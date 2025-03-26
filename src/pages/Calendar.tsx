@@ -43,6 +43,24 @@ export default function Calendar() {
     }
   }, [events, myCalendars, otherCalendars]);
   
+  // Helper function to verify if an ID is a valid UUID
+  const isValidUUID = (id: string): boolean => {
+    if (!id) return false;
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(id);
+  };
+  
+  // Handle save with UUID validation
+  const handleSaveEventWithValidation = (event: any) => {
+    console.log("Validating event before save:", event);
+    if (modalMode === 'edit' && !isValidUUID(event.id)) {
+      console.error("Invalid event ID for updating:", event.id);
+      alert("Cannot update event: Invalid ID format");
+      return;
+    }
+    handleSaveEvent(event);
+  };
+  
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -90,7 +108,7 @@ export default function Calendar() {
         onClose={() => setModalOpen(false)}
         event={selectedEvent}
         mode={modalMode}
-        onSave={handleSaveEvent}
+        onSave={handleSaveEventWithValidation}
         onDelete={handleDeleteEvent}
       />
     </div>

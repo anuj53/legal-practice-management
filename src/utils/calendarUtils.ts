@@ -1,4 +1,3 @@
-
 import { addHours, addDays, subDays, startOfDay } from 'date-fns';
 
 // Types we need to move from useCalendarData
@@ -91,81 +90,79 @@ export const convertEventToDbEvent = (eventObj: Event | Omit<Event, 'id'>) => {
 };
 
 // Generate demo events for testing based on the existing calendars
-export const generateDemoEvents = (existingCalendars: Calendar[] = []): Event[] => {
-  console.log('Generating demo events with existing calendars:', existingCalendars.map(c => `${c.id} (${c.name})`));
+export const generateDemoEvents = (calendars: Calendar[]): Event[] => {
+  console.log('Generating demo events with existing calendars:', 
+    calendars.map(cal => `${cal.id} (${cal.name})`).join(', ')
+  );
   
-  const now = new Date();
-  const today = startOfDay(now);
+  const calendarMap: Record<string, string> = {};
   
-  // Find calendar IDs based on properties or use defaults
-  const findCalendarId = (type: 'personal' | 'firm' | 'statute'): string => {
-    let calendarId = type; // Default fallback to legacy ID
-    
-    if (existingCalendars.length > 0) {
-      // Try to find matching calendar based on its properties
-      if (type === 'firm') {
-        const firmCalendar = existingCalendars.find(c => c.is_firm);
-        if (firmCalendar) return firmCalendar.id;
-      } else if (type === 'statute') {
-        const statuteCalendar = existingCalendars.find(c => c.is_statute);
-        if (statuteCalendar) return statuteCalendar.id;
-      } else {
-        // For personal, find a calendar that's neither firm nor statute
-        const personalCalendar = existingCalendars.find(c => !c.is_firm && !c.is_statute);
-        if (personalCalendar) return personalCalendar.id;
-      }
-      
-      // If we can't find a specific one, just use the first available
-      return existingCalendars[0].id;
-    }
-    
-    return calendarId;
-  };
-  
-  const personalCalendarId = findCalendarId('personal');
-  const firmCalendarId = findCalendarId('firm');
-  const statuteCalendarId = findCalendarId('statute');
-  
-  console.log('Using calendar IDs:', {
-    personal: personalCalendarId,
-    firm: firmCalendarId,
-    statute: statuteCalendarId
+  // Map calendar types to actual calendar IDs
+  calendars.forEach(cal => {
+    if (cal.is_firm) calendarMap['firm'] = cal.id;
+    else if (cal.is_statute) calendarMap['statute'] = cal.id;
+    else calendarMap['personal'] = cal.id;
   });
   
-  return [
+  console.log('Using calendar IDs:', calendarMap);
+  
+  const now = new Date();
+  const getDate = (dayOffset: number, hourOffset: number = 0, minuteOffset: number = 0) => {
+    const date = new Date(now);
+    date.setDate(date.getDate() + dayOffset);
+    date.setHours(date.getHours() + hourOffset);
+    date.setMinutes(date.getMinutes() + minuteOffset);
+    return date;
+  };
+  
+  // Generate UUID for demo events
+  const generateUUID = () => {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  };
+  
+  // Use actual calendar IDs from the provided calendars array
+  const getCalendarId = (type: 'firm' | 'statute' | 'personal'): string => {
+    return calendarMap[type] || calendars[0]?.id || generateUUID();
+  };
+  
+  const events: Event[] = [
     {
-      id: '1',
+      id: generateUUID(),
       title: 'Client Consultation: John Smith',
-      start: addHours(today, 10),
-      end: addHours(today, 11),
+      start: getDate(0, 1),
+      end: getDate(0, 2),
       type: 'client-meeting',
-      calendar: personalCalendarId,
+      calendar: getCalendarId('firm'),
       description: 'Initial consultation regarding divorce case.',
       location: 'Office - Room 305',
       attendees: ['John Smith'],
       caseId: 'DIV-2023-105',
       clientName: 'John Smith',
       assignedLawyer: 'Jane Roberts',
-      isAllDay: false
+      isAllDay: false,
     },
     {
-      id: '2',
+      id: generateUUID(),
       title: 'Team Meeting',
-      start: addHours(today, 14),
-      end: addHours(today, 15),
+      start: getDate(0, 4),
+      end: getDate(0, 5),
       type: 'internal-meeting',
-      calendar: firmCalendarId,
+      calendar: getCalendarId('firm'),
       description: 'Weekly team meeting to discuss case progress.',
       attendees: ['Amy Johnson', 'Michael Lee', 'Sarah Wilson'],
-      isAllDay: false
+      isAllDay: false,
     },
     {
-      id: '3',
+      id: generateUUID(),
       title: 'Court Hearing: Smith v. Jones',
-      start: addHours(addDays(today, 1), 9),
-      end: addHours(addDays(today, 1), 12),
+      start: getDate(1, 9),
+      end: getDate(1, 12),
       type: 'court',
-      calendar: firmCalendarId,
+      calendar: getCalendarId('firm'),
       location: 'County Courthouse - Room 203',
       description: 'Preliminary hearing for custody case.',
       caseId: 'FAM-2023-089',
@@ -176,15 +173,15 @@ export const generateDemoEvents = (existingCalendars: Calendar[] = []): Event[] 
         judgeDetails: 'Judge William Harrington',
         docketNumber: 'FC-2023-1234'
       },
-      isAllDay: false
+      isAllDay: false,
     },
     {
-      id: '4',
+      id: generateUUID(),
       title: 'Filing Deadline: Johnson Estate',
-      start: addHours(addDays(today, 2), 17),
-      end: addHours(addDays(today, 2), 17.5),
+      start: getDate(2, 17),
+      end: getDate(2, 17.5),
       type: 'deadline',
-      calendar: statuteCalendarId,
+      calendar: getCalendarId('statute'),
       description: 'Last day to file estate documents.',
       caseId: 'PRB-2023-042',
       clientName: 'Johnson Family',
@@ -196,106 +193,106 @@ export const generateDemoEvents = (existingCalendars: Calendar[] = []): Event[] 
           url: 'https://example.com/documents/estate-inventory.pdf'
         }
       ],
-      isAllDay: false
+      isAllDay: false,
     },
     {
-      id: '5',
+      id: generateUUID(),
       title: 'Lunch with Sarah',
-      start: addHours(addDays(today, -1), 12),
-      end: addHours(addDays(today, -1), 13),
+      start: getDate(-1, 12),
+      end: getDate(-1, 13),
       type: 'personal',
-      calendar: personalCalendarId,
+      calendar: getCalendarId('personal'),
       location: 'Café Bistro',
-      isAllDay: false
+      isAllDay: false,
     },
     {
-      id: '6',
+      id: generateUUID(),
       title: 'Expert Witness Preparation',
-      start: addHours(addDays(today, 3), 14),
-      end: addHours(addDays(today, 3), 16),
+      start: getDate(3, 14),
+      end: getDate(3, 16),
       type: 'internal-meeting',
-      calendar: firmCalendarId,
+      calendar: getCalendarId('firm'),
       description: 'Meeting with expert witness Dr. Phillips to prepare for trial testimony.',
       location: 'Conference Room B',
       attendees: ['Dr. Phillips', 'Amy Johnson'],
       caseId: 'LIT-2023-078',
-      isAllDay: false
+      isAllDay: false,
     },
     {
-      id: '7',
+      id: generateUUID(),
       title: 'Document Review: Williams Case',
-      start: addHours(subDays(today, 2), 9),
-      end: addHours(subDays(today, 2), 12),
+      start: getDate(-2, 9),
+      end: getDate(-2, 12),
       type: 'internal-meeting',
-      calendar: personalCalendarId,
+      calendar: getCalendarId('personal'),
       description: 'Review discovery documents for Williams litigation case.',
       caseId: 'LIT-2023-067',
       clientName: 'Williams Corp',
       assignedLawyer: 'Stephanie Davis',
-      isAllDay: false
+      isAllDay: false,
     },
     {
-      id: '8',
+      id: generateUUID(),
       title: 'Client Meeting: Robert Davis',
-      start: addHours(today, 16),
-      end: addHours(today, 17),
+      start: getDate(16),
+      end: getDate(17),
       type: 'client-meeting',
-      calendar: personalCalendarId,
+      calendar: getCalendarId('personal'),
       location: 'Virtual - Zoom',
       description: 'Follow-up meeting to discuss settlement options.',
       attendees: ['Robert Davis'],
       caseId: 'SET-2023-042',
       clientName: 'Robert Davis',
       assignedLawyer: 'Jane Roberts',
-      isAllDay: false
+      isAllDay: false,
     },
     {
-      id: '9',
+      id: generateUUID(),
       title: 'Mediator Conference',
-      start: addHours(addDays(today, 4), 10),
-      end: addHours(addDays(today, 4), 14),
+      start: getDate(4, 10),
+      end: getDate(4, 14),
       type: 'court',
-      calendar: firmCalendarId,
+      calendar: getCalendarId('firm'),
       location: 'Mediation Center - Suite 400',
       description: 'Mediation session for Roberts divorce case.',
       attendees: ['Mediator: James Wilson', 'Opposing Counsel: Jane Smith'],
       caseId: 'DIV-2023-091',
       clientName: 'Roberts Family',
       assignedLawyer: 'Sarah Wilson',
-      isAllDay: false
+      isAllDay: false,
     },
     {
-      id: '10',
+      id: generateUUID(),
       title: 'Statute Deadline: Tax Filing',
-      start: addHours(addDays(today, 10), 23.5),
-      end: addHours(addDays(today, 10), 23.75),
+      start: getDate(10, 23.5),
+      end: getDate(10, 23.75),
       type: 'deadline',
-      calendar: statuteCalendarId,
+      calendar: getCalendarId('statute'),
       description: 'Final deadline for corporate tax filing.',
       caseId: 'TAX-2023-028',
       clientName: 'ABC Corporation',
       assignedLawyer: 'Michael Lee',
-      isAllDay: false
+      isAllDay: false,
     },
     {
-      id: '11',
+      id: generateUUID(),
       title: 'Bar Association Annual Conference',
-      start: addDays(today, 15),
-      end: addDays(today, 18),
+      start: getDate(15),
+      end: getDate(18),
       type: 'personal',
-      calendar: personalCalendarId,
+      calendar: getCalendarId('personal'),
       location: 'Hilton Downtown Hotel',
       description: 'Annual bar association conference with workshops and networking events.',
       isRecurring: false,
-      isAllDay: true
+      isAllDay: true,
     },
     {
-      id: '12',
+      id: generateUUID(),
       title: 'Client Status Meeting (Recurring)',
-      start: addHours(addDays(today, 5), 11),
-      end: addHours(addDays(today, 5), 12),
+      start: getDate(5, 11),
+      end: getDate(5, 12),
       type: 'client-meeting',
-      calendar: personalCalendarId,
+      calendar: getCalendarId('personal'),
       description: 'Biweekly status meeting with major corporate client',
       location: 'Conference Room A',
       attendees: ['John CEO', 'Sarah CFO'],
@@ -308,9 +305,12 @@ export const generateDemoEvents = (existingCalendars: Calendar[] = []): Event[] 
         interval: 2,
         occurrences: 10
       },
-      isAllDay: false
+      isAllDay: false,
     }
   ];
+  
+  console.log(`Generated ${events.length} demo events with actual calendar IDs`);
+  return events;
 };
 
 // Generate demo calendar data

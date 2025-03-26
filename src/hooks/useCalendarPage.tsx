@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Event } from '@/utils/calendarUtils';
 import { useCalendarData } from '@/hooks/useCalendarData';
@@ -38,20 +37,17 @@ export function useCalendarPage() {
     }
   }, [events, myCalendars, otherCalendars]);
   
-  // Create a mapping from legacy calendar names to actual calendar IDs
   const calendarNameToIdMap = () => {
     const map: Record<string, string> = {};
     
-    // Map from legacy types to actual calendar IDs based on calendar properties
     myCalendars.forEach(cal => {
       if (cal.is_firm) map['firm'] = cal.id;
       else if (cal.is_statute) map['statute'] = cal.id;
-      else map['personal'] = cal.id; // Default personal calendar
+      else map['personal'] = cal.id;
     });
     
-    // Add direct ID mappings
     [...myCalendars, ...otherCalendars].forEach(cal => {
-      map[cal.id] = cal.id; // Direct ID mapping
+      map[cal.id] = cal.id;
     });
     
     console.log("Calendar mapping:", map);
@@ -59,13 +55,11 @@ export function useCalendarPage() {
   };
   
   const filteredEvents = events.filter(event => {
-    // Get the actual calendar ID (either directly or via mapping)
     const mapping = calendarNameToIdMap();
     const actualCalendarId = mapping[event.calendar] || event.calendar;
     
     console.log("Mapping event:", event.title, "Original calendar:", event.calendar, "Mapped calendar:", actualCalendarId);
     
-    // Find the calendar in either myCalendars or otherCalendars
     const allCalendars = [...myCalendars, ...otherCalendars];
     const calendar = allCalendars.find(cal => cal.id === actualCalendarId);
     
@@ -121,7 +115,6 @@ export function useCalendarPage() {
   const handleCreateEvent = () => {
     console.log("Create event clicked");
     
-    // Use the first available calendar ID or fall back to a default
     const defaultCalendarId = myCalendars.length > 0 
       ? myCalendars[0].id 
       : 'personal';
@@ -130,10 +123,10 @@ export function useCalendarPage() {
     
     const now = new Date();
     const defaultEvent = {
-      id: '',  // Empty ID for new events
+      id: '',
       title: '',
       start: now,
-      end: new Date(now.getTime() + 60 * 60 * 1000), // 1 hour later
+      end: new Date(now.getTime() + 60 * 60 * 1000),
       type: 'client-meeting' as const,
       calendar: defaultCalendarId,
       isAllDay: false,
@@ -156,6 +149,13 @@ export function useCalendarPage() {
         console.log("New event created:", newEvent);
       } else {
         console.log("Updating event with ID:", event.id);
+        
+        if (!isValidUUID(event.id)) {
+          console.error("Event ID is not a valid UUID:", event.id);
+          toast.error('Invalid event ID format');
+          return;
+        }
+        
         const updatedEvent = await updateEvent(event);
         toast.success('Event updated successfully!');
         console.log("Event updated:", updatedEvent);
@@ -177,6 +177,11 @@ export function useCalendarPage() {
       console.error('Error deleting event:', error);
       toast.error('Failed to delete event');
     }
+  };
+
+  const isValidUUID = (id: string): boolean => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(id);
   };
 
   return {

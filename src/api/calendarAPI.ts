@@ -211,6 +211,12 @@ export const updateEventInDb = async (event: Event) => {
   try {
     console.log('Updating event in DB:', event);
     
+    // Check if the event ID is a valid UUID before proceeding
+    if (!event.id || typeof event.id !== 'string' || !isValidUUID(event.id)) {
+      console.error('Invalid event ID for update:', event.id);
+      throw new Error(`Invalid UUID format for event ID: ${event.id}`);
+    }
+    
     // Add detailed logging to debug the issue
     console.log('Event details for debugging:');
     console.log('  ID:', event.id);
@@ -247,6 +253,12 @@ export const updateEventInDb = async (event: Event) => {
     throw err;
   }
 };
+
+// Helper function to validate UUID format
+function isValidUUID(uuid: string) {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(uuid);
+}
 
 // Delete event from Supabase
 export const deleteEventFromDb = async (id: string) => {
