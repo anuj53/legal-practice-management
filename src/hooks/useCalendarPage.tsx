@@ -135,7 +135,7 @@ export function useCalendarPage() {
     
     const now = new Date();
     const defaultEvent = {
-      id: '',
+      id: '', // Empty ID for new events
       title: '',
       start: now,
       end: new Date(now.getTime() + 60 * 60 * 1000),
@@ -155,28 +155,35 @@ export function useCalendarPage() {
   const handleSaveEvent = async (event: Event) => {
     console.log("Saving event:", event);
     
-    // Enhanced validation before save
-    if (modalMode === 'edit' && !isValidUUID(event.id)) {
-      console.error("Invalid event ID format for edit:", event.id);
-      toast.error('Cannot save: Invalid event ID format');
-      return;
-    }
-    
-    // Ensure calendar ID is a valid UUID
-    if (!isValidUUID(event.calendar)) {
-      console.error("Invalid calendar ID format:", event.calendar);
-      toast.error('Cannot save: Invalid calendar ID format');
-      return;
-    }
-    
     try {
       if (modalMode === 'create') {
         console.log("Creating new event with calendar ID:", event.calendar);
+        
+        // For new events, we don't validate the event ID as it will be generated
+        if (!event.calendar || !isValidUUID(event.calendar)) {
+          console.error("Invalid calendar ID format:", event.calendar);
+          toast.error('Cannot save: Invalid calendar ID format');
+          return;
+        }
+        
         const newEvent = await createEvent(event);
         toast.success('Event created successfully!');
         console.log("New event created:", newEvent);
       } else {
         console.log("Updating event with ID:", event.id);
+        
+        // For existing events, validate both IDs
+        if (!event.id || !isValidUUID(event.id)) {
+          console.error("Invalid event ID format for edit:", event.id);
+          toast.error('Cannot save: Invalid event ID format');
+          return;
+        }
+        
+        if (!event.calendar || !isValidUUID(event.calendar)) {
+          console.error("Invalid calendar ID format:", event.calendar);
+          toast.error('Cannot save: Invalid calendar ID format');
+          return;
+        }
         
         const updatedEvent = await updateEvent(event);
         toast.success('Event updated successfully!');
@@ -209,10 +216,16 @@ export function useCalendarPage() {
     }
   };
 
+  // Improved UUID validation function
   const isValidUUID = (id: string): boolean => {
     if (!id) return false;
+    
+    // Strict UUID validation regex
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    return uuidRegex.test(id);
+    
+    const isValid = uuidRegex.test(id);
+    console.log(`UUID validation for "${id}": ${isValid}`);
+    return isValid;
   };
 
   return {

@@ -6,8 +6,13 @@ import { Calendar, Event, convertDbEventToEvent, convertEventToDbEvent } from '@
 // Helper function to validate UUID format
 function isValidUUID(uuid: string) {
   if (!uuid) return false;
+  
+  // Strict UUID regex validation
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  return uuidRegex.test(uuid);
+  
+  const isValid = uuidRegex.test(uuid);
+  console.log(`API UUID validation for "${uuid}": ${isValid}`);
+  return isValid;
 }
 
 // Fetch calendars from Supabase
@@ -165,12 +170,12 @@ export const createCalendarInDb = async (calendar: Omit<Calendar, 'id'>) => {
   }
 };
 
-// Create event in Supabase
+// Create event in Supabase - no need to validate event ID, it will be generated
 export const createEventInDb = async (event: Omit<Event, 'id'>) => {
   try {
     console.log('Creating event in DB:', event);
     
-    // Comprehensive validation
+    // Comprehensive validation for create
     if (!event.calendar) {
       const errorMsg = 'Calendar ID is missing or empty';
       console.error(errorMsg);
@@ -195,7 +200,6 @@ export const createEventInDb = async (event: Omit<Event, 'id'>) => {
       throw new Error(errorMsg);
     }
     
-    // Convert to database format
     // Create the DB event object with required fields for insert
     const dbEvent = {
       title: event.title,
@@ -245,7 +249,7 @@ export const updateEventInDb = async (event: Event) => {
   try {
     console.log('Updating event in DB:', event);
     
-    // Thorough UUID validation
+    // Thorough UUID validation for update
     if (!event.id) {
       throw new Error('Event ID cannot be empty for update operation');
     }
@@ -268,7 +272,7 @@ export const updateEventInDb = async (event: Event) => {
     }
     
     // Add detailed logging to debug the issue
-    console.log('Event details for debugging:');
+    console.log('Event details for updating:');
     console.log('  ID:', event.id);
     console.log('  Title:', event.title);
     console.log('  Start:', event.start);

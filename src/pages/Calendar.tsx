@@ -45,16 +45,14 @@ export default function Calendar() {
     }
   }, [events, myCalendars, otherCalendars]);
   
-  // Handle save with UUID validation
+  // Handle save with improved UUID validation
   const handleSaveEventWithValidation = (event: any) => {
     console.log("Validating event before save:", event);
     console.log("Modal mode:", modalMode);
-    console.log("Calendar ID for validation:", event.calendar);
-    console.log("Is valid calendar UUID?", isValidUUID(event.calendar));
     
-    // For new events in create mode, we still need to validate the calendar ID
+    // For new events in create mode, we need to validate the calendar ID but not the event ID
     if (modalMode === 'create') {
-      console.log("Creating new event, validating calendar ID");
+      console.log("Creating new event, validating calendar ID only");
       
       if (!event.calendar) {
         console.error("Missing calendar ID for new event");
@@ -68,17 +66,20 @@ export default function Calendar() {
         return;
       }
       
+      // In create mode, we don't need to validate the event ID as it will be generated
+      console.log("Calendar ID validation passed, proceeding with create");
       handleSaveEvent(event);
       return;
     }
     
-    // For existing events, validate both event ID and calendar ID
+    // For existing events in edit mode, validate both event ID and calendar ID
     if (!event.id) {
       console.error("Missing event ID for update");
       toast.error("Cannot update event: Missing ID");
       return;
     }
     
+    console.log("Validating event ID for edit:", event.id);
     if (!isValidUUID(event.id)) {
       console.error("Invalid event ID for updating:", event.id);
       toast.error("Cannot update event: Invalid ID format");
@@ -97,6 +98,7 @@ export default function Calendar() {
       return;
     }
     
+    console.log("All validation passed, proceeding with update");
     handleSaveEvent(event);
   };
   
