@@ -45,60 +45,12 @@ export default function Calendar() {
     }
   }, [events, myCalendars, otherCalendars]);
   
-  // Handle save with improved UUID validation
+  // Handle save without unnecessary validation - defer to useCalendarPage
   const handleSaveEventWithValidation = (event: any) => {
-    console.log("Validating event before save:", event);
-    console.log("Modal mode:", modalMode);
+    console.log("Calendar: Saving event:", event);
+    console.log("Calendar: Modal mode:", modalMode);
     
-    // For new events in create mode, we need to validate the calendar ID but not the event ID
-    if (modalMode === 'create') {
-      console.log("Creating new event, validating calendar ID only");
-      
-      if (!event.calendar) {
-        console.error("Missing calendar ID for new event");
-        toast.error("Cannot save: Missing calendar ID");
-        return;
-      }
-      
-      if (!isValidUUID(event.calendar)) {
-        console.error("Invalid calendar ID format for new event:", event.calendar);
-        toast.error("Cannot save: Invalid calendar ID format");
-        return;
-      }
-      
-      // In create mode, we don't need to validate the event ID as it will be generated
-      console.log("Calendar ID validation passed, proceeding with create");
-      handleSaveEvent(event);
-      return;
-    }
-    
-    // For existing events in edit mode, validate both event ID and calendar ID
-    if (!event.id) {
-      console.error("Missing event ID for update");
-      toast.error("Cannot update event: Missing ID");
-      return;
-    }
-    
-    console.log("Validating event ID for edit:", event.id);
-    if (!isValidUUID(event.id)) {
-      console.error("Invalid event ID for updating:", event.id);
-      toast.error("Cannot update event: Invalid ID format");
-      return;
-    }
-    
-    if (!event.calendar) {
-      console.error("Missing calendar ID for event update");
-      toast.error("Cannot update event: Missing calendar ID");
-      return;
-    }
-    
-    if (!isValidUUID(event.calendar)) {
-      console.error("Invalid calendar ID:", event.calendar);
-      toast.error("Cannot update event: Invalid calendar ID format");
-      return;
-    }
-    
-    console.log("All validation passed, proceeding with update");
+    // Let useCalendarPage's handleSaveEvent handle the validation
     handleSaveEvent(event);
   };
   

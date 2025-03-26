@@ -88,8 +88,11 @@ export const useCalendar = () => {
   // Create event
   const createEvent = async (event: Omit<Event, 'id'>) => {
     try {
+      console.log('useCalendar: Creating event with calendar ID:', event.calendar);
+      
       // First create in the database
       const newEvent = await createEventInDb(event);
+      console.log('useCalendar: createEventInDb returned new event:', newEvent);
       
       // Update local state
       setEvents(prev => [...prev, newEvent]);
@@ -102,22 +105,17 @@ export const useCalendar = () => {
     } catch (err) {
       console.error('Error creating event:', err);
       setError('Failed to create event');
-      toast.error('Failed to create event');
-      
-      // Fall back to client-side ID generation for demo mode
-      const newEvent = {
-        ...event,
-        id: Math.random().toString(36).substring(2, 9),
-      } as Event;
-      
-      setEvents(prev => [...prev, newEvent]);
-      return newEvent;
+      toast.error(`Failed to create event: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      throw err; // Re-throw so the caller can handle it
     }
   };
 
   // Update event
   const updateEvent = async (event: Event) => {
     try {
+      console.log('useCalendar: Updating event with ID:', event.id);
+      console.log('useCalendar: Event calendar ID:', event.calendar);
+      
       // First update in the database
       const updatedEvent = await updateEventInDb(event);
       
@@ -132,17 +130,16 @@ export const useCalendar = () => {
     } catch (err) {
       console.error('Error updating event:', err);
       setError('Failed to update event');
-      toast.error('Failed to update event');
-      
-      // Still update the local state so UI stays consistent
-      setEvents(prev => prev.map(e => e.id === event.id ? event : e));
-      return event;
+      toast.error(`Failed to update event: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      throw err; // Re-throw so the caller can handle it
     }
   };
 
   // Delete event
   const deleteEvent = async (id: string) => {
     try {
+      console.log('useCalendar: Deleting event with ID:', id);
+      
       // First delete from the database
       await deleteEventFromDb(id);
       
@@ -156,10 +153,8 @@ export const useCalendar = () => {
     } catch (err) {
       console.error('Error deleting event:', err);
       setError('Failed to delete event');
-      toast.error('Failed to delete event');
-      
-      // Still update the local state so UI stays consistent
-      setEvents(prev => prev.filter(e => e.id !== id));
+      toast.error(`Failed to delete event: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      throw err; // Re-throw so the caller can handle it
     }
   };
 

@@ -41,14 +41,13 @@ export function useCalendarPage() {
   const calendarNameToIdMap = () => {
     const map: Record<string, string> = {};
     
-    myCalendars.forEach(cal => {
+    [...myCalendars, ...otherCalendars].forEach(cal => {
+      map[cal.id] = cal.id; // Map each ID to itself for direct lookup
+      
+      // Also add special mappings for certain calendar types
       if (cal.is_firm) map['firm'] = cal.id;
       else if (cal.is_statute) map['statute'] = cal.id;
-      else map['personal'] = cal.id;
-    });
-    
-    [...myCalendars, ...otherCalendars].forEach(cal => {
-      map[cal.id] = cal.id;
+      else if (!cal.is_firm && !cal.is_statute) map['personal'] = cal.id;
     });
     
     console.log("Calendar mapping:", map);
@@ -57,9 +56,13 @@ export function useCalendarPage() {
   
   const filteredEvents = events.filter(event => {
     const mapping = calendarNameToIdMap();
-    const actualCalendarId = mapping[event.calendar] || event.calendar;
+    let actualCalendarId = event.calendar;
     
-    console.log("Mapping event:", event.title, "Original calendar:", event.calendar, "Mapped calendar:", actualCalendarId);
+    // Try to resolve special names to IDs if necessary
+    if (mapping[event.calendar] && !isValidUUID(event.calendar)) {
+      actualCalendarId = mapping[event.calendar];
+      console.log(`Mapped special calendar name "${event.calendar}" to ID "${actualCalendarId}"`);
+    }
     
     const allCalendars = [...myCalendars, ...otherCalendars];
     const calendar = allCalendars.find(cal => cal.id === actualCalendarId);
@@ -69,7 +72,6 @@ export function useCalendarPage() {
       return false;
     }
     
-    console.log("Event will be displayed:", event.title, "Calendar checked:", calendar.checked);
     return calendar.checked;
   });
   
@@ -81,23 +83,14 @@ export function useCalendarPage() {
   }, [filteredEvents]);
   
   const handleCalendarToggle = (id: string, category: 'my' | 'other') => {
-    if (category === 'my') {
-      const calendar = myCalendars.find(cal => cal.id === id);
-      if (calendar) {
-        updateCalendar({
-          ...calendar,
-          checked: !calendar.checked
-        });
-      }
-    } else {
-      const calendar = otherCalendars.find(cal => cal.id === id);
-      if (calendar) {
-        const updatedCalendar = {
-          ...calendar,
-          checked: !calendar.checked
-        };
-        updateCalendar(updatedCalendar);
-      }
+    const calendars = category === 'my' ? myCalendars : otherCalendars;
+    const calendar = calendars.find(cal => cal.id === id);
+    
+    if (calendar) {
+      updateCalendar({
+        ...calendar,
+        checked: !calendar.checked
+      });
     }
   };
   
@@ -116,7 +109,7 @@ export function useCalendarPage() {
   const handleCreateEvent = () => {
     console.log("Create event clicked");
     
-    // Find valid calendars (must have UUID format)
+    // Get valid calendars (with valid UUID format)
     const validCalendars = myCalendars.filter(cal => isValidUUID(cal.id));
     
     console.log("Valid calendars found:", validCalendars.map(c => `${c.id} (${c.name})`));
@@ -153,42 +146,72 @@ export function useCalendarPage() {
   };
   
   const handleSaveEvent = async (event: Event) => {
-    console.log("Saving event:", event);
+    console.log("handleSaveEvent called with event:", event);
+    console.log("Current modal mode:", modalMode);
     
     try {
+      // For new events in create mode
       if (modalMode === 'create') {
-        console.log("Creating new event with calendar ID:", event.calendar);
+        console.log("Creating new event");
         
-        // For new events, we don't validate the event ID as it will be generated
-        if (!event.calendar || !isValidUUID(event.calendar)) {
-          console.error("Invalid calendar ID format:", event.calendar);
-          toast.error('Cannot save: Invalid calendar ID format');
+        // Validate calendar ID
+        if (!event.calendar) {
+          console.error("Missing calendar ID for new event");
+          toast.error("Cannot save: Missing calendar ID");
           return;
         }
         
-        const newEvent = await createEvent(event);
+        if (!isValidUUID(event.calendar)) {
+          console.error("Invalid calendar ID format for new event:", event.calendar);
+          toast.error("Cannot save: Invalid calendar ID format");
+          return;
+        }
+        
+        // Create with valid calendar ID
+        const newEvent = await createEvent({
+          ...event,
+          // Ensure we're not passing any ID for create operations
+          id: undefined as any
+        });
+        
         toast.success('Event created successfully!');
         console.log("New event created:", newEvent);
-      } else {
-        console.log("Updating event with ID:", event.id);
+      } 
+      // For existing events in edit mode
+      else {
+        console.log("Updating existing event with ID:", event.id);
         
-        // For existing events, validate both IDs
-        if (!event.id || !isValidUUID(event.id)) {
-          console.error("Invalid event ID format for edit:", event.id);
-          toast.error('Cannot save: Invalid event ID format');
+        // Validate both event ID and calendar ID
+        if (!event.id) {
+          console.error("Missing event ID for update");
+          toast.error("Cannot update event: Missing ID");
           return;
         }
         
-        if (!event.calendar || !isValidUUID(event.calendar)) {
-          console.error("Invalid calendar ID format:", event.calendar);
-          toast.error('Cannot save: Invalid calendar ID format');
+        if (!isValidUUID(event.id)) {
+          console.error("Invalid event ID format for update:", event.id);
+          toast.error("Cannot update event: Invalid ID format");
           return;
         }
         
+        if (!event.calendar) {
+          console.error("Missing calendar ID for event update");
+          toast.error("Cannot update event: Missing calendar ID");
+          return;
+        }
+        
+        if (!isValidUUID(event.calendar)) {
+          console.error("Invalid calendar ID format for update:", event.calendar);
+          toast.error("Cannot save: Invalid calendar ID format");
+          return;
+        }
+        
+        // Update with valid IDs
         const updatedEvent = await updateEvent(event);
         toast.success('Event updated successfully!');
         console.log("Event updated:", updatedEvent);
       }
+      
       setModalOpen(false);
     } catch (error) {
       console.error('Error saving event:', error);

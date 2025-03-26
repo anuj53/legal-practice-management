@@ -2,7 +2,8 @@
 import { useEffect } from 'react';
 import { 
   generateDemoCalendars, 
-  generateDemoEvents 
+  generateDemoEvents,
+  isValidUUID
 } from '@/utils/calendarUtils';
 import {
   fetchCalendars,
@@ -44,8 +45,21 @@ export const useCalendarData = () => {
         // If we have data from database, use it
         if (result) {
           console.log('Setting calendars from database');
-          setMyCalendars(result.myCalendars);
-          setOtherCalendars(result.otherCalendars);
+          console.log('My calendars from DB:', result.myCalendars.map(c => `${c.id} (${c.name})`));
+          
+          // Validate calendar IDs
+          const validMyCalendars = result.myCalendars.filter(cal => isValidUUID(cal.id));
+          const validOtherCalendars = result.otherCalendars.filter(cal => isValidUUID(cal.id));
+          
+          if (validMyCalendars.length === 0) {
+            console.warn('No valid calendar IDs found in DB data, using demo data instead');
+            const { myCalendars, otherCalendars } = generateDemoCalendars();
+            setMyCalendars(myCalendars);
+            setOtherCalendars(otherCalendars);
+          } else {
+            setMyCalendars(validMyCalendars);
+            setOtherCalendars(validOtherCalendars);
+          }
         } else {
           // Fall back to demo data if no database records
           console.log('No calendars found in DB, using demo data');
@@ -80,7 +94,19 @@ export const useCalendarData = () => {
         // If we have data from database, use it
         if (result && result.length > 0) {
           console.log(`Setting ${result.length} events from database`);
-          setEvents(result);
+          
+          // Validate event calendar IDs
+          const validEvents = result.filter(event => isValidUUID(event.calendar));
+          
+          if (validEvents.length === 0) {
+            console.warn('No valid event calendar IDs found in DB data, using demo data instead');
+            // Pass the actual calendars to use their IDs
+            const allCalendars = [...myCalendars, ...otherCalendars];
+            const demoEvents = generateDemoEvents(allCalendars);
+            setEvents(demoEvents);
+          } else {
+            setEvents(validEvents);
+          }
         } else {
           // Fall back to demo data if no database records
           console.log('No events found in DB, using demo data');
@@ -105,7 +131,10 @@ export const useCalendarData = () => {
       }
     };
 
-    loadEvents();
+    // Only load events if we have calendars
+    if (myCalendars.length > 0 || otherCalendars.length > 0) {
+      loadEvents();
+    }
   }, [dataUpdated, myCalendars, otherCalendars, setEvents, setLoading, setError]); // Refetch when data is updated or calendars change
 
   return {

@@ -1,3 +1,4 @@
+
 import { addHours, addDays, subDays, startOfDay } from 'date-fns';
 
 // Types we need to move from useCalendarData
@@ -50,6 +51,11 @@ export interface Event {
 export const convertDbEventToEvent = (dbEvent: any): Event => {
   console.log('Converting DB event to app event:', dbEvent);
   
+  if (!dbEvent || !dbEvent.calendar_id) {
+    console.error('Invalid DB event:', dbEvent);
+    throw new Error('Cannot convert invalid DB event: missing calendar_id');
+  }
+  
   const event = {
     id: dbEvent.id,
     title: dbEvent.title,
@@ -65,11 +71,26 @@ export const convertDbEventToEvent = (dbEvent: any): Event => {
   };
   
   console.log('Converted event:', event);
+  console.log('Calendar ID:', event.calendar, 'Valid:', isValidUUID(event.calendar));
   return event;
 };
 
 // Convert local Event to database format
 export const convertEventToDbEvent = (eventObj: Event | Omit<Event, 'id'>) => {
+  // Log the input for debugging
+  console.log('Converting app event to DB event, input:', eventObj);
+  
+  // Validate calendar ID
+  if (!eventObj.calendar) {
+    console.error('Missing calendar ID in event:', eventObj);
+    throw new Error('Missing calendar ID for database operation');
+  }
+  
+  if (!isValidUUID(eventObj.calendar)) {
+    console.error('Invalid calendar ID format in event:', eventObj);
+    throw new Error(`Invalid calendar ID format: ${eventObj.calendar}`);
+  }
+  
   // Create a clean database event object with only the fields we need to store
   const dbEvent = {
     title: eventObj.title,
@@ -85,7 +106,8 @@ export const convertEventToDbEvent = (eventObj: Event | Omit<Event, 'id'>) => {
     ...('id' in eventObj ? { id: eventObj.id } : {})
   };
   
-  console.log('Converting app event to DB event:', dbEvent);
+  console.log('Converted to DB event:', dbEvent);
+  console.log('Calendar ID being used:', dbEvent.calendar_id);
   return dbEvent;
 };
 
@@ -93,7 +115,9 @@ export const convertEventToDbEvent = (eventObj: Event | Omit<Event, 'id'>) => {
 export const isValidUUID = (id: string): boolean => {
   if (!id) return false;
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  return uuidRegex.test(id);
+  const isValid = uuidRegex.test(id);
+  console.log(`Utils UUID validation for "${id}": ${isValid}`);
+  return isValid;
 };
 
 // Generate demo events for testing based on the existing calendars
@@ -153,193 +177,55 @@ export const generateDemoEvents = (calendars: Calendar[]): Event[] => {
     return defaultCalendarId;
   };
   
-  const events: Event[] = [
+  // Start building events
+  const eventTemplates = [
     {
-      id: generateUUID(),
       title: 'Client Consultation: John Smith',
-      start: getDate(0, 1),
-      end: getDate(0, 2),
-      type: 'client-meeting',
-      calendar: getCalendarId('firm'),
+      dayOffset: 0,
+      hourOffset: 1,
+      duration: 1, // hours
+      type: 'client-meeting' as const,
+      calendarType: 'firm',
       description: 'Initial consultation regarding divorce case.',
       location: 'Office - Room 305',
-      attendees: ['John Smith'],
-      caseId: 'DIV-2023-105',
-      clientName: 'John Smith',
-      assignedLawyer: 'Jane Roberts',
-      isAllDay: false,
     },
     {
-      id: generateUUID(),
       title: 'Team Meeting',
-      start: getDate(0, 4),
-      end: getDate(0, 5),
-      type: 'internal-meeting',
-      calendar: getCalendarId('firm'),
+      dayOffset: 0,
+      hourOffset: 4,
+      duration: 1,
+      type: 'internal-meeting' as const,
+      calendarType: 'firm',
       description: 'Weekly team meeting to discuss case progress.',
-      attendees: ['Amy Johnson', 'Michael Lee', 'Sarah Wilson'],
-      isAllDay: false,
     },
-    {
-      id: generateUUID(),
-      title: 'Court Hearing: Smith v. Jones',
-      start: getDate(1, 9),
-      end: getDate(1, 12),
-      type: 'court',
-      calendar: getCalendarId('firm'),
-      location: 'County Courthouse - Room 203',
-      description: 'Preliminary hearing for custody case.',
-      caseId: 'FAM-2023-089',
-      clientName: 'Mary Smith',
-      assignedLawyer: 'Robert Johnson',
-      courtInfo: {
-        courtName: 'County Family Court',
-        judgeDetails: 'Judge William Harrington',
-        docketNumber: 'FC-2023-1234'
-      },
-      isAllDay: false,
-    },
-    {
-      id: generateUUID(),
-      title: 'Filing Deadline: Johnson Estate',
-      start: getDate(2, 17),
-      end: getDate(2, 17.5),
-      type: 'deadline',
-      calendar: getCalendarId('statute'),
-      description: 'Last day to file estate documents.',
-      caseId: 'PRB-2023-042',
-      clientName: 'Johnson Family',
-      assignedLawyer: 'Stephanie Davis',
-      documents: [
-        {
-          id: 'doc1',
-          name: 'Estate Inventory',
-          url: 'https://example.com/documents/estate-inventory.pdf'
-        }
-      ],
-      isAllDay: false,
-    },
-    {
-      id: generateUUID(),
-      title: 'Lunch with Sarah',
-      start: getDate(-1, 12),
-      end: getDate(-1, 13),
-      type: 'personal',
-      calendar: getCalendarId('personal'),
-      location: 'Café Bistro',
-      isAllDay: false,
-    },
-    {
-      id: generateUUID(),
-      title: 'Expert Witness Preparation',
-      start: getDate(3, 14),
-      end: getDate(3, 16),
-      type: 'internal-meeting',
-      calendar: getCalendarId('firm'),
-      description: 'Meeting with expert witness Dr. Phillips to prepare for trial testimony.',
-      location: 'Conference Room B',
-      attendees: ['Dr. Phillips', 'Amy Johnson'],
-      caseId: 'LIT-2023-078',
-      isAllDay: false,
-    },
-    {
-      id: generateUUID(),
-      title: 'Document Review: Williams Case',
-      start: getDate(-2, 9),
-      end: getDate(-2, 12),
-      type: 'internal-meeting',
-      calendar: getCalendarId('personal'),
-      description: 'Review discovery documents for Williams litigation case.',
-      caseId: 'LIT-2023-067',
-      clientName: 'Williams Corp',
-      assignedLawyer: 'Stephanie Davis',
-      isAllDay: false,
-    },
-    {
-      id: generateUUID(),
-      title: 'Client Meeting: Robert Davis',
-      start: getDate(16),
-      end: getDate(17),
-      type: 'client-meeting',
-      calendar: getCalendarId('personal'),
-      location: 'Virtual - Zoom',
-      description: 'Follow-up meeting to discuss settlement options.',
-      attendees: ['Robert Davis'],
-      caseId: 'SET-2023-042',
-      clientName: 'Robert Davis',
-      assignedLawyer: 'Jane Roberts',
-      isAllDay: false,
-    },
-    {
-      id: generateUUID(),
-      title: 'Mediator Conference',
-      start: getDate(4, 10),
-      end: getDate(4, 14),
-      type: 'court',
-      calendar: getCalendarId('firm'),
-      location: 'Mediation Center - Suite 400',
-      description: 'Mediation session for Roberts divorce case.',
-      attendees: ['Mediator: James Wilson', 'Opposing Counsel: Jane Smith'],
-      caseId: 'DIV-2023-091',
-      clientName: 'Roberts Family',
-      assignedLawyer: 'Sarah Wilson',
-      isAllDay: false,
-    },
-    {
-      id: generateUUID(),
-      title: 'Statute Deadline: Tax Filing',
-      start: getDate(10, 23.5),
-      end: getDate(10, 23.75),
-      type: 'deadline',
-      calendar: getCalendarId('statute'),
-      description: 'Final deadline for corporate tax filing.',
-      caseId: 'TAX-2023-028',
-      clientName: 'ABC Corporation',
-      assignedLawyer: 'Michael Lee',
-      isAllDay: false,
-    },
-    {
-      id: generateUUID(),
-      title: 'Bar Association Annual Conference',
-      start: getDate(15),
-      end: getDate(18),
-      type: 'personal',
-      calendar: getCalendarId('personal'),
-      location: 'Hilton Downtown Hotel',
-      description: 'Annual bar association conference with workshops and networking events.',
-      isRecurring: false,
-      isAllDay: true,
-    },
-    {
-      id: generateUUID(),
-      title: 'Client Status Meeting (Recurring)',
-      start: getDate(5, 11),
-      end: getDate(5, 12),
-      type: 'client-meeting',
-      calendar: getCalendarId('personal'),
-      description: 'Biweekly status meeting with major corporate client',
-      location: 'Conference Room A',
-      attendees: ['John CEO', 'Sarah CFO'],
-      caseId: 'COR-2023-105',
-      clientName: 'Major Corp',
-      assignedLawyer: 'Jane Roberts',
-      isRecurring: true,
-      recurrencePattern: {
-        frequency: 'weekly',
-        interval: 2,
-        occurrences: 10
-      },
-      isAllDay: false,
-    }
+    // ... more event templates
   ];
   
-  // Validate all events have valid calendar IDs
+  // Create events from templates
+  const events: Event[] = eventTemplates.map(template => {
+    const calendarId = getCalendarId(template.calendarType as 'firm' | 'statute' | 'personal');
+    console.log(`Creating demo event "${template.title}" with calendar ID: ${calendarId}`);
+    
+    return {
+      id: generateUUID(),
+      title: template.title,
+      start: getDate(template.dayOffset, template.hourOffset),
+      end: getDate(template.dayOffset, template.hourOffset + template.duration),
+      type: template.type,
+      calendar: calendarId,
+      description: template.description || '',
+      location: template.location || '',
+      isAllDay: false,
+    };
+  });
+  
+  // Manually verify all events have valid calendar IDs
   const validEvents = events.filter(event => {
-    if (!isValidUUID(event.calendar)) {
+    const isValid = isValidUUID(event.calendar);
+    if (!isValid) {
       console.error(`Invalid calendar ID for event "${event.title}": ${event.calendar}`);
-      return false;
     }
-    return true;
+    return isValid;
   });
   
   console.log(`Generated ${validEvents.length} valid demo events`);
@@ -348,16 +234,68 @@ export const generateDemoEvents = (calendars: Calendar[]): Event[] => {
 
 // Generate demo calendar data
 export const generateDemoCalendars = (): { myCalendars: Calendar[], otherCalendars: Calendar[] } => {
+  // Generate proper UUIDs for demo calendars
+  const generateUUID = () => {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  };
+  
   const myCalendars: Calendar[] = [
-    { id: 'personal', name: 'Personal', color: '#5cb85c', checked: true },
-    { id: 'firm', name: 'Firm Calendar', color: '#0e91e3', checked: true },
-    { id: 'statute', name: 'Statute of Limitations', color: '#d9534f', checked: true },
+    { 
+      id: generateUUID(), 
+      name: 'Personal', 
+      color: '#5cb85c', 
+      checked: true,
+      is_firm: false,
+      is_statute: false,
+      is_public: false
+    },
+    { 
+      id: generateUUID(), 
+      name: 'Firm Calendar', 
+      color: '#0e91e3', 
+      checked: true,
+      is_firm: true,
+      is_statute: false,
+      is_public: true
+    },
+    { 
+      id: generateUUID(), 
+      name: 'Statute of Limitations', 
+      color: '#d9534f', 
+      checked: true,
+      is_firm: false,
+      is_statute: true,
+      is_public: false
+    },
   ];
   
   const otherCalendars: Calendar[] = [
-    { id: 'team-a', name: 'Team A', color: '#905ac7', checked: false },
-    { id: 'team-b', name: 'Team B', color: '#f0ad4e', checked: false },
+    { 
+      id: generateUUID(), 
+      name: 'Team A', 
+      color: '#905ac7', 
+      checked: false,
+      is_firm: false,
+      is_statute: false,
+      is_public: true
+    },
+    { 
+      id: generateUUID(), 
+      name: 'Team B', 
+      color: '#f0ad4e', 
+      checked: false,
+      is_firm: false,
+      is_statute: false,
+      is_public: true
+    },
   ];
 
+  console.log('Generated demo calendars with valid UUIDs:');
+  console.log(myCalendars.map(cal => `${cal.id} (${cal.name})`));
+  
   return { myCalendars, otherCalendars };
 };

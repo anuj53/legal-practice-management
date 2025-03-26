@@ -173,7 +173,10 @@ export const createCalendarInDb = async (calendar: Omit<Calendar, 'id'>) => {
 // Create event in Supabase - no need to validate event ID, it will be generated
 export const createEventInDb = async (event: Omit<Event, 'id'>) => {
   try {
-    console.log('Creating event in DB:', event);
+    console.log('API: Creating event in DB:', event);
+    console.log('API: Calendar ID:', event.calendar);
+    console.log('API: Calendar ID type:', typeof event.calendar);
+    console.log('API: Calendar ID is valid UUID:', isValidUUID(event.calendar));
     
     // Comprehensive validation for create
     if (!event.calendar) {
@@ -213,9 +216,9 @@ export const createEventInDb = async (event: Omit<Event, 'id'>) => {
       updated_at: new Date().toISOString()
     };
     
-    console.log('Formatted DB event for create:', dbEvent);
-    console.log('Calendar ID being used:', dbEvent.calendar_id);
-    console.log('Calendar ID is valid UUID:', isValidUUID(dbEvent.calendar_id));
+    console.log('API: Formatted DB event for create:', dbEvent);
+    console.log('API: Calendar ID being used:', dbEvent.calendar_id);
+    console.log('API: Calendar ID is valid UUID:', isValidUUID(dbEvent.calendar_id));
     
     const { data, error } = await supabase
       .from('events')
@@ -227,7 +230,7 @@ export const createEventInDb = async (event: Omit<Event, 'id'>) => {
       throw error;
     }
     
-    console.log('Event created in DB, response:', data);
+    console.log('API: Event created in DB, response:', data);
     
     if (!data || data.length === 0) {
       console.error('No data returned from event creation');
@@ -236,7 +239,7 @@ export const createEventInDb = async (event: Omit<Event, 'id'>) => {
     
     // Return new event with generated ID
     const newEvent = convertDbEventToEvent(data[0]);
-    console.log('Converted new event:', newEvent);
+    console.log('API: Converted new event:', newEvent);
     return newEvent;
   } catch (err) {
     console.error('Error creating event:', err);
@@ -247,7 +250,9 @@ export const createEventInDb = async (event: Omit<Event, 'id'>) => {
 // Update event in Supabase
 export const updateEventInDb = async (event: Event) => {
   try {
-    console.log('Updating event in DB:', event);
+    console.log('API: Updating event in DB:', event);
+    console.log('API: Event ID:', event.id);
+    console.log('API: Calendar ID:', event.calendar);
     
     // Thorough UUID validation for update
     if (!event.id) {
@@ -272,7 +277,7 @@ export const updateEventInDb = async (event: Event) => {
     }
     
     // Add detailed logging to debug the issue
-    console.log('Event details for updating:');
+    console.log('API: Event details for updating:');
     console.log('  ID:', event.id);
     console.log('  Title:', event.title);
     console.log('  Start:', event.start);
@@ -282,7 +287,7 @@ export const updateEventInDb = async (event: Event) => {
     // Convert to database format
     const dbEvent = convertEventToDbEvent(event);
     
-    console.log('Formatted DB event for update:', dbEvent);
+    console.log('API: Formatted DB event for update:', dbEvent);
     
     const { data, error } = await supabase
       .from('events')
@@ -295,13 +300,15 @@ export const updateEventInDb = async (event: Event) => {
       throw error;
     }
     
-    console.log('Event update response from DB:', data);
+    console.log('API: Event update response from DB:', data);
     
     if (!data || data.length === 0) {
-      console.warn('Update succeeded but no data returned from database. This might indicate the row wasn\'t found.');
+      console.warn('Update succeeded but no data returned from database. Returning original event.');
+      return event;
     }
     
-    return event;
+    // Return the updated event from the database
+    return convertDbEventToEvent(data[0]);
   } catch (err) {
     console.error('Error updating event:', err);
     throw err;
@@ -311,7 +318,7 @@ export const updateEventInDb = async (event: Event) => {
 // Delete event from Supabase
 export const deleteEventFromDb = async (id: string) => {
   try {
-    console.log('Deleting event from DB:', id);
+    console.log('API: Deleting event from DB:', id);
     
     // Validate UUID before attempting to delete
     if (!isValidUUID(id)) {
@@ -328,7 +335,7 @@ export const deleteEventFromDb = async (id: string) => {
       throw error;
     }
     
-    console.log('Event deleted from DB');
+    console.log('API: Event deleted from DB');
     return true;
   } catch (err) {
     console.error('Error deleting event:', err);
