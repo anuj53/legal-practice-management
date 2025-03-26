@@ -48,7 +48,7 @@ export function DayView({ date, events, onEventClick }: DayViewProps) {
   });
   
   useEffect(() => {
-    // Scroll to current time instead of 8am
+    // Scroll to current time or 8am if not today
     if (containerRef.current) {
       const now = new Date();
       // If viewing today, scroll to current time, otherwise scroll to business hours (8am)

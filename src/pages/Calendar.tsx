@@ -61,6 +61,7 @@ export default function Calendar() {
   };
   
   const handleEventClick = (event: Event) => {
+    console.log("Event clicked:", event);
     setSelectedEvent(event);
     setModalMode('view');
     setModalOpen(true);
@@ -81,7 +82,7 @@ export default function Calendar() {
       start: now,
       end: new Date(now.getTime() + 60 * 60 * 1000), // 1 hour later
       type: 'client-meeting' as const,
-      calendar: myCalendars[0]?.id || 'personal',
+      calendar: myCalendars.length > 0 ? myCalendars[0].id : 'personal',
       isAllDay: false
     };
     
