@@ -28,7 +28,6 @@ export default function Calendar() {
     handleCreateEvent,
     handleSaveEvent,
     handleDeleteEvent,
-    isValidUUID
   } = useCalendarPage();
   
   // Debug log to confirm data is loaded properly
@@ -44,15 +43,6 @@ export default function Calendar() {
       console.log("No events to display");
     }
   }, [events, myCalendars, otherCalendars]);
-  
-  // Handle save without unnecessary validation - defer to useCalendarPage
-  const handleSaveEventWithValidation = (event: any) => {
-    console.log("Calendar: Saving event:", event);
-    console.log("Calendar: Modal mode:", modalMode);
-    
-    // Let useCalendarPage's handleSaveEvent handle the validation
-    handleSaveEvent(event);
-  };
   
   if (loading) {
     return (
@@ -101,7 +91,7 @@ export default function Calendar() {
         onClose={() => setModalOpen(false)}
         event={selectedEvent}
         mode={modalMode}
-        onSave={handleSaveEventWithValidation}
+        onSave={handleSaveEvent}
         onDelete={handleDeleteEvent}
       />
     </div>

@@ -1,7 +1,7 @@
 
 import { addHours, addDays, subDays, startOfDay } from 'date-fns';
 
-// Types we need to move from useCalendarData
+// Types
 export interface Calendar {
   id: string;
   name: string;
@@ -46,6 +46,19 @@ export interface Event {
   };
   isAllDay?: boolean;
 }
+
+// Helper function to validate UUID format
+export const isValidUUID = (id: string): boolean => {
+  if (!id || typeof id !== 'string') {
+    console.log(`UUID validation failed: ${id} is not a valid string`);
+    return false;
+  }
+  
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  const isValid = uuidRegex.test(id);
+  console.log(`UUID validation for "${id}": ${isValid}`);
+  return isValid;
+};
 
 // Convert database event to local Event format
 export const convertDbEventToEvent = (dbEvent: any): Event => {
@@ -109,15 +122,6 @@ export const convertEventToDbEvent = (eventObj: Event | Omit<Event, 'id'>) => {
   console.log('Converted to DB event:', dbEvent);
   console.log('Calendar ID being used:', dbEvent.calendar_id);
   return dbEvent;
-};
-
-// Helper function to validate UUID format
-export const isValidUUID = (id: string): boolean => {
-  if (!id) return false;
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  const isValid = uuidRegex.test(id);
-  console.log(`Utils UUID validation for "${id}": ${isValid}`);
-  return isValid;
 };
 
 // Generate demo events for testing based on the existing calendars
@@ -198,7 +202,34 @@ export const generateDemoEvents = (calendars: Calendar[]): Event[] => {
       calendarType: 'firm',
       description: 'Weekly team meeting to discuss case progress.',
     },
-    // ... more event templates
+    {
+      title: 'Court Hearing: Johnson v. Smith',
+      dayOffset: 1,
+      hourOffset: 2,
+      duration: 2,
+      type: 'court' as const,
+      calendarType: 'firm',
+      description: 'Status hearing for Johnson divorce case.',
+      location: 'County Courthouse - Room 217',
+    },
+    {
+      title: 'Filing Deadline: Thompson Brief',
+      dayOffset: 2,
+      hourOffset: 5,
+      duration: 0.5,
+      type: 'deadline' as const,
+      calendarType: 'statute',
+      description: 'Final deadline for appellate brief submission.',
+    },
+    {
+      title: 'Lunch with Sarah',
+      dayOffset: 3,
+      hourOffset: 0,
+      duration: 1.5,
+      type: 'personal' as const,
+      calendarType: 'personal',
+      location: 'Cafe Bistro',
+    }
   ];
   
   // Create events from templates

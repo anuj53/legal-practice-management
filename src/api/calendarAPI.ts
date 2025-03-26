@@ -1,19 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Calendar, Event, convertDbEventToEvent, convertEventToDbEvent } from '@/utils/calendarUtils';
-
-// Helper function to validate UUID format
-function isValidUUID(uuid: string) {
-  if (!uuid) return false;
-  
-  // Strict UUID regex validation
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  
-  const isValid = uuidRegex.test(uuid);
-  console.log(`API UUID validation for "${uuid}": ${isValid}`);
-  return isValid;
-}
+import { Calendar, Event, convertDbEventToEvent, convertEventToDbEvent, isValidUUID } from '@/utils/calendarUtils';
 
 // Fetch calendars from Supabase
 export const fetchCalendars = async () => {
@@ -99,7 +87,9 @@ export const fetchEvents = async () => {
       
       const convertedEvents = eventsData.map(convertDbEventToEvent);
       console.log('Converted events:', convertedEvents.length);
-      console.log('Sample converted event:', convertedEvents[0]);
+      if (convertedEvents.length > 0) {
+        console.log('Sample converted event:', convertedEvents[0]);
+      }
       
       return convertedEvents;
     }
@@ -170,7 +160,7 @@ export const createCalendarInDb = async (calendar: Omit<Calendar, 'id'>) => {
   }
 };
 
-// Create event in Supabase - no need to validate event ID, it will be generated
+// Create event in Supabase
 export const createEventInDb = async (event: Omit<Event, 'id'>) => {
   try {
     console.log('API: Creating event in DB:', event);
@@ -275,14 +265,6 @@ export const updateEventInDb = async (event: Event) => {
     if (!isValidUUID(event.calendar)) {
       throw new Error(`Invalid UUID format for calendar ID: ${event.calendar}`);
     }
-    
-    // Add detailed logging to debug the issue
-    console.log('API: Event details for updating:');
-    console.log('  ID:', event.id);
-    console.log('  Title:', event.title);
-    console.log('  Start:', event.start);
-    console.log('  End:', event.end);
-    console.log('  Calendar:', event.calendar);
     
     // Convert to database format
     const dbEvent = convertEventToDbEvent(event);

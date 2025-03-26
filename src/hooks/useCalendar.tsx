@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { 
   Calendar, 
   Event,
+  isValidUUID
 } from '@/utils/calendarUtils';
 import {
   fetchCalendars,
@@ -90,6 +91,13 @@ export const useCalendar = () => {
     try {
       console.log('useCalendar: Creating event with calendar ID:', event.calendar);
       
+      // Check calendar ID validity
+      if (!event.calendar || !isValidUUID(event.calendar)) {
+        const msg = `Invalid calendar ID: ${event.calendar}`;
+        console.error(msg);
+        throw new Error(msg);
+      }
+      
       // First create in the database
       const newEvent = await createEventInDb(event);
       console.log('useCalendar: createEventInDb returned new event:', newEvent);
@@ -116,6 +124,19 @@ export const useCalendar = () => {
       console.log('useCalendar: Updating event with ID:', event.id);
       console.log('useCalendar: Event calendar ID:', event.calendar);
       
+      // Validate IDs before proceeding
+      if (!event.id || !isValidUUID(event.id)) {
+        const msg = `Invalid event ID: ${event.id}`;
+        console.error(msg);
+        throw new Error(msg);
+      }
+      
+      if (!event.calendar || !isValidUUID(event.calendar)) {
+        const msg = `Invalid calendar ID: ${event.calendar}`;
+        console.error(msg);
+        throw new Error(msg);
+      }
+      
       // First update in the database
       const updatedEvent = await updateEventInDb(event);
       
@@ -139,6 +160,13 @@ export const useCalendar = () => {
   const deleteEvent = async (id: string) => {
     try {
       console.log('useCalendar: Deleting event with ID:', id);
+      
+      // Validate UUID before attempting to delete
+      if (!isValidUUID(id)) {
+        const msg = `Invalid event ID format: ${id}`;
+        console.error(msg);
+        throw new Error(msg);
+      }
       
       // First delete from the database
       await deleteEventFromDb(id);

@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Event } from '@/utils/calendarUtils';
+import { Event, isValidUUID } from '@/utils/calendarUtils';
 import { useCalendarData } from '@/hooks/useCalendarData';
 import { toast } from 'sonner';
 import { CalendarView } from '@/components/calendar/CalendarHeader';
@@ -128,7 +128,6 @@ export function useCalendarPage() {
     
     const now = new Date();
     const defaultEvent = {
-      id: '', // Empty ID for new events
       title: '',
       start: now,
       end: new Date(now.getTime() + 60 * 60 * 1000),
@@ -167,12 +166,9 @@ export function useCalendarPage() {
           return;
         }
         
-        // Create with valid calendar ID
-        const newEvent = await createEvent({
-          ...event,
-          // Ensure we're not passing any ID for create operations
-          id: undefined as any
-        });
+        // Create with valid calendar ID - explicitly remove the id property for new events
+        const { id, ...eventWithoutId } = event;
+        const newEvent = await createEvent(eventWithoutId);
         
         toast.success('Event created successfully!');
         console.log("New event created:", newEvent);
@@ -237,18 +233,6 @@ export function useCalendarPage() {
       console.error('Error deleting event:', error);
       toast.error(`Failed to delete event: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-  };
-
-  // Improved UUID validation function
-  const isValidUUID = (id: string): boolean => {
-    if (!id) return false;
-    
-    // Strict UUID validation regex
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    
-    const isValid = uuidRegex.test(id);
-    console.log(`UUID validation for "${id}": ${isValid}`);
-    return isValid;
   };
 
   return {
