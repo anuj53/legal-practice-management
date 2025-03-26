@@ -13,6 +13,7 @@ import {
   differenceInMinutes
 } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface Event {
   id: string;
@@ -68,12 +69,18 @@ export function WeekView({
   const hourHeight = 60; // Height of each hour row in pixels
 
   useEffect(() => {
-    // Scroll to 8am
+    // Scroll to current time instead of always 8am
     if (containerRef.current) {
-      const scrollPosition = 8 * hourHeight;
-      containerRef.current.scrollTop = scrollPosition;
+      const now = new Date();
+      // If the week contains today, scroll to current time, otherwise scroll to business hours (8am)
+      const today = days.find(day => isToday(day));
+      const scrollHour = today ? now.getHours() : 8;
+      
+      // Add a small offset to show a bit of context before the current hour
+      const scrollPosition = (scrollHour - 0.5) * hourHeight;
+      containerRef.current.scrollTop = Math.max(0, scrollPosition);
     }
-  }, [date]);
+  }, [date, days]);
 
   // Function to get minutes since midnight
   const getMinutesSinceMidnight = (date: Date) => {
@@ -155,7 +162,7 @@ export function WeekView({
   const currentTimePosition = (now.getHours() * 60 + now.getMinutes()) / 60 * hourHeight;
   
   return (
-    <div ref={containerRef} className="flex flex-col h-full overflow-y-auto custom-scrollbar">
+    <div className="flex flex-col h-full">
       <div className="flex sticky top-0 z-10 bg-white border-b">
         <div className="time-column w-16" />
         {days.map(day => (
@@ -168,90 +175,92 @@ export function WeekView({
         ))}
       </div>
       
-      <div className="flex flex-1">
-        <div className="time-column w-16 py-2">
-          {hours.map(hour => (
-            <div 
-              key={hour.toString()} 
-              className="hour-row flex items-start justify-end"
-              style={{ height: `${hourHeight}px` }}
-            >
-              <span className="text-xs -mt-2 pr-2 text-gray-500">
-                {format(hour, 'h a')}
-              </span>
-            </div>
-          ))}
-        </div>
-        
-        <div className="flex-1 flex">
-          {days.map(day => {
-            const dayEvents = events.filter(event => isSameDay(event.start, day));
-            const organizedEvents = organizeEventsByDay(dayEvents);
-            
-            return (
-              <div key={day.toString()} className={cn("flex-1 relative", isToday(day) && "bg-blue-50/30")}>
-                {hours.map(hour => (
-                  <div 
-                    key={hour.toString()} 
-                    className="hour-row border-t border-gray-200" 
-                    style={{ height: `${hourHeight}px` }}
-                  />
-                ))}
-                
-                {isToday(day) && (
-                  <div 
-                    className="current-time-indicator absolute w-full border-t border-red-500 z-20" 
-                    style={{ top: `${currentTimePosition}px` }}
-                  >
-                    <div className="absolute -left-1 -top-1.5 w-3 h-3 rounded-full bg-red-500"></div>
-                  </div>
-                )}
-                
-                {organizedEvents.map(({ event, columnCount, columnIndex }) => {
-                  const { top, height } = calculateEventPosition(event);
-                  const eventTypeClasses = {
-                    'client-meeting': 'bg-blue-100 border-blue-400 text-blue-800',
-                    'internal-meeting': 'bg-teal-100 border-teal-400 text-teal-800',
-                    'court': 'bg-purple-100 border-purple-400 text-purple-800',
-                    'deadline': 'bg-red-100 border-red-400 text-red-800',
-                    'personal': 'bg-orange-100 border-orange-400 text-orange-800',
-                  };
-                  
-                  // Calculate width and left position for each event
-                  const width = columnCount > 1 ? `calc(${90 / columnCount}%)` : '90%';
-                  const left = columnCount > 1 ? `${(90 / columnCount) * columnIndex}%` : '5%';
-                  
-                  return (
-                    <div
-                      key={event.id}
-                      className={cn(
-                        "absolute rounded px-1 border-l-4",
-                        eventTypeClasses[event.type],
-                        "overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                      )}
-                      style={{
-                        top,
-                        height,
-                        width,
-                        left,
-                        zIndex: 10
-                      }}
-                      onClick={() => onEventClick(event)}
-                    >
-                      <div className="p-1 h-full flex flex-col overflow-hidden">
-                        <p className="font-medium text-xs whitespace-nowrap">
-                          {format(event.start, 'h:mm a')}
-                        </p>
-                        <p className="text-xs truncate">{event.title}</p>
-                      </div>
-                    </div>
-                  );
-                })}
+      <ScrollArea ref={containerRef} className="flex-1">
+        <div className="flex min-w-full">
+          <div className="time-column w-16 py-2 sticky left-0 bg-white z-10">
+            {hours.map(hour => (
+              <div 
+                key={hour.toString()} 
+                className="hour-row flex items-start justify-end"
+                style={{ height: `${hourHeight}px` }}
+              >
+                <span className="text-xs -mt-2 pr-2 text-gray-500">
+                  {format(hour, 'h a')}
+                </span>
               </div>
-            );
-          })}
+            ))}
+          </div>
+          
+          <div className="flex-1 flex">
+            {days.map(day => {
+              const dayEvents = events.filter(event => isSameDay(event.start, day));
+              const organizedEvents = organizeEventsByDay(dayEvents);
+              
+              return (
+                <div key={day.toString()} className={cn("flex-1 relative", isToday(day) && "bg-blue-50/30")}>
+                  {hours.map(hour => (
+                    <div 
+                      key={hour.toString()} 
+                      className="hour-row border-t border-gray-200" 
+                      style={{ height: `${hourHeight}px` }}
+                    />
+                  ))}
+                  
+                  {isToday(day) && (
+                    <div 
+                      className="current-time-indicator absolute w-full border-t border-red-500 z-20" 
+                      style={{ top: `${currentTimePosition}px` }}
+                    >
+                      <div className="absolute -left-1 -top-1.5 w-3 h-3 rounded-full bg-red-500"></div>
+                    </div>
+                  )}
+                  
+                  {organizedEvents.map(({ event, columnCount, columnIndex }) => {
+                    const { top, height } = calculateEventPosition(event);
+                    const eventTypeClasses = {
+                      'client-meeting': 'bg-blue-100 border-blue-400 text-blue-800',
+                      'internal-meeting': 'bg-teal-100 border-teal-400 text-teal-800',
+                      'court': 'bg-purple-100 border-purple-400 text-purple-800',
+                      'deadline': 'bg-red-100 border-red-400 text-red-800',
+                      'personal': 'bg-orange-100 border-orange-400 text-orange-800',
+                    };
+                    
+                    // Calculate width and left position for each event
+                    const width = columnCount > 1 ? `calc(${90 / columnCount}%)` : '90%';
+                    const left = columnCount > 1 ? `${(90 / columnCount) * columnIndex}%` : '5%';
+                    
+                    return (
+                      <div
+                        key={event.id}
+                        className={cn(
+                          "absolute rounded px-1 border-l-4",
+                          eventTypeClasses[event.type],
+                          "overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                        )}
+                        style={{
+                          top,
+                          height,
+                          width,
+                          left,
+                          zIndex: 10
+                        }}
+                        onClick={() => onEventClick(event)}
+                      >
+                        <div className="p-1 h-full flex flex-col overflow-hidden">
+                          <p className="font-medium text-xs whitespace-nowrap">
+                            {format(event.start, 'h:mm a')}
+                          </p>
+                          <p className="text-xs truncate">{event.title}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      </ScrollArea>
     </div>
   );
 }

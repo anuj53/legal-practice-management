@@ -130,6 +130,10 @@
 
 .time-column {
   @apply w-[60px] text-right pr-2 text-sm text-gray-500 font-medium;
+  position: sticky;
+  left: 0;
+  z-index: 20;
+  background-color: white;
 }
 
 .hour-row {

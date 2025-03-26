@@ -2,6 +2,7 @@
 import React, { useRef, useEffect } from 'react';
 import { format, addMinutes, startOfDay, eachHourOfInterval, isSameDay, differenceInMinutes } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface Event {
   id: string;
@@ -47,10 +48,15 @@ export function DayView({ date, events, onEventClick }: DayViewProps) {
   });
   
   useEffect(() => {
-    // Scroll to 8am
+    // Scroll to current time instead of 8am
     if (containerRef.current) {
-      const scrollPosition = 8 * hourHeight;
-      containerRef.current.scrollTop = scrollPosition;
+      const now = new Date();
+      // If viewing today, scroll to current time, otherwise scroll to business hours (8am)
+      const scrollHour = isSameDay(date, now) ? now.getHours() : 8;
+      
+      // Add a small offset to show a bit of context before the current hour
+      const scrollPosition = (scrollHour - 0.5) * hourHeight;
+      containerRef.current.scrollTop = Math.max(0, scrollPosition);
     }
   }, [date]);
   
@@ -142,12 +148,12 @@ export function DayView({ date, events, onEventClick }: DayViewProps) {
   const organizedEvents = organizeEvents(todayEvents);
   
   return (
-    <div 
+    <ScrollArea
       ref={containerRef}
-      className="flex flex-col h-full overflow-y-auto custom-scrollbar"
+      className="h-full"
     >
       <div className="flex flex-1">
-        <div className="time-column py-2 pr-2 w-16 text-right">
+        <div className="time-column py-2 pr-2 w-16 text-right sticky left-0 bg-white z-10">
           {hours.map((hour) => (
             <div 
               key={hour.toString()} 
@@ -227,6 +233,6 @@ export function DayView({ date, events, onEventClick }: DayViewProps) {
           })}
         </div>
       </div>
-    </div>
+    </ScrollArea>
   );
 }
