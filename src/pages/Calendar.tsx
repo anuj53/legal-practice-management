@@ -18,6 +18,7 @@ export default function Calendar() {
     modalOpen,
     setModalOpen,
     modalMode,
+    setModalMode,
     myCalendars,
     otherCalendars,
     events,
