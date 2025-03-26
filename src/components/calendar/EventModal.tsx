@@ -236,7 +236,13 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
                   <Label>Recurring</Label>
                   <Select
                     value={formData.isRecurring ? "yes" : "no"}
-                    onValueChange={(value) => handleSelectChange('isRecurring', value === "yes")}
+                    onValueChange={(value) => {
+                      // Here's the fix - convert string to boolean
+                      setFormData(prev => ({ 
+                        ...prev, 
+                        isRecurring: value === "yes" 
+                      }));
+                    }}
                   >
                     <SelectTrigger className="mt-1">
                       <SelectValue placeholder="Is recurring?" />
