@@ -20,9 +20,10 @@ interface CalendarSidebarProps {
   myCalendars: CalendarItem[];
   otherCalendars: CalendarItem[];
   onCalendarToggle: (id: string, category: 'my' | 'other') => void;
+  onCreateEvent: () => void; // Added this property to fix the TypeScript error
 }
 
-export function CalendarSidebar({ myCalendars, otherCalendars, onCalendarToggle }: CalendarSidebarProps) {
+export function CalendarSidebar({ myCalendars, otherCalendars, onCalendarToggle, onCreateEvent }: CalendarSidebarProps) {
   const handleCreateCalendar = () => {
     // Implement create calendar functionality
     console.log('Create calendar clicked');

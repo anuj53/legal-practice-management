@@ -18,9 +18,10 @@ interface CalendarHeaderProps {
   view: CalendarView;
   onDateChange: (date: Date) => void;
   onViewChange: (view: CalendarView) => void;
+  onCreateEvent: () => void; // Added this property to fix the TypeScript error
 }
 
-export function CalendarHeader({ currentDate, view, onDateChange, onViewChange }: CalendarHeaderProps) {
+export function CalendarHeader({ currentDate, view, onDateChange, onViewChange, onCreateEvent }: CalendarHeaderProps) {
   const handlePrevious = () => {
     switch (view) {
       case 'day':
@@ -116,7 +117,11 @@ export function CalendarHeader({ currentDate, view, onDateChange, onViewChange }
           </SelectContent>
         </Select>
         
-        <Button variant="default" className="gap-1 bg-yorpro-600 hover:bg-yorpro-700">
+        <Button 
+          variant="default" 
+          className="gap-1 bg-yorpro-600 hover:bg-yorpro-700" 
+          onClick={onCreateEvent}  // Added onClick handler
+        >
           <Calendar className="h-4 w-4" />
           New Event
         </Button>
