@@ -156,13 +156,20 @@ export const createEventInDb = async (event: Omit<Event, 'id'>) => {
   try {
     console.log('Creating event in DB:', event);
     
-    // Convert to database format - we need to modify this to work with events without IDs
-    // Create a temporary event object with a placeholder ID for conversion purposes
-    const tempEvent = { ...event, id: 'temp-id' } as Event;
-    const dbEvent = convertEventToDbEvent(tempEvent);
-    
-    // Remove any id field from the object before inserting to let Supabase generate the ID
-    delete dbEvent.id;
+    // Convert to database format
+    // Create the DB event object with required fields for insert
+    const dbEvent = {
+      title: event.title,
+      description: event.description,
+      start_time: event.start.toISOString(),
+      end_time: event.end.toISOString(),
+      location: event.location,
+      is_recurring: event.isRecurring || false,
+      type: event.type,
+      calendar_id: event.calendar,
+      is_all_day: event.isAllDay || false,
+      updated_at: new Date().toISOString()
+    };
     
     const { data, error } = await supabase
       .from('events')

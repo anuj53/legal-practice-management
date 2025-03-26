@@ -66,26 +66,22 @@ export const convertDbEventToEvent = (dbEvent: any): Event => {
 };
 
 // Convert local Event to database format
-export const convertEventToDbEvent = (event: Event) => {
-  const dbEvent: Record<string, any> = {
-    title: event.title,
-    description: event.description,
-    start_time: event.start.toISOString(),
-    end_time: event.end.toISOString(),
-    location: event.location,
-    is_recurring: event.isRecurring || false,
-    type: event.type,
-    calendar_id: event.calendar,
-    is_all_day: event.isAllDay || false,
-    updated_at: new Date().toISOString()
+export const convertEventToDbEvent = (eventObj: Event | Omit<Event, 'id'>) => {
+  // Create a clean database event object with only the fields we need to store
+  return {
+    title: eventObj.title,
+    description: eventObj.description,
+    start_time: eventObj.start.toISOString(),
+    end_time: eventObj.end.toISOString(),
+    location: eventObj.location,
+    is_recurring: eventObj.isRecurring || false,
+    type: eventObj.type,
+    calendar_id: eventObj.calendar,
+    is_all_day: eventObj.isAllDay || false,
+    updated_at: new Date().toISOString(),
+    // Only include ID if it exists in the event object (for updates)
+    ...('id' in eventObj ? { id: eventObj.id } : {})
   };
-  
-  // Only include ID if it's not a temporary ID
-  if (event.id && event.id !== 'temp-id') {
-    dbEvent.id = event.id;
-  }
-  
-  return dbEvent;
 };
 
 // Generate demo events for testing
