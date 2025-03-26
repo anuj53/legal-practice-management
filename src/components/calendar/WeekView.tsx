@@ -45,14 +45,16 @@ export function WeekView({ date, events, onEventClick }: WeekViewProps) {
   useEffect(() => {
     // Scroll to 8am
     if (containerRef.current) {
-      const scrollPosition = 8 * 60; // 8am
+      const hourHeight = 60; // Height of each hour row in pixels
+      const scrollPosition = 8 * hourHeight; // 8am
       containerRef.current.scrollTop = scrollPosition;
     }
   }, [date]);
   
   // Current time indicator
   const now = new Date();
-  const currentTimePosition = ((now.getHours() * 60 + now.getMinutes()) / (24 * 60)) * 100;
+  const hourHeight = 60; // Height of each hour row in pixels
+  const currentTimePosition = (now.getHours() * 60 + now.getMinutes()) / 60 * hourHeight;
   
   return (
     <div 
@@ -104,26 +106,30 @@ export function WeekView({ date, events, onEventClick }: WeekViewProps) {
               {isToday(day) && (
                 <div 
                   className="current-time-indicator"
-                  style={{ top: `${currentTimePosition}%` }}
+                  style={{ top: `${currentTimePosition}px` }}
                 />
               )}
               
               {events
                 .filter(event => isSameDay(event.start, day))
                 .map((event) => {
-                  const startMinutes = event.start.getHours() * 60 + event.start.getMinutes();
-                  const endMinutes = event.end.getHours() * 60 + event.end.getMinutes();
+                  const startMinutes = 
+                    (event.start.getHours() * 60 + event.start.getMinutes());
+                  const endMinutes = 
+                    (event.end.getHours() * 60 + event.end.getMinutes());
                   const duration = endMinutes - startMinutes;
-                  const top = (startMinutes / (24 * 60)) * 100;
-                  const height = (duration / (24 * 60)) * 100;
+                  
+                  // Calculate position based on hour row height
+                  const top = (startMinutes / 60) * hourHeight;
+                  const height = (duration / 60) * hourHeight;
                   
                   return (
                     <div
                       key={event.id}
                       className={cn("event-card absolute left-1 right-1", `event-${event.type}`)}
                       style={{
-                        top: `${top}%`,
-                        height: `${height}%`,
+                        top: `${top}px`,
+                        height: `${height}px`,
                       }}
                       onClick={() => onEventClick(event)}
                     >

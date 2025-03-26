@@ -30,7 +30,8 @@ export function DayView({ date, events, onEventClick }: DayViewProps) {
   useEffect(() => {
     // Scroll to 8am
     if (containerRef.current) {
-      const scrollPosition = 8 * 60; // 8am
+      const hourHeight = 60; // Height of each hour row in pixels
+      const scrollPosition = 8 * hourHeight; // 8am
       containerRef.current.scrollTop = scrollPosition;
     }
   }, [date]);
@@ -38,8 +39,9 @@ export function DayView({ date, events, onEventClick }: DayViewProps) {
   // Current time indicator
   const now = new Date();
   const currentDay = isSameDay(date, now);
+  const dayMinutes = 24 * 60; // Total minutes in a day
   const currentTimePosition = currentDay 
-    ? ((now.getHours() * 60 + now.getMinutes()) / (24 * 60)) * 100
+    ? ((now.getHours() * 60 + now.getMinutes()) / dayMinutes) * (hours.length * 60)
     : null;
   
   return (
@@ -59,7 +61,7 @@ export function DayView({ date, events, onEventClick }: DayViewProps) {
         </div>
         
         <div className="flex-1 relative">
-          <div className="absolute top-0 left-0 right-0 bottom-0">
+          <div className="absolute inset-0">
             {hours.map((hour) => (
               <div key={hour.toString()} className="hour-row" />
             ))}
@@ -67,24 +69,30 @@ export function DayView({ date, events, onEventClick }: DayViewProps) {
             {currentTimePosition !== null && (
               <div 
                 className="current-time-indicator"
-                style={{ top: `${currentTimePosition}%` }}
+                style={{ top: `${currentTimePosition}px` }}
               />
             )}
             
             {todayEvents.map((event) => {
-              const startMinutes = event.start.getHours() * 60 + event.start.getMinutes();
-              const endMinutes = event.end.getHours() * 60 + event.end.getMinutes();
+              const startOfToday = startOfDay(date);
+              const startMinutes = 
+                (event.start.getHours() * 60 + event.start.getMinutes());
+              const endMinutes = 
+                (event.end.getHours() * 60 + event.end.getMinutes());
               const duration = endMinutes - startMinutes;
-              const top = (startMinutes / (24 * 60)) * 100;
-              const height = (duration / (24 * 60)) * 100;
+              
+              // Calculate position based on hour row height
+              const hourHeight = 60; // Height of each hour row in pixels
+              const top = (startMinutes / 60) * hourHeight;
+              const height = (duration / 60) * hourHeight;
               
               return (
                 <div
                   key={event.id}
                   className={cn("event-card absolute left-2 right-2", `event-${event.type}`)}
                   style={{
-                    top: `${top}%`,
-                    height: `${height}%`,
+                    top: `${top}px`,
+                    height: `${height}px`,
                   }}
                   onClick={() => onEventClick(event)}
                 >
