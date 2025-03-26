@@ -89,22 +89,40 @@ export const convertEventToDbEvent = (eventObj: Event | Omit<Event, 'id'>) => {
   return dbEvent;
 };
 
+// Helper function to validate UUID format
+export const isValidUUID = (id: string): boolean => {
+  if (!id) return false;
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(id);
+};
+
 // Generate demo events for testing based on the existing calendars
 export const generateDemoEvents = (calendars: Calendar[]): Event[] => {
   console.log('Generating demo events with existing calendars:', 
     calendars.map(cal => `${cal.id} (${cal.name})`).join(', ')
   );
   
+  // Filter calendars to ensure we only use those with valid UUIDs
+  const validCalendars = calendars.filter(cal => isValidUUID(cal.id));
+  
+  if (validCalendars.length === 0) {
+    console.error('No valid calendars found for creating demo events');
+    return [];
+  }
+  
   const calendarMap: Record<string, string> = {};
   
   // Map calendar types to actual calendar IDs
-  calendars.forEach(cal => {
+  validCalendars.forEach(cal => {
     if (cal.is_firm) calendarMap['firm'] = cal.id;
     else if (cal.is_statute) calendarMap['statute'] = cal.id;
     else calendarMap['personal'] = cal.id;
   });
   
+  // Ensure we have at least one valid calendar ID for demo events
+  const defaultCalendarId = validCalendars[0].id;
   console.log('Using calendar IDs:', calendarMap);
+  console.log('Default calendar ID for demo events:', defaultCalendarId);
   
   const now = new Date();
   const getDate = (dayOffset: number, hourOffset: number = 0, minuteOffset: number = 0) => {
@@ -126,7 +144,13 @@ export const generateDemoEvents = (calendars: Calendar[]): Event[] => {
   
   // Use actual calendar IDs from the provided calendars array
   const getCalendarId = (type: 'firm' | 'statute' | 'personal'): string => {
-    return calendarMap[type] || calendars[0]?.id || generateUUID();
+    // First try to get the specific type of calendar
+    if (calendarMap[type]) {
+      return calendarMap[type];
+    }
+    
+    // If not found, return the first valid calendar ID
+    return defaultCalendarId;
   };
   
   const events: Event[] = [
@@ -309,8 +333,17 @@ export const generateDemoEvents = (calendars: Calendar[]): Event[] => {
     }
   ];
   
-  console.log(`Generated ${events.length} demo events with actual calendar IDs`);
-  return events;
+  // Validate all events have valid calendar IDs
+  const validEvents = events.filter(event => {
+    if (!isValidUUID(event.calendar)) {
+      console.error(`Invalid calendar ID for event "${event.title}": ${event.calendar}`);
+      return false;
+    }
+    return true;
+  });
+  
+  console.log(`Generated ${validEvents.length} valid demo events`);
+  return validEvents;
 };
 
 // Generate demo calendar data

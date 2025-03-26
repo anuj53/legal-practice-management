@@ -57,6 +57,12 @@ export default function Calendar() {
     // For new events in create mode, we don't need to validate the ID as it will be generated
     if (modalMode === 'create') {
       console.log("Creating new event, ID validation not needed");
+      // But we still need to validate the calendar ID
+      if (!isValidUUID(event.calendar)) {
+        console.error("Invalid calendar ID format for new event:", event.calendar);
+        alert("Cannot save: Invalid calendar ID format");
+        return;
+      }
       handleSaveEvent(event);
       return;
     }

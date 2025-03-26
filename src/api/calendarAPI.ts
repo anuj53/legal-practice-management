@@ -171,7 +171,12 @@ export const createEventInDb = async (event: Omit<Event, 'id'>) => {
     console.log('Creating event in DB:', event);
     
     // Validate calendar ID
+    if (!event.calendar) {
+      throw new Error('Calendar ID is missing or empty');
+    }
+    
     if (!isValidUUID(event.calendar)) {
+      console.error(`Invalid calendar ID format: "${event.calendar}"`);
       throw new Error(`Invalid calendar ID format: ${event.calendar}`);
     }
     
@@ -237,6 +242,10 @@ export const updateEventInDb = async (event: Event) => {
     }
     
     // Calendar ID validation
+    if (!event.calendar) {
+      throw new Error('Calendar ID cannot be empty');
+    }
+    
     if (!isValidUUID(event.calendar)) {
       throw new Error(`Invalid UUID format for calendar ID: ${event.calendar}`);
     }

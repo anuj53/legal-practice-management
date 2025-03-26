@@ -116,19 +116,20 @@ export function useCalendarPage() {
   const handleCreateEvent = () => {
     console.log("Create event clicked");
     
-    // Get first available calendar or use a placeholder ID
-    const defaultCalendarId = myCalendars.length > 0 
-      ? myCalendars[0].id 
-      : '';
+    // Find a valid calendar ID (must be a UUID)
+    const validCalendars = myCalendars.filter(cal => isValidUUID(cal.id));
     
-    console.log("Using default calendar ID for new event:", defaultCalendarId);
-    
-    // Validate calendar ID to ensure it's a valid UUID
-    if (defaultCalendarId && !isValidUUID(defaultCalendarId)) {
-      console.error("Default calendar ID is not a valid UUID:", defaultCalendarId);
-      toast.error("Cannot create event: Invalid calendar ID");
+    if (validCalendars.length === 0) {
+      console.error("No valid calendars found for creating a new event");
+      toast.error("Cannot create event: No valid calendars available");
       return;
     }
+    
+    // Use the first valid calendar ID
+    const defaultCalendarId = validCalendars[0].id;
+    
+    console.log("Using default calendar ID for new event:", defaultCalendarId);
+    console.log("Calendar validation check:", isValidUUID(defaultCalendarId));
     
     const now = new Date();
     const defaultEvent = {
@@ -143,6 +144,7 @@ export function useCalendarPage() {
       location: '',
     };
     
+    console.log("Created default event with calendar ID:", defaultEvent.calendar);
     setSelectedEvent(defaultEvent as Event);
     setModalMode('create');
     setModalOpen(true);
@@ -167,7 +169,7 @@ export function useCalendarPage() {
     
     try {
       if (modalMode === 'create') {
-        console.log("Creating new event");
+        console.log("Creating new event with calendar ID:", event.calendar);
         const newEvent = await createEvent(event);
         toast.success('Event created successfully!');
         console.log("New event created:", newEvent);
