@@ -23,17 +23,19 @@ const App = () => {
             <Route element={<MainLayout />}>
               <Route path="/" element={<Index />} />
               <Route path="/calendar" element={<Calendar />} />
-              <Route path="/matters" element={<NotFound />} />
-              <Route path="/contracts" element={<NotFound />} />
+              <Route path="/tasks" element={<NotFound />} />
+              <Route path="/matter" element={<NotFound />} />
+              <Route path="/contacts" element={<NotFound />} />
               <Route path="/activities" element={<NotFound />} />
-              <Route path="/billing" element={<NotFound />} />
-              <Route path="/payments" element={<NotFound />} />
-              <Route path="/accounts" element={<NotFound />} />
               <Route path="/documents" element={<NotFound />} />
-              <Route path="/communications" element={<NotFound />} />
+              <Route path="/interactions" element={<NotFound />} />
+              <Route path="/billings" element={<NotFound />} />
               <Route path="/reports" element={<NotFound />} />
-              <Route path="/integrations" element={<NotFound />} />
+              <Route path="/leads" element={<NotFound />} />
+              <Route path="/intake-form" element={<NotFound />} />
+              <Route path="/workflows" element={<NotFound />} />
               <Route path="/settings" element={<NotFound />} />
+              <Route path="/appearance" element={<NotFound />} />
             </Route>
             
             {/* Catch-all route for 404 */}

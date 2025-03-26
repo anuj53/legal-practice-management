@@ -11,8 +11,15 @@ import {
   Database, 
   MessageSquare, 
   BarChart2, 
-  Plug, 
-  Settings 
+  Settings,
+  Users,
+  File,
+  MessageCircle,
+  DollarSign,
+  UserPlus,
+  ClipboardList,
+  GitBranch,
+  Palette
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -66,22 +73,24 @@ export function Sidebar() {
         <div className="space-y-0.5">
           <SidebarItem icon={BarChart} label="Dashboard" to="/" />
           <SidebarItem icon={Calendar} label="Calendar" to="/calendar" />
-          <SidebarItem icon={FileText} label="Matters" to="/matters" />
-          <SidebarItem icon={FileText} label="Contracts" to="/contracts" />
+          <SidebarItem icon={CheckSquare} label="Tasks" to="/tasks" />
+          <SidebarItem icon={FileText} label="Matter" to="/matter" />
+          <SidebarItem icon={Users} label="Contacts" to="/contacts" />
           <SidebarItem icon={Activity} label="Activities" to="/activities" />
-          <SidebarItem icon={CreditCard} label="Billing" to="/billing" />
-          <SidebarItem icon={CreditCard} label="Online Payments" to="/payments" />
-          <SidebarItem icon={Database} label="Accounts" to="/accounts" />
-          <SidebarItem icon={FileText} label="Documents" to="/documents" />
-          <SidebarItem icon={MessageSquare} label="Communications" to="/communications" />
+          <SidebarItem icon={File} label="Documents" to="/documents" />
+          <SidebarItem icon={MessageCircle} label="Interactions" to="/interactions" />
+          <SidebarItem icon={DollarSign} label="Billings" to="/billings" />
           <SidebarItem icon={BarChart2} label="Reports" to="/reports" />
-          <SidebarItem icon={Plug} label="App Integrations" to="/integrations" />
+          <SidebarItem icon={UserPlus} label="Leads" to="/leads" />
+          <SidebarItem icon={ClipboardList} label="Intake Form" to="/intake-form" />
+          <SidebarItem icon={GitBranch} label="Workflows" to="/workflows" />
         </div>
         
         <Separator className="bg-yorpro-700/50 my-4" />
         
         <div className="space-y-0.5">
           <SidebarItem icon={Settings} label="Settings" to="/settings" />
+          <SidebarItem icon={Palette} label="Appearance" to="/appearance" />
         </div>
       </div>
       
