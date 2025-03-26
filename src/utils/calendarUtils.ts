@@ -48,27 +48,30 @@ export interface Event {
 
 // Convert database event to local Event format
 export const convertDbEventToEvent = (dbEvent: any): Event => {
-  return {
+  console.log('Converting DB event to app event:', dbEvent);
+  
+  const event = {
     id: dbEvent.id,
     title: dbEvent.title,
-    description: dbEvent.description,
+    description: dbEvent.description || '',
     start: new Date(dbEvent.start_time),
     end: new Date(dbEvent.end_time),
     type: dbEvent.type || 'client-meeting',
     calendar: dbEvent.calendar_id,
-    location: dbEvent.location,
-    isRecurring: dbEvent.is_recurring,
-    // Map other fields as needed
+    location: dbEvent.location || '',
+    isRecurring: dbEvent.is_recurring || false,
     attendees: [], // Assume empty for now as they're stored in a separate table
     isAllDay: false,
-    // Add other fields with defaults as needed
   };
+  
+  console.log('Converted event:', event);
+  return event;
 };
 
 // Convert local Event to database format
 export const convertEventToDbEvent = (eventObj: Event | Omit<Event, 'id'>) => {
   // Create a clean database event object with only the fields we need to store
-  return {
+  const dbEvent = {
     title: eventObj.title,
     description: eventObj.description,
     start_time: eventObj.start.toISOString(),
@@ -81,6 +84,9 @@ export const convertEventToDbEvent = (eventObj: Event | Omit<Event, 'id'>) => {
     // Only include ID if it exists in the event object (for updates)
     ...('id' in eventObj ? { id: eventObj.id } : {})
   };
+  
+  console.log('Converting app event to DB event:', dbEvent);
+  return dbEvent;
 };
 
 // Generate demo events for testing

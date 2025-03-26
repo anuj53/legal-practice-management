@@ -32,6 +32,9 @@ export default function Calendar() {
   // Debug log to confirm data is loaded properly
   useEffect(() => {
     console.log("Calendar component rendered with events:", events.length);
+    if (events.length > 0) {
+      console.log("First event:", events[0]);
+    }
   }, [events]);
   
   if (loading) {

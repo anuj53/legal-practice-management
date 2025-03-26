@@ -37,11 +37,13 @@ export const useCalendarData = () => {
   useEffect(() => {
     const loadCalendars = async () => {
       try {
+        console.log('Loading calendars...');
         // First try to fetch from database
         const result = await fetchCalendars();
         
         // If we have data from database, use it
         if (result) {
+          console.log('Setting calendars from database');
           setMyCalendars(result.myCalendars);
           setOtherCalendars(result.otherCalendars);
         } else {
@@ -69,27 +71,32 @@ export const useCalendarData = () => {
   useEffect(() => {
     const loadEvents = async () => {
       try {
+        console.log('Loading events...');
+        setLoading(true);
+        
         // First try to fetch from the database
         const result = await fetchEvents();
         
         // If we have data from database, use it
-        if (result) {
+        if (result && result.length > 0) {
+          console.log(`Setting ${result.length} events from database`);
           setEvents(result);
-          setLoading(false);
         } else {
           // Fall back to demo data if no database records
           console.log('No events found in DB, using demo data');
           const demoEvents = generateDemoEvents();
+          console.log(`Generated ${demoEvents.length} demo events`);
           setEvents(demoEvents);
-          setLoading(false);
         }
       } catch (err) {
         console.error('Error in fetchEvents:', err);
         setError('Failed to load events');
         
         // Fall back to demo data on error
+        console.log('Using demo events due to error');
         const demoEvents = generateDemoEvents();
         setEvents(demoEvents);
+      } finally {
         setLoading(false);
       }
     };

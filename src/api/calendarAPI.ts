@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Calendar, Event, convertDbEventToEvent, convertEventToDbEvent } from '@/utils/calendarUtils';
@@ -59,6 +60,7 @@ export const fetchCalendars = async () => {
 // Fetch events from Supabase
 export const fetchEvents = async () => {
   try {
+    console.log('Fetching events from database...');
     // Fetch events from database
     const { data: eventsData, error: eventsError } = await supabase
       .from('events')
@@ -81,9 +83,16 @@ export const fetchEvents = async () => {
 
     if (eventsData && eventsData.length > 0) {
       console.log('Found events in DB:', eventsData.length);
-      return eventsData.map(convertDbEventToEvent);
+      console.log('Sample event from DB:', eventsData[0]);
+      
+      const convertedEvents = eventsData.map(convertDbEventToEvent);
+      console.log('Converted events:', convertedEvents.length);
+      console.log('Sample converted event:', convertedEvents[0]);
+      
+      return convertedEvents;
     }
-    return null;
+    console.log('No events found in database');
+    return [];
   } catch (err) {
     console.error('Error fetching events:', err);
     throw err;
@@ -168,6 +177,8 @@ export const createEventInDb = async (event: Omit<Event, 'id'>) => {
       updated_at: new Date().toISOString()
     };
     
+    console.log('Formatted DB event for create:', dbEvent);
+    
     const { data, error } = await supabase
       .from('events')
       .insert(dbEvent)
@@ -178,13 +189,17 @@ export const createEventInDb = async (event: Omit<Event, 'id'>) => {
       throw error;
     }
     
-    console.log('Event created in DB:', data);
+    console.log('Event created in DB, response:', data);
+    
+    if (!data || data.length === 0) {
+      console.error('No data returned from event creation');
+      throw new Error('No data returned from event creation');
+    }
     
     // Return new event with generated ID
-    return {
-      ...event,
-      id: data[0].id,
-    } as Event;
+    const newEvent = convertDbEventToEvent(data[0]);
+    console.log('Converted new event:', newEvent);
+    return newEvent;
   } catch (err) {
     console.error('Error creating event:', err);
     throw err;
