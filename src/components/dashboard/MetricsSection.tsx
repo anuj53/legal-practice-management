@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
@@ -7,7 +6,6 @@ import { Clock, DollarSign, TrendingUp, FileClock, Users, Briefcase, BarChart2, 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 
-// Sample data - in a real app, this would come from an API
 const hourlyData = [
   { month: 'Jan', billable: 78, non_billable: 22, total: 100 },
   { month: 'Feb', billable: 85, non_billable: 18, total: 103 },
@@ -98,7 +96,6 @@ const MetricsSection = () => {
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Hourly Metrics Card */}
         <Card className="shadow-md hover:shadow-lg transition-shadow border-gray-200 overflow-hidden">
           <CardHeader className="bg-gradient-to-r from-blue-50 to-white border-b pb-2">
             <div className="flex justify-between items-center">
@@ -196,7 +193,6 @@ const MetricsSection = () => {
           </CardContent>
         </Card>
 
-        {/* Billing Metrics Card */}
         <Card className="shadow-md hover:shadow-lg transition-shadow border-gray-200 overflow-hidden">
           <CardHeader className="bg-gradient-to-r from-green-50 to-white border-b pb-2">
             <div className="flex justify-between items-center">
@@ -305,7 +301,6 @@ const MetricsSection = () => {
         </Card>
       </div>
 
-      {/* Practice Analysis Section */}
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-gray-800">Practice Analysis</h2>
         <div className="text-sm text-gray-500">Updated today</div>
@@ -557,7 +552,6 @@ const MetricsSection = () => {
         </Card>
       </div>
 
-      {/* Yearly Goals Progress */}
       <div className="mt-6">
         <Card className="shadow-md hover:shadow-lg transition-shadow border-gray-200 overflow-hidden">
           <CardHeader className="bg-gradient-to-r from-indigo-50 to-white border-b pb-2">
@@ -617,7 +611,6 @@ const MetricsSection = () => {
                       endAngle={-270}
                     >
                       <RadialBar
-                        minAngle={15}
                         background
                         clockWise
                         dataKey="value"
@@ -677,3 +670,4 @@ const MetricsSection = () => {
 };
 
 export default MetricsSection;
+
