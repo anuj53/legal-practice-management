@@ -48,6 +48,15 @@ export function CalendarSidebar({ myCalendars, otherCalendars, onCalendarToggle,
     <div className="w-64 border-l border-gray-200 bg-white p-4 overflow-y-auto custom-scrollbar">
       <div className="mb-6">
         <Button 
+          onClick={onCreateEvent}
+          variant="default" 
+          className="w-full justify-start gap-2 mb-4 bg-yorpro-600 hover:bg-yorpro-700"
+        >
+          <Plus className="h-4 w-4" />
+          Create New Event
+        </Button>
+        
+        <Button 
           onClick={handleCreateCalendar}
           variant="outline" 
           className="w-full justify-start gap-2 mb-4 border-dashed"

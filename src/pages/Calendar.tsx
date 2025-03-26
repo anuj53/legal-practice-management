@@ -72,9 +72,11 @@ export default function Calendar() {
   };
   
   const handleCreateEvent = () => {
+    console.log("Create event clicked");
     // Create a default event starting at the current time
     const now = new Date();
     const defaultEvent = {
+      id: '',  // Empty ID for new events
       title: '',
       start: now,
       end: new Date(now.getTime() + 60 * 60 * 1000), // 1 hour later
@@ -83,32 +85,41 @@ export default function Calendar() {
       isAllDay: false
     };
     
-    setSelectedEvent(null);
+    setSelectedEvent(defaultEvent as Event);
     setModalMode('create');
     setModalOpen(true);
   };
   
   const handleSaveEvent = async (event: Event) => {
+    console.log("Saving event:", event);
     try {
       if (modalMode === 'create') {
-        await createEvent(event);
+        console.log("Creating new event");
+        const newEvent = await createEvent(event);
+        toast.success('Event created successfully!');
+        console.log("New event created:", newEvent);
       } else {
-        await updateEvent(event);
+        console.log("Updating event");
+        const updatedEvent = await updateEvent(event);
+        toast.success('Event updated successfully!');
+        console.log("Event updated:", updatedEvent);
       }
       setModalOpen(false);
     } catch (error) {
-      toast.error('Failed to save event');
       console.error('Error saving event:', error);
+      toast.error('Failed to save event');
     }
   };
   
   const handleDeleteEvent = async (id: string) => {
+    console.log("Deleting event:", id);
     try {
       await deleteEvent(id);
+      toast.success('Event deleted successfully!');
       setModalOpen(false);
     } catch (error) {
-      toast.error('Failed to delete event');
       console.error('Error deleting event:', error);
+      toast.error('Failed to delete event');
     }
   };
   
