@@ -53,11 +53,28 @@ export default function Calendar() {
   // Handle save with UUID validation
   const handleSaveEventWithValidation = (event: any) => {
     console.log("Validating event before save:", event);
-    if (modalMode === 'edit' && !isValidUUID(event.id)) {
+    
+    // For new events in create mode, we don't need to validate the ID as it will be generated
+    if (modalMode === 'create') {
+      console.log("Creating new event, ID validation not needed");
+      handleSaveEvent(event);
+      return;
+    }
+    
+    // For existing events, validate the UUID
+    if (!isValidUUID(event.id)) {
       console.error("Invalid event ID for updating:", event.id);
       alert("Cannot update event: Invalid ID format");
       return;
     }
+    
+    // Make sure calendar ID is also a valid UUID
+    if (!isValidUUID(event.calendar)) {
+      console.error("Invalid calendar ID:", event.calendar);
+      alert("Cannot update event: Invalid calendar ID format");
+      return;
+    }
+    
     handleSaveEvent(event);
   };
   

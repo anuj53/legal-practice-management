@@ -3,6 +3,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Calendar, Event, convertDbEventToEvent, convertEventToDbEvent } from '@/utils/calendarUtils';
 
+// Helper function to validate UUID format
+function isValidUUID(uuid: string) {
+  if (!uuid) return false;
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(uuid);
+}
+
 // Fetch calendars from Supabase
 export const fetchCalendars = async () => {
   try {
@@ -163,6 +170,11 @@ export const createEventInDb = async (event: Omit<Event, 'id'>) => {
   try {
     console.log('Creating event in DB:', event);
     
+    // Validate calendar ID
+    if (!isValidUUID(event.calendar)) {
+      throw new Error(`Invalid calendar ID format: ${event.calendar}`);
+    }
+    
     // Convert to database format
     // Create the DB event object with required fields for insert
     const dbEvent = {
@@ -211,10 +223,22 @@ export const updateEventInDb = async (event: Event) => {
   try {
     console.log('Updating event in DB:', event);
     
-    // Check if the event ID is a valid UUID before proceeding
-    if (!event.id || typeof event.id !== 'string' || !isValidUUID(event.id)) {
-      console.error('Invalid event ID for update:', event.id);
+    // Thorough UUID validation
+    if (!event.id) {
+      throw new Error('Event ID cannot be empty for update operation');
+    }
+    
+    if (typeof event.id !== 'string') {
+      throw new Error(`Invalid event ID type: ${typeof event.id}, expected string`);
+    }
+    
+    if (!isValidUUID(event.id)) {
       throw new Error(`Invalid UUID format for event ID: ${event.id}`);
+    }
+    
+    // Calendar ID validation
+    if (!isValidUUID(event.calendar)) {
+      throw new Error(`Invalid UUID format for calendar ID: ${event.calendar}`);
     }
     
     // Add detailed logging to debug the issue
@@ -254,16 +278,15 @@ export const updateEventInDb = async (event: Event) => {
   }
 };
 
-// Helper function to validate UUID format
-function isValidUUID(uuid: string) {
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  return uuidRegex.test(uuid);
-}
-
 // Delete event from Supabase
 export const deleteEventFromDb = async (id: string) => {
   try {
     console.log('Deleting event from DB:', id);
+    
+    // Validate UUID before attempting to delete
+    if (!isValidUUID(id)) {
+      throw new Error(`Invalid UUID format for event ID: ${id}`);
+    }
     
     const { error } = await supabase
       .from('events')

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Event } from '@/utils/calendarUtils';
 import { useCalendarData } from '@/hooks/useCalendarData';
@@ -115,11 +116,19 @@ export function useCalendarPage() {
   const handleCreateEvent = () => {
     console.log("Create event clicked");
     
+    // Get first available calendar or use a placeholder ID
     const defaultCalendarId = myCalendars.length > 0 
       ? myCalendars[0].id 
-      : 'personal';
+      : '';
     
     console.log("Using default calendar ID for new event:", defaultCalendarId);
+    
+    // Validate calendar ID to ensure it's a valid UUID
+    if (defaultCalendarId && !isValidUUID(defaultCalendarId)) {
+      console.error("Default calendar ID is not a valid UUID:", defaultCalendarId);
+      toast.error("Cannot create event: Invalid calendar ID");
+      return;
+    }
     
     const now = new Date();
     const defaultEvent = {
@@ -141,6 +150,21 @@ export function useCalendarPage() {
   
   const handleSaveEvent = async (event: Event) => {
     console.log("Saving event:", event);
+    
+    // Enhanced validation before save
+    if (modalMode === 'edit' && !isValidUUID(event.id)) {
+      console.error("Invalid event ID format for edit:", event.id);
+      toast.error('Cannot save: Invalid event ID format');
+      return;
+    }
+    
+    // Ensure calendar ID is a valid UUID
+    if (!isValidUUID(event.calendar)) {
+      console.error("Invalid calendar ID format:", event.calendar);
+      toast.error('Cannot save: Invalid calendar ID format');
+      return;
+    }
+    
     try {
       if (modalMode === 'create') {
         console.log("Creating new event");
@@ -150,12 +174,6 @@ export function useCalendarPage() {
       } else {
         console.log("Updating event with ID:", event.id);
         
-        if (!isValidUUID(event.id)) {
-          console.error("Event ID is not a valid UUID:", event.id);
-          toast.error('Invalid event ID format');
-          return;
-        }
-        
         const updatedEvent = await updateEvent(event);
         toast.success('Event updated successfully!');
         console.log("Event updated:", updatedEvent);
@@ -163,23 +181,32 @@ export function useCalendarPage() {
       setModalOpen(false);
     } catch (error) {
       console.error('Error saving event:', error);
-      toast.error('Failed to save event');
+      toast.error(`Failed to save event: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
   
   const handleDeleteEvent = async (id: string) => {
     console.log("Deleting event:", id);
+    
+    // Validate UUID before attempting to delete
+    if (!isValidUUID(id)) {
+      console.error("Invalid event ID for deletion:", id);
+      toast.error('Cannot delete: Invalid event ID format');
+      return;
+    }
+    
     try {
       await deleteEvent(id);
       toast.success('Event deleted successfully!');
       setModalOpen(false);
     } catch (error) {
       console.error('Error deleting event:', error);
-      toast.error('Failed to delete event');
+      toast.error(`Failed to delete event: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
   const isValidUUID = (id: string): boolean => {
+    if (!id) return false;
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     return uuidRegex.test(id);
   };
