@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { addHours, format, startOfDay, addDays, subDays, subHours } from 'date-fns';
@@ -94,9 +95,15 @@ export const useCalendarData = () => {
 
         // If we have data from database, use it
         if (calendarsData && calendarsData.length > 0) {
+          console.log('Found calendars in DB:', calendarsData.length);
+          
+          // Get current user (fixed TS error - don't compare directly with Promise)
+          const { data: { user } } = await supabase.auth.getUser();
+          const currentUserId = user?.id;
+          
           // Transform to expected format and separate into my/other calendars
           const myCalendarsData = calendarsData
-            .filter(cal => cal.user_id === null || cal.user_id === supabase.auth.getUser())
+            .filter(cal => cal.user_id === null || cal.user_id === currentUserId)
             .map(cal => ({
               id: cal.id,
               name: cal.name,
@@ -108,7 +115,7 @@ export const useCalendarData = () => {
             }));
           
           const otherCalendarsData = calendarsData
-            .filter(cal => cal.user_id !== null && cal.user_id !== supabase.auth.getUser() && cal.is_public)
+            .filter(cal => cal.user_id !== null && cal.user_id !== currentUserId && cal.is_public)
             .map(cal => ({
               id: cal.id,
               name: cal.name,
@@ -591,7 +598,7 @@ export const useCalendarData = () => {
           is_firm: calendar.is_firm || false,
           is_statute: calendar.is_statute || false,
           is_public: calendar.is_public || false,
-          updated_at: new Date()
+          updated_at: new Date().toISOString() // Fix TS error - convert Date to string
         })
         .eq('id', calendar.id);
 
@@ -737,6 +744,14 @@ export const useCalendarData = () => {
     try {
       console.log('Updating event in DB:', event);
       
+      // Add detailed logging to debug the issue
+      console.log('Event details for debugging:');
+      console.log('  ID:', event.id);
+      console.log('  Title:', event.title);
+      console.log('  Start:', event.start);
+      console.log('  End:', event.end);
+      console.log('  Calendar:', event.calendar);
+      
       // Convert the event to the database format
       const dbEvent = {
         title: event.title,
@@ -748,8 +763,10 @@ export const useCalendarData = () => {
         type: event.type,
         calendar_id: event.calendar,
         is_all_day: event.isAllDay || false,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString() // Fix TS error - convert Date to string
       };
+      
+      console.log('Formatted DB event for update:', dbEvent);
       
       // First update in the database
       const { data, error } = await supabase
@@ -763,12 +780,16 @@ export const useCalendarData = () => {
         throw error;
       }
       
-      console.log('Event updated in DB:', data);
+      console.log('Event update response from DB:', data);
+      
+      if (!data || data.length === 0) {
+        console.warn('Update succeeded but no data returned from database. This might indicate the row wasn\'t found.');
+      }
       
       // Update local state
       setEvents(prev => prev.map(e => e.id === event.id ? event : e));
       
-      // Trigger a data refresh
+      // Trigger a data refresh to ensure we get the latest data from DB
       setDataUpdated(prev => prev + 1);
       
       toast.success('Event updated successfully!');

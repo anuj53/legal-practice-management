@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { addDays, format, startOfDay } from 'date-fns';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -100,7 +100,7 @@ export default function Calendar() {
         toast.success('Event created successfully!');
         console.log("New event created:", newEvent);
       } else {
-        console.log("Updating event");
+        console.log("Updating event with ID:", event.id);
         const updatedEvent = await updateEvent(event);
         toast.success('Event updated successfully!');
         console.log("Event updated:", updatedEvent);
@@ -123,6 +123,11 @@ export default function Calendar() {
       toast.error('Failed to delete event');
     }
   };
+  
+  // Debug log to confirm data is loaded properly
+  useEffect(() => {
+    console.log("Calendar component rendered with events:", events.length);
+  }, [events]);
   
   if (loading) {
     return (
