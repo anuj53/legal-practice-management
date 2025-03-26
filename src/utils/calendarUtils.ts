@@ -60,7 +60,7 @@ export const convertDbEventToEvent = (dbEvent: any): Event => {
     isRecurring: dbEvent.is_recurring,
     // Map other fields as needed
     attendees: [], // Assume empty for now as they're stored in a separate table
-    isAllDay: dbEvent.is_all_day,
+    isAllDay: false,
     // Add other fields with defaults as needed
   };
 };
@@ -77,7 +77,6 @@ export const convertEventToDbEvent = (eventObj: Event | Omit<Event, 'id'>) => {
     is_recurring: eventObj.isRecurring || false,
     type: eventObj.type,
     calendar_id: eventObj.calendar,
-    is_all_day: eventObj.isAllDay || false,
     updated_at: new Date().toISOString(),
     // Only include ID if it exists in the event object (for updates)
     ...('id' in eventObj ? { id: eventObj.id } : {})

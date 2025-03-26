@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Calendar, Event, convertDbEventToEvent, convertEventToDbEvent } from '@/utils/calendarUtils';
@@ -72,8 +71,7 @@ export const fetchEvents = async () => {
         location,
         is_recurring,
         type,
-        calendar_id,
-        is_all_day
+        calendar_id
       `);
 
     if (eventsError) {
@@ -167,7 +165,6 @@ export const createEventInDb = async (event: Omit<Event, 'id'>) => {
       is_recurring: event.isRecurring || false,
       type: event.type,
       calendar_id: event.calendar,
-      is_all_day: event.isAllDay || false,
       updated_at: new Date().toISOString()
     };
     
