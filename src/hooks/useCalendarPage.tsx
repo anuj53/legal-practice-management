@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Event } from '@/utils/calendarUtils';
 import { useCalendarData } from '@/hooks/useCalendarData';
@@ -27,21 +28,49 @@ export function useCalendarPage() {
     console.log("useCalendarPage - events received:", events.length);
     console.log("useCalendarPage - myCalendars:", myCalendars.length);
     console.log("useCalendarPage - otherCalendars:", otherCalendars.length);
-  }, [events, myCalendars, otherCalendars]);
-  
-  const filteredEvents = events.filter(event => {
-    console.log("Filtering event:", event.id, event.title, "for calendar:", event.calendar);
     
-    if (!event.calendar) {
-      console.log("Event has no calendar ID:", event.title);
-      return false;
+    if (myCalendars.length > 0) {
+      console.log("First calendar:", myCalendars[0].id, myCalendars[0].name);
     }
     
+    if (events.length > 0) {
+      console.log("Sample event calendar ID:", events[0].calendar);
+    }
+  }, [events, myCalendars, otherCalendars]);
+  
+  // Create a mapping from legacy calendar names to actual calendar IDs
+  const calendarNameToIdMap = () => {
+    const map: Record<string, string> = {};
+    
+    // Map from legacy types to actual calendar IDs based on calendar properties
+    myCalendars.forEach(cal => {
+      if (cal.is_firm) map['firm'] = cal.id;
+      else if (cal.is_statute) map['statute'] = cal.id;
+      else map['personal'] = cal.id; // Default personal calendar
+    });
+    
+    // Add direct ID mappings
+    [...myCalendars, ...otherCalendars].forEach(cal => {
+      map[cal.id] = cal.id; // Direct ID mapping
+    });
+    
+    console.log("Calendar mapping:", map);
+    return map;
+  };
+  
+  const filteredEvents = events.filter(event => {
+    // Get the actual calendar ID (either directly or via mapping)
+    const mapping = calendarNameToIdMap();
+    const actualCalendarId = mapping[event.calendar] || event.calendar;
+    
+    console.log("Mapping event:", event.title, "Original calendar:", event.calendar, "Mapped calendar:", actualCalendarId);
+    
+    // Find the calendar in either myCalendars or otherCalendars
     const allCalendars = [...myCalendars, ...otherCalendars];
-    const calendar = allCalendars.find(cal => cal.id === event.calendar);
+    const calendar = allCalendars.find(cal => cal.id === actualCalendarId);
     
     if (!calendar) {
-      console.log("Calendar not found for event:", event.title, "Calendar ID:", event.calendar);
+      console.log("Calendar not found for event:", event.title, "Calendar ID:", actualCalendarId);
       return false;
     }
     
@@ -51,6 +80,9 @@ export function useCalendarPage() {
   
   useEffect(() => {
     console.log("Filtered events:", filteredEvents.length);
+    if (filteredEvents.length > 0) {
+      console.log("Sample filtered event:", filteredEvents[0].title);
+    }
   }, [filteredEvents]);
   
   const handleCalendarToggle = (id: string, category: 'my' | 'other') => {
@@ -88,6 +120,14 @@ export function useCalendarPage() {
   
   const handleCreateEvent = () => {
     console.log("Create event clicked");
+    
+    // Use the first available calendar ID or fall back to a default
+    const defaultCalendarId = myCalendars.length > 0 
+      ? myCalendars[0].id 
+      : 'personal';
+    
+    console.log("Using default calendar ID for new event:", defaultCalendarId);
+    
     const now = new Date();
     const defaultEvent = {
       id: '',  // Empty ID for new events
@@ -95,7 +135,7 @@ export function useCalendarPage() {
       start: now,
       end: new Date(now.getTime() + 60 * 60 * 1000), // 1 hour later
       type: 'client-meeting' as const,
-      calendar: myCalendars.length > 0 ? myCalendars[0].id : 'personal',
+      calendar: defaultCalendarId,
       isAllDay: false,
       description: '',
       location: '',

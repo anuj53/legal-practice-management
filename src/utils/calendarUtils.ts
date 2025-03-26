@@ -1,3 +1,4 @@
+
 import { addHours, addDays, subDays, startOfDay } from 'date-fns';
 
 // Types we need to move from useCalendarData
@@ -89,10 +90,47 @@ export const convertEventToDbEvent = (eventObj: Event | Omit<Event, 'id'>) => {
   return dbEvent;
 };
 
-// Generate demo events for testing
-export const generateDemoEvents = (): Event[] => {
+// Generate demo events for testing based on the existing calendars
+export const generateDemoEvents = (existingCalendars: Calendar[] = []): Event[] => {
+  console.log('Generating demo events with existing calendars:', existingCalendars.map(c => `${c.id} (${c.name})`));
+  
   const now = new Date();
   const today = startOfDay(now);
+  
+  // Find calendar IDs based on properties or use defaults
+  const findCalendarId = (type: 'personal' | 'firm' | 'statute'): string => {
+    let calendarId = type; // Default fallback to legacy ID
+    
+    if (existingCalendars.length > 0) {
+      // Try to find matching calendar based on its properties
+      if (type === 'firm') {
+        const firmCalendar = existingCalendars.find(c => c.is_firm);
+        if (firmCalendar) return firmCalendar.id;
+      } else if (type === 'statute') {
+        const statuteCalendar = existingCalendars.find(c => c.is_statute);
+        if (statuteCalendar) return statuteCalendar.id;
+      } else {
+        // For personal, find a calendar that's neither firm nor statute
+        const personalCalendar = existingCalendars.find(c => !c.is_firm && !c.is_statute);
+        if (personalCalendar) return personalCalendar.id;
+      }
+      
+      // If we can't find a specific one, just use the first available
+      return existingCalendars[0].id;
+    }
+    
+    return calendarId;
+  };
+  
+  const personalCalendarId = findCalendarId('personal');
+  const firmCalendarId = findCalendarId('firm');
+  const statuteCalendarId = findCalendarId('statute');
+  
+  console.log('Using calendar IDs:', {
+    personal: personalCalendarId,
+    firm: firmCalendarId,
+    statute: statuteCalendarId
+  });
   
   return [
     {
@@ -101,7 +139,7 @@ export const generateDemoEvents = (): Event[] => {
       start: addHours(today, 10),
       end: addHours(today, 11),
       type: 'client-meeting',
-      calendar: 'personal',
+      calendar: personalCalendarId,
       description: 'Initial consultation regarding divorce case.',
       location: 'Office - Room 305',
       attendees: ['John Smith'],
@@ -116,7 +154,7 @@ export const generateDemoEvents = (): Event[] => {
       start: addHours(today, 14),
       end: addHours(today, 15),
       type: 'internal-meeting',
-      calendar: 'firm',
+      calendar: firmCalendarId,
       description: 'Weekly team meeting to discuss case progress.',
       attendees: ['Amy Johnson', 'Michael Lee', 'Sarah Wilson'],
       isAllDay: false
@@ -127,7 +165,7 @@ export const generateDemoEvents = (): Event[] => {
       start: addHours(addDays(today, 1), 9),
       end: addHours(addDays(today, 1), 12),
       type: 'court',
-      calendar: 'firm',
+      calendar: firmCalendarId,
       location: 'County Courthouse - Room 203',
       description: 'Preliminary hearing for custody case.',
       caseId: 'FAM-2023-089',
@@ -146,7 +184,7 @@ export const generateDemoEvents = (): Event[] => {
       start: addHours(addDays(today, 2), 17),
       end: addHours(addDays(today, 2), 17.5),
       type: 'deadline',
-      calendar: 'statute',
+      calendar: statuteCalendarId,
       description: 'Last day to file estate documents.',
       caseId: 'PRB-2023-042',
       clientName: 'Johnson Family',
@@ -166,7 +204,7 @@ export const generateDemoEvents = (): Event[] => {
       start: addHours(addDays(today, -1), 12),
       end: addHours(addDays(today, -1), 13),
       type: 'personal',
-      calendar: 'personal',
+      calendar: personalCalendarId,
       location: 'Café Bistro',
       isAllDay: false
     },
@@ -176,7 +214,7 @@ export const generateDemoEvents = (): Event[] => {
       start: addHours(addDays(today, 3), 14),
       end: addHours(addDays(today, 3), 16),
       type: 'internal-meeting',
-      calendar: 'firm',
+      calendar: firmCalendarId,
       description: 'Meeting with expert witness Dr. Phillips to prepare for trial testimony.',
       location: 'Conference Room B',
       attendees: ['Dr. Phillips', 'Amy Johnson'],
@@ -189,7 +227,7 @@ export const generateDemoEvents = (): Event[] => {
       start: addHours(subDays(today, 2), 9),
       end: addHours(subDays(today, 2), 12),
       type: 'internal-meeting',
-      calendar: 'personal',
+      calendar: personalCalendarId,
       description: 'Review discovery documents for Williams litigation case.',
       caseId: 'LIT-2023-067',
       clientName: 'Williams Corp',
@@ -202,7 +240,7 @@ export const generateDemoEvents = (): Event[] => {
       start: addHours(today, 16),
       end: addHours(today, 17),
       type: 'client-meeting',
-      calendar: 'personal',
+      calendar: personalCalendarId,
       location: 'Virtual - Zoom',
       description: 'Follow-up meeting to discuss settlement options.',
       attendees: ['Robert Davis'],
@@ -217,7 +255,7 @@ export const generateDemoEvents = (): Event[] => {
       start: addHours(addDays(today, 4), 10),
       end: addHours(addDays(today, 4), 14),
       type: 'court',
-      calendar: 'firm',
+      calendar: firmCalendarId,
       location: 'Mediation Center - Suite 400',
       description: 'Mediation session for Roberts divorce case.',
       attendees: ['Mediator: James Wilson', 'Opposing Counsel: Jane Smith'],
@@ -232,7 +270,7 @@ export const generateDemoEvents = (): Event[] => {
       start: addHours(addDays(today, 10), 23.5),
       end: addHours(addDays(today, 10), 23.75),
       type: 'deadline',
-      calendar: 'statute',
+      calendar: statuteCalendarId,
       description: 'Final deadline for corporate tax filing.',
       caseId: 'TAX-2023-028',
       clientName: 'ABC Corporation',
@@ -245,7 +283,7 @@ export const generateDemoEvents = (): Event[] => {
       start: addDays(today, 15),
       end: addDays(today, 18),
       type: 'personal',
-      calendar: 'personal',
+      calendar: personalCalendarId,
       location: 'Hilton Downtown Hotel',
       description: 'Annual bar association conference with workshops and networking events.',
       isRecurring: false,
@@ -257,7 +295,7 @@ export const generateDemoEvents = (): Event[] => {
       start: addHours(addDays(today, 5), 11),
       end: addHours(addDays(today, 5), 12),
       type: 'client-meeting',
-      calendar: 'personal',
+      calendar: personalCalendarId,
       description: 'Biweekly status meeting with major corporate client',
       location: 'Conference Room A',
       attendees: ['John CEO', 'Sarah CFO'],

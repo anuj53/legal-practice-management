@@ -84,8 +84,10 @@ export const useCalendarData = () => {
         } else {
           // Fall back to demo data if no database records
           console.log('No events found in DB, using demo data');
-          const demoEvents = generateDemoEvents();
-          console.log(`Generated ${demoEvents.length} demo events`);
+          // Pass the actual calendars to use their IDs
+          const allCalendars = [...myCalendars, ...otherCalendars];
+          const demoEvents = generateDemoEvents(allCalendars);
+          console.log(`Generated ${demoEvents.length} demo events with actual calendar IDs`);
           setEvents(demoEvents);
         }
       } catch (err) {
@@ -94,7 +96,9 @@ export const useCalendarData = () => {
         
         // Fall back to demo data on error
         console.log('Using demo events due to error');
-        const demoEvents = generateDemoEvents();
+        // Pass the actual calendars to use their IDs
+        const allCalendars = [...myCalendars, ...otherCalendars];
+        const demoEvents = generateDemoEvents(allCalendars);
         setEvents(demoEvents);
       } finally {
         setLoading(false);
@@ -102,7 +106,7 @@ export const useCalendarData = () => {
     };
 
     loadEvents();
-  }, [dataUpdated, setEvents, setLoading, setError]); // Refetch when data is updated
+  }, [dataUpdated, myCalendars, otherCalendars, setEvents, setLoading, setError]); // Refetch when data is updated or calendars change
 
   return {
     myCalendars,

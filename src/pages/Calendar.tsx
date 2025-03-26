@@ -32,10 +32,16 @@ export default function Calendar() {
   // Debug log to confirm data is loaded properly
   useEffect(() => {
     console.log("Calendar component rendered with events:", events.length);
+    console.log("Available calendars:", 
+      [...myCalendars, ...otherCalendars].map(cal => `${cal.id} (${cal.name})`).join(', ')
+    );
+    
     if (events.length > 0) {
       console.log("First event:", events[0]);
+    } else {
+      console.log("No events to display");
     }
-  }, [events]);
+  }, [events, myCalendars, otherCalendars]);
   
   if (loading) {
     return (
