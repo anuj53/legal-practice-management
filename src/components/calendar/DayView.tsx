@@ -39,9 +39,9 @@ export function DayView({ date, events, onEventClick }: DayViewProps) {
   // Current time indicator
   const now = new Date();
   const currentDay = isSameDay(date, now);
-  const dayMinutes = 24 * 60; // Total minutes in a day
+  const hourHeight = 60; // Height of each hour row in pixels
   const currentTimePosition = currentDay 
-    ? ((now.getHours() * 60 + now.getMinutes()) / dayMinutes) * (hours.length * 60)
+    ? ((now.getHours() * 60 + now.getMinutes()) / 60) * hourHeight
     : null;
   
   return (
@@ -74,17 +74,17 @@ export function DayView({ date, events, onEventClick }: DayViewProps) {
             )}
             
             {todayEvents.map((event) => {
-              const startOfToday = startOfDay(date);
               const startMinutes = 
                 (event.start.getHours() * 60 + event.start.getMinutes());
+              
               const endMinutes = 
                 (event.end.getHours() * 60 + event.end.getMinutes());
+              
               const duration = endMinutes - startMinutes;
               
-              // Calculate position based on hour row height
-              const hourHeight = 60; // Height of each hour row in pixels
+              // Calculate position in pixels based on hour height
               const top = (startMinutes / 60) * hourHeight;
-              const height = (duration / 60) * hourHeight;
+              const height = Math.max((duration / 60) * hourHeight, 20); // Minimum height of 20px
               
               return (
                 <div

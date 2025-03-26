@@ -42,10 +42,11 @@ export function WeekView({ date, events, onEventClick }: WeekViewProps) {
     end: addMinutes(startOfDay(date), 23 * 60 + 59)
   });
 
+  const hourHeight = 60; // Height of each hour row in pixels
+
   useEffect(() => {
     // Scroll to 8am
     if (containerRef.current) {
-      const hourHeight = 60; // Height of each hour row in pixels
       const scrollPosition = 8 * hourHeight; // 8am
       containerRef.current.scrollTop = scrollPosition;
     }
@@ -53,7 +54,6 @@ export function WeekView({ date, events, onEventClick }: WeekViewProps) {
   
   // Current time indicator
   const now = new Date();
-  const hourHeight = 60; // Height of each hour row in pixels
   const currentTimePosition = (now.getHours() * 60 + now.getMinutes()) / 60 * hourHeight;
   
   return (
@@ -115,13 +115,15 @@ export function WeekView({ date, events, onEventClick }: WeekViewProps) {
                 .map((event) => {
                   const startMinutes = 
                     (event.start.getHours() * 60 + event.start.getMinutes());
+                  
                   const endMinutes = 
                     (event.end.getHours() * 60 + event.end.getMinutes());
+                  
                   const duration = endMinutes - startMinutes;
                   
-                  // Calculate position based on hour row height
+                  // Calculate position in pixels based on hour height
                   const top = (startMinutes / 60) * hourHeight;
-                  const height = (duration / 60) * hourHeight;
+                  const height = Math.max((duration / 60) * hourHeight, 20); // Minimum height of 20px
                   
                   return (
                     <div
