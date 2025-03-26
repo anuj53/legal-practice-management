@@ -1,0 +1,248 @@
+
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { Calendar, Event, convertDbEventToEvent, convertEventToDbEvent } from '@/utils/calendarUtils';
+
+// Fetch calendars from Supabase
+export const fetchCalendars = async () => {
+  try {
+    // Fetch calendars from database
+    const { data: calendarsData, error: calendarsError } = await supabase
+      .from('calendars')
+      .select('*');
+
+    if (calendarsError) {
+      console.error('Error fetching calendars from DB:', calendarsError);
+      throw calendarsError;
+    }
+
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    const currentUserId = user?.id;
+    
+    if (calendarsData && calendarsData.length > 0) {
+      console.log('Found calendars in DB:', calendarsData.length);
+      
+      // Transform to expected format and separate into my/other calendars
+      const myCalendars = calendarsData
+        .filter(cal => cal.user_id === null || cal.user_id === currentUserId)
+        .map(cal => ({
+          id: cal.id,
+          name: cal.name,
+          color: cal.color,
+          checked: true,
+          is_firm: cal.is_firm,
+          is_statute: cal.is_statute,
+          is_public: cal.is_public,
+        }));
+      
+      const otherCalendars = calendarsData
+        .filter(cal => cal.user_id !== null && cal.user_id !== currentUserId && cal.is_public)
+        .map(cal => ({
+          id: cal.id,
+          name: cal.name,
+          color: cal.color,
+          checked: false,
+          is_firm: cal.is_firm,
+          is_statute: cal.is_statute,
+          is_public: cal.is_public,
+        }));
+
+      return { myCalendars, otherCalendars };
+    }
+    return null;
+  } catch (err) {
+    console.error('Error fetching calendars:', err);
+    throw err;
+  }
+};
+
+// Fetch events from Supabase
+export const fetchEvents = async () => {
+  try {
+    // Fetch events from database
+    const { data: eventsData, error: eventsError } = await supabase
+      .from('events')
+      .select(`
+        id,
+        title,
+        description,
+        start_time,
+        end_time,
+        location,
+        is_recurring,
+        type,
+        calendar_id,
+        is_all_day
+      `);
+
+    if (eventsError) {
+      console.error('Error fetching events from DB:', eventsError);
+      throw eventsError;
+    }
+
+    if (eventsData && eventsData.length > 0) {
+      console.log('Found events in DB:', eventsData.length);
+      return eventsData.map(convertDbEventToEvent);
+    }
+    return null;
+  } catch (err) {
+    console.error('Error fetching events:', err);
+    throw err;
+  }
+};
+
+// Update calendar in Supabase
+export const updateCalendarInDb = async (calendar: Calendar) => {
+  try {
+    const { data, error } = await supabase
+      .from('calendars')
+      .update({
+        name: calendar.name,
+        color: calendar.color,
+        is_firm: calendar.is_firm || false,
+        is_statute: calendar.is_statute || false,
+        is_public: calendar.is_public || false,
+        updated_at: new Date().toISOString() 
+      })
+      .eq('id', calendar.id)
+      .select();
+
+    if (error) {
+      console.error('Error updating calendar in DB:', error);
+      throw error;
+    }
+    
+    console.log('Calendar updated in DB:', data);
+    return data;
+  } catch (err) {
+    console.error('Error updating calendar:', err);
+    throw err;
+  }
+};
+
+// Create calendar in Supabase
+export const createCalendarInDb = async (calendar: Omit<Calendar, 'id'>) => {
+  try {
+    const { data, error } = await supabase
+      .from('calendars')
+      .insert({
+        name: calendar.name,
+        color: calendar.color,
+        is_firm: calendar.is_firm || false,
+        is_statute: calendar.is_statute || false,
+        is_public: calendar.is_public || false
+      })
+      .select();
+
+    if (error) {
+      console.error('Error creating calendar in DB:', error);
+      throw error;
+    }
+    
+    // Return new calendar with generated ID
+    return {
+      ...calendar,
+      id: data[0].id,
+    } as Calendar;
+  } catch (err) {
+    console.error('Error creating calendar:', err);
+    throw err;
+  }
+};
+
+// Create event in Supabase
+export const createEventInDb = async (event: Omit<Event, 'id'>) => {
+  try {
+    console.log('Creating event in DB:', event);
+    
+    // Convert to database format
+    const dbEvent = convertEventToDbEvent(event);
+    
+    const { data, error } = await supabase
+      .from('events')
+      .insert(dbEvent)
+      .select();
+
+    if (error) {
+      console.error('Error creating event in DB:', error);
+      throw error;
+    }
+    
+    console.log('Event created in DB:', data);
+    
+    // Return new event with generated ID
+    return {
+      ...event,
+      id: data[0].id,
+    } as Event;
+  } catch (err) {
+    console.error('Error creating event:', err);
+    throw err;
+  }
+};
+
+// Update event in Supabase
+export const updateEventInDb = async (event: Event) => {
+  try {
+    console.log('Updating event in DB:', event);
+    
+    // Add detailed logging to debug the issue
+    console.log('Event details for debugging:');
+    console.log('  ID:', event.id);
+    console.log('  Title:', event.title);
+    console.log('  Start:', event.start);
+    console.log('  End:', event.end);
+    console.log('  Calendar:', event.calendar);
+    
+    // Convert to database format
+    const dbEvent = convertEventToDbEvent(event);
+    
+    console.log('Formatted DB event for update:', dbEvent);
+    
+    const { data, error } = await supabase
+      .from('events')
+      .update(dbEvent)
+      .eq('id', event.id)
+      .select();
+
+    if (error) {
+      console.error('Error updating event in DB:', error);
+      throw error;
+    }
+    
+    console.log('Event update response from DB:', data);
+    
+    if (!data || data.length === 0) {
+      console.warn('Update succeeded but no data returned from database. This might indicate the row wasn\'t found.');
+    }
+    
+    return event;
+  } catch (err) {
+    console.error('Error updating event:', err);
+    throw err;
+  }
+};
+
+// Delete event from Supabase
+export const deleteEventFromDb = async (id: string) => {
+  try {
+    console.log('Deleting event from DB:', id);
+    
+    const { error } = await supabase
+      .from('events')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting event from DB:', error);
+      throw error;
+    }
+    
+    console.log('Event deleted from DB');
+    return true;
+  } catch (err) {
+    console.error('Error deleting event:', err);
+    throw err;
+  }
+};

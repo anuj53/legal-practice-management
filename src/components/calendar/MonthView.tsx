@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   format, 
@@ -12,15 +11,7 @@ import {
   isSameDay
 } from 'date-fns';
 import { cn } from '@/lib/utils';
-
-interface Event {
-  id: string;
-  title: string;
-  start: Date;
-  end: Date;
-  type: 'client-meeting' | 'internal-meeting' | 'court' | 'deadline' | 'personal';
-  calendar: string;
-}
+import { Event } from '@/utils/calendarUtils';
 
 interface MonthViewProps {
   date: Date;

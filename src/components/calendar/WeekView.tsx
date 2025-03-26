@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect } from 'react';
 import { 
   format, 
@@ -14,30 +13,7 @@ import {
 } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
-
-interface Event {
-  id: string;
-  title: string;
-  start: Date;
-  end: Date;
-  type: 'client-meeting' | 'internal-meeting' | 'court' | 'deadline' | 'personal';
-  calendar: string;
-  description?: string;
-  location?: string;
-  attendees?: string[];
-  isRecurring?: boolean;
-  reminder?: string;
-  // Legal-specific fields
-  caseId?: string;
-  clientName?: string;
-  assignedLawyer?: string;
-  courtInfo?: {
-    courtName?: string;
-    judgeDetails?: string;
-    docketNumber?: string;
-  };
-  documents?: Array<{id: string, name: string, url: string}>;
-}
+import { Event } from '@/utils/calendarUtils';
 
 interface WeekViewProps {
   date: Date;
