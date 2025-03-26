@@ -6,6 +6,7 @@ import { CalendarMain } from '@/components/calendar/CalendarMain';
 import { EventModal } from '@/components/calendar/EventModal';
 import { MobileActionButton } from '@/components/calendar/MobileActionButton';
 import { useCalendarPage } from '@/hooks/useCalendarPage';
+import { toast } from 'sonner';
 
 export default function Calendar() {
   const {
@@ -26,7 +27,8 @@ export default function Calendar() {
     handleDayClick,
     handleCreateEvent,
     handleSaveEvent,
-    handleDeleteEvent
+    handleDeleteEvent,
+    isValidUUID
   } = useCalendarPage();
   
   // Debug log to confirm data is loaded properly
@@ -43,41 +45,55 @@ export default function Calendar() {
     }
   }, [events, myCalendars, otherCalendars]);
   
-  // Helper function to verify if an ID is a valid UUID
-  const isValidUUID = (id: string): boolean => {
-    if (!id) return false;
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    return uuidRegex.test(id);
-  };
-  
   // Handle save with UUID validation
   const handleSaveEventWithValidation = (event: any) => {
     console.log("Validating event before save:", event);
+    console.log("Modal mode:", modalMode);
+    console.log("Calendar ID for validation:", event.calendar);
+    console.log("Is valid calendar UUID?", isValidUUID(event.calendar));
     
-    // For new events in create mode, we don't need to validate the ID as it will be generated
+    // For new events in create mode, we still need to validate the calendar ID
     if (modalMode === 'create') {
-      console.log("Creating new event, ID validation not needed");
-      // But we still need to validate the calendar ID
-      if (!isValidUUID(event.calendar)) {
-        console.error("Invalid calendar ID format for new event:", event.calendar);
-        alert("Cannot save: Invalid calendar ID format");
+      console.log("Creating new event, validating calendar ID");
+      
+      if (!event.calendar) {
+        console.error("Missing calendar ID for new event");
+        toast.error("Cannot save: Missing calendar ID");
         return;
       }
+      
+      if (!isValidUUID(event.calendar)) {
+        console.error("Invalid calendar ID format for new event:", event.calendar);
+        toast.error("Cannot save: Invalid calendar ID format");
+        return;
+      }
+      
       handleSaveEvent(event);
       return;
     }
     
-    // For existing events, validate the UUID
-    if (!isValidUUID(event.id)) {
-      console.error("Invalid event ID for updating:", event.id);
-      alert("Cannot update event: Invalid ID format");
+    // For existing events, validate both event ID and calendar ID
+    if (!event.id) {
+      console.error("Missing event ID for update");
+      toast.error("Cannot update event: Missing ID");
       return;
     }
     
-    // Make sure calendar ID is also a valid UUID
+    if (!isValidUUID(event.id)) {
+      console.error("Invalid event ID for updating:", event.id);
+      toast.error("Cannot update event: Invalid ID format");
+      return;
+    }
+    
+    if (!event.calendar) {
+      console.error("Missing calendar ID for event update");
+      toast.error("Cannot update event: Missing calendar ID");
+      return;
+    }
+    
     if (!isValidUUID(event.calendar)) {
       console.error("Invalid calendar ID:", event.calendar);
-      alert("Cannot update event: Invalid calendar ID format");
+      toast.error("Cannot update event: Invalid calendar ID format");
       return;
     }
     

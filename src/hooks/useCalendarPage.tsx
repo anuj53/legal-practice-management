@@ -116,8 +116,10 @@ export function useCalendarPage() {
   const handleCreateEvent = () => {
     console.log("Create event clicked");
     
-    // Find a valid calendar ID (must be a UUID)
+    // Find valid calendars (must have UUID format)
     const validCalendars = myCalendars.filter(cal => isValidUUID(cal.id));
+    
+    console.log("Valid calendars found:", validCalendars.map(c => `${c.id} (${c.name})`));
     
     if (validCalendars.length === 0) {
       console.error("No valid calendars found for creating a new event");
@@ -233,6 +235,7 @@ export function useCalendarPage() {
     handleDayClick,
     handleCreateEvent,
     handleSaveEvent,
-    handleDeleteEvent
+    handleDeleteEvent,
+    isValidUUID
   };
 }

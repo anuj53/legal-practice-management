@@ -170,31 +170,48 @@ export const createEventInDb = async (event: Omit<Event, 'id'>) => {
   try {
     console.log('Creating event in DB:', event);
     
-    // Validate calendar ID
+    // Comprehensive validation
     if (!event.calendar) {
-      throw new Error('Calendar ID is missing or empty');
+      const errorMsg = 'Calendar ID is missing or empty';
+      console.error(errorMsg);
+      throw new Error(errorMsg);
     }
     
     if (!isValidUUID(event.calendar)) {
-      console.error(`Invalid calendar ID format: "${event.calendar}"`);
-      throw new Error(`Invalid calendar ID format: ${event.calendar}`);
+      const errorMsg = `Invalid calendar ID format: "${event.calendar}"`;
+      console.error(errorMsg);
+      throw new Error(errorMsg);
+    }
+    
+    if (!event.title) {
+      const errorMsg = 'Event title is required';
+      console.error(errorMsg);
+      throw new Error(errorMsg);
+    }
+    
+    if (!event.start || !event.end) {
+      const errorMsg = 'Event start and end times are required';
+      console.error(errorMsg);
+      throw new Error(errorMsg);
     }
     
     // Convert to database format
     // Create the DB event object with required fields for insert
     const dbEvent = {
       title: event.title,
-      description: event.description,
+      description: event.description || '',
       start_time: event.start.toISOString(),
       end_time: event.end.toISOString(),
-      location: event.location,
+      location: event.location || '',
       is_recurring: event.isRecurring || false,
-      type: event.type,
+      type: event.type || 'client-meeting',
       calendar_id: event.calendar,
       updated_at: new Date().toISOString()
     };
     
     console.log('Formatted DB event for create:', dbEvent);
+    console.log('Calendar ID being used:', dbEvent.calendar_id);
+    console.log('Calendar ID is valid UUID:', isValidUUID(dbEvent.calendar_id));
     
     const { data, error } = await supabase
       .from('events')
