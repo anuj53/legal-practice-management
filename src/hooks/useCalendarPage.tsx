@@ -166,8 +166,10 @@ export function useCalendarPage() {
           return;
         }
         
-        // Create with valid calendar ID - explicitly remove the id property for new events
+        // Fixed: Create a properly typed object without 'id' property
         const { id, ...eventWithoutId } = event;
+        
+        // Use the correctly typed object for createEvent
         const newEvent = await createEvent(eventWithoutId);
         
         toast.success('Event created successfully!');
