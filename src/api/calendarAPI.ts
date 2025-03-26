@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Calendar, Event, convertDbEventToEvent, convertEventToDbEvent } from '@/utils/calendarUtils';
@@ -155,8 +156,13 @@ export const createEventInDb = async (event: Omit<Event, 'id'>) => {
   try {
     console.log('Creating event in DB:', event);
     
-    // Convert to database format
-    const dbEvent = convertEventToDbEvent(event as Event);
+    // Convert to database format - we need to modify this to work with events without IDs
+    // Create a temporary event object with a placeholder ID for conversion purposes
+    const tempEvent = { ...event, id: 'temp-id' } as Event;
+    const dbEvent = convertEventToDbEvent(tempEvent);
+    
+    // Remove any id field from the object before inserting to let Supabase generate the ID
+    delete dbEvent.id;
     
     const { data, error } = await supabase
       .from('events')

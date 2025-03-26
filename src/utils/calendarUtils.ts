@@ -1,4 +1,3 @@
-
 import { addHours, addDays, subDays, startOfDay } from 'date-fns';
 
 // Types we need to move from useCalendarData
@@ -68,7 +67,7 @@ export const convertDbEventToEvent = (dbEvent: any): Event => {
 
 // Convert local Event to database format
 export const convertEventToDbEvent = (event: Event) => {
-  return {
+  const dbEvent: Record<string, any> = {
     title: event.title,
     description: event.description,
     start_time: event.start.toISOString(),
@@ -80,6 +79,13 @@ export const convertEventToDbEvent = (event: Event) => {
     is_all_day: event.isAllDay || false,
     updated_at: new Date().toISOString()
   };
+  
+  // Only include ID if it's not a temporary ID
+  if (event.id && event.id !== 'temp-id') {
+    dbEvent.id = event.id;
+  }
+  
+  return dbEvent;
 };
 
 // Generate demo events for testing
