@@ -27,10 +27,11 @@ export function DayView({ date, events, onEventClick }: DayViewProps) {
     end: addMinutes(startOfDay(date), 23 * 60 + 59)
   });
   
+  const hourHeight = 60; // Height of each hour row in pixels
+  
   useEffect(() => {
     // Scroll to 8am
     if (containerRef.current) {
-      const hourHeight = 60; // Height of each hour row in pixels
       const scrollPosition = 8 * hourHeight; // 8am
       containerRef.current.scrollTop = scrollPosition;
     }
@@ -39,7 +40,6 @@ export function DayView({ date, events, onEventClick }: DayViewProps) {
   // Current time indicator
   const now = new Date();
   const currentDay = isSameDay(date, now);
-  const hourHeight = 60; // Height of each hour row in pixels
   const currentTimePosition = currentDay 
     ? ((now.getHours() * 60 + now.getMinutes()) / 60) * hourHeight
     : null;
@@ -53,7 +53,7 @@ export function DayView({ date, events, onEventClick }: DayViewProps) {
         <div className="time-column py-2">
           {hours.map((hour) => (
             <div key={hour.toString()} className="hour-row flex items-start justify-end">
-              <span className="text-xs -mt-2">
+              <span className="text-xs -mt-2 pr-2">
                 {format(hour, 'h a')}
               </span>
             </div>
@@ -61,47 +61,59 @@ export function DayView({ date, events, onEventClick }: DayViewProps) {
         </div>
         
         <div className="flex-1 relative">
-          <div className="absolute inset-0">
-            {hours.map((hour) => (
-              <div key={hour.toString()} className="hour-row" />
-            ))}
+          {hours.map((hour) => (
+            <div key={hour.toString()} className="hour-row border-t border-gray-200" />
+          ))}
+          
+          {currentTimePosition !== null && (
+            <div 
+              className="current-time-indicator"
+              style={{ top: `${currentTimePosition}px` }}
+            />
+          )}
+          
+          {todayEvents.map((event) => {
+            // Calculate event position
+            const eventStartHour = event.start.getHours();
+            const eventStartMinute = event.start.getMinutes();
+            const eventEndHour = event.end.getHours();
+            const eventEndMinute = event.end.getMinutes();
             
-            {currentTimePosition !== null && (
-              <div 
-                className="current-time-indicator"
-                style={{ top: `${currentTimePosition}px` }}
-              />
-            )}
+            // Calculate position based on minutes since start of day
+            const startMinutesSinceMidnight = eventStartHour * 60 + eventStartMinute;
+            const endMinutesSinceMidnight = eventEndHour * 60 + eventEndMinute;
             
-            {todayEvents.map((event) => {
-              const startMinutes = 
-                (event.start.getHours() * 60 + event.start.getMinutes());
-              
-              const endMinutes = 
-                (event.end.getHours() * 60 + event.end.getMinutes());
-              
-              const duration = endMinutes - startMinutes;
-              
-              // Calculate position in pixels based on hour height
-              const top = (startMinutes / 60) * hourHeight;
-              const height = Math.max((duration / 60) * hourHeight, 20); // Minimum height of 20px
-              
-              return (
-                <div
-                  key={event.id}
-                  className={cn("event-card absolute left-2 right-2", `event-${event.type}`)}
-                  style={{
-                    top: `${top}px`,
-                    height: `${height}px`,
-                  }}
-                  onClick={() => onEventClick(event)}
-                >
-                  <p className="font-medium text-xs">{format(event.start, 'h:mm a')} - {format(event.end, 'h:mm a')}</p>
-                  <p className="font-medium truncate">{event.title}</p>
+            // Convert to pixels (hourHeight is pixels per hour, so divide by 60 to get pixels per minute)
+            const topPosition = (startMinutesSinceMidnight / 60) * hourHeight;
+            const heightInPixels = ((endMinutesSinceMidnight - startMinutesSinceMidnight) / 60) * hourHeight;
+            
+            // Ensure minimum height for very short events
+            const eventHeight = Math.max(heightInPixels, 20);
+            
+            return (
+              <div
+                key={event.id}
+                className={cn(
+                  "event-card absolute left-2 right-2",
+                  `event-${event.type}`,
+                  "overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+                )}
+                style={{
+                  top: `${topPosition}px`,
+                  height: `${eventHeight}px`,
+                  zIndex: 10
+                }}
+                onClick={() => onEventClick(event)}
+              >
+                <div className="p-1 h-full flex flex-col">
+                  <p className="font-medium text-xs whitespace-nowrap">
+                    {format(event.start, 'h:mm a')} - {format(event.end, 'h:mm a')}
+                  </p>
+                  <p className="font-medium text-sm truncate">{event.title}</p>
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
