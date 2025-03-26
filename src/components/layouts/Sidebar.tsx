@@ -1,7 +1,19 @@
 
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Calendar, FileText, CheckSquare, Users, Folder, BarChart, Settings } from 'lucide-react';
+import { 
+  BarChart, 
+  Calendar, 
+  FileText, 
+  CheckSquare, 
+  Activity, 
+  CreditCard, 
+  Database, 
+  MessageSquare, 
+  BarChart2, 
+  Plug, 
+  Settings 
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -52,10 +64,16 @@ export function Sidebar() {
         <div className="space-y-1">
           <SidebarItem icon={BarChart} label="Dashboard" to="/" />
           <SidebarItem icon={Calendar} label="Calendar" to="/calendar" />
-          <SidebarItem icon={CheckSquare} label="Tasks" to="/tasks" />
           <SidebarItem icon={FileText} label="Matters" to="/matters" />
-          <SidebarItem icon={Users} label="Contacts" to="/contacts" />
-          <SidebarItem icon={Folder} label="Documents" to="/documents" />
+          <SidebarItem icon={FileText} label="Contracts" to="/contracts" />
+          <SidebarItem icon={Activity} label="Activities" to="/activities" />
+          <SidebarItem icon={CreditCard} label="Billing" to="/billing" />
+          <SidebarItem icon={CreditCard} label="Online Payments" to="/payments" />
+          <SidebarItem icon={Database} label="Accounts" to="/accounts" />
+          <SidebarItem icon={FileText} label="Documents" to="/documents" />
+          <SidebarItem icon={MessageSquare} label="Communications" to="/communications" />
+          <SidebarItem icon={BarChart2} label="Reports" to="/reports" />
+          <SidebarItem icon={Plug} label="App Integrations" to="/integrations" />
         </div>
         
         <Separator className="bg-yorpro-700 my-4" />

@@ -21,7 +21,17 @@ const App = () => (
           <Route element={<MainLayout />}>
             <Route path="/" element={<Index />} />
             <Route path="/calendar" element={<Calendar />} />
-            {/* Add more routes here when needed */}
+            <Route path="/matters" element={<NotFound />} />
+            <Route path="/contracts" element={<NotFound />} />
+            <Route path="/activities" element={<NotFound />} />
+            <Route path="/billing" element={<NotFound />} />
+            <Route path="/payments" element={<NotFound />} />
+            <Route path="/accounts" element={<NotFound />} />
+            <Route path="/documents" element={<NotFound />} />
+            <Route path="/communications" element={<NotFound />} />
+            <Route path="/reports" element={<NotFound />} />
+            <Route path="/integrations" element={<NotFound />} />
+            <Route path="/settings" element={<NotFound />} />
           </Route>
           
           {/* Catch-all route for 404 */}
