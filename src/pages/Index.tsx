@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, Users, FileText, CheckSquare, BarChart, Clock, ChevronRight, Bell, Briefcase, Users2 } from 'lucide-react';
@@ -171,7 +172,7 @@ const Index = () => {
         />
       </div>
 
-      {/* Metrics Section */}
+      {/* Enhanced Metrics Section */}
       <div className="mb-8 px-4 md:px-0">
         <MetricsSection />
       </div>
@@ -324,4 +325,3 @@ const Index = () => {
 };
 
 export default Index;
-
