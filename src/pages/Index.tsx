@@ -1,10 +1,10 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, Users, FileText, CheckSquare, BarChart, Clock, ChevronRight, Bell, Briefcase, Users2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import MetricsSection from '@/components/dashboard/MetricsSection';
 
 const DashboardCard = ({ 
   icon: Icon, 
@@ -171,6 +171,11 @@ const Index = () => {
         />
       </div>
 
+      {/* Metrics Section */}
+      <div className="mb-8 px-4 md:px-0">
+        <MetricsSection />
+      </div>
+
       <section className="mb-8 px-4 md:px-0">
         <h2 className="text-xl font-semibold mb-4 text-gray-800 flex items-center">
           <span className="mr-2">Quick Access</span>
@@ -319,3 +324,4 @@ const Index = () => {
 };
 
 export default Index;
+
