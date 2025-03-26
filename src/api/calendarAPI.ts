@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Calendar, Event, convertDbEventToEvent, convertEventToDbEvent } from '@/utils/calendarUtils';
@@ -157,7 +156,7 @@ export const createEventInDb = async (event: Omit<Event, 'id'>) => {
     console.log('Creating event in DB:', event);
     
     // Convert to database format
-    const dbEvent = convertEventToDbEvent(event);
+    const dbEvent = convertEventToDbEvent(event as Event);
     
     const { data, error } = await supabase
       .from('events')
