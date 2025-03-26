@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { addDays, addHours, format, startOfDay, subDays, subHours } from 'date-fns';
+import { addDays, format, startOfDay } from 'date-fns';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CalendarHeader, type CalendarView } from '@/components/calendar/CalendarHeader';
@@ -10,140 +10,26 @@ import { WeekView } from '@/components/calendar/WeekView';
 import { MonthView } from '@/components/calendar/MonthView';
 import { AgendaView } from '@/components/calendar/AgendaView';
 import { EventModal } from '@/components/calendar/EventModal';
-import { Separator } from '@/components/ui/separator';
+import { useCalendarData, type Event } from '@/hooks/useCalendarData';
 import { toast } from 'sonner';
-
-// Demo event data
-const generateDemoEvents = () => {
-  const now = new Date();
-  const today = startOfDay(now);
-  
-  return [
-    {
-      id: '1',
-      title: 'Client Consultation: John Smith',
-      start: addHours(today, 10),
-      end: addHours(today, 11),
-      type: 'client-meeting' as const,
-      calendar: 'personal',
-      description: 'Initial consultation regarding divorce case.',
-      location: 'Office - Room 305',
-      attendees: ['John Smith'],
-    },
-    {
-      id: '2',
-      title: 'Team Meeting',
-      start: addHours(today, 14),
-      end: addHours(today, 15),
-      type: 'internal-meeting' as const,
-      calendar: 'firm',
-      description: 'Weekly team meeting to discuss case progress.',
-      attendees: ['Amy Johnson', 'Michael Lee', 'Sarah Wilson'],
-    },
-    {
-      id: '3',
-      title: 'Court Hearing: Smith v. Jones',
-      start: addHours(addDays(today, 1), 9),
-      end: addHours(addDays(today, 1), 12),
-      type: 'court' as const,
-      calendar: 'firm',
-      location: 'County Courthouse - Room 203',
-      description: 'Preliminary hearing for custody case.',
-    },
-    {
-      id: '4',
-      title: 'Filing Deadline: Johnson Estate',
-      start: addHours(addDays(today, 2), 17),
-      end: addHours(addDays(today, 2), 17.5),
-      type: 'deadline' as const,
-      calendar: 'statute',
-      description: 'Last day to file estate documents.',
-    },
-    {
-      id: '5',
-      title: 'Lunch with Sarah',
-      start: addHours(addDays(today, -1), 12),
-      end: addHours(addDays(today, -1), 13),
-      type: 'personal' as const,
-      calendar: 'personal',
-      location: 'Café Bistro',
-    },
-    {
-      id: '6',
-      title: 'Expert Witness Preparation',
-      start: addHours(addDays(today, 3), 14),
-      end: addHours(addDays(today, 3), 16),
-      type: 'internal-meeting' as const,
-      calendar: 'firm',
-      description: 'Meeting with expert witness Dr. Phillips to prepare for trial testimony.',
-      location: 'Conference Room B',
-      attendees: ['Dr. Phillips', 'Amy Johnson'],
-    },
-    {
-      id: '7',
-      title: 'Document Review: Williams Case',
-      start: addHours(subDays(today, 2), 9),
-      end: addHours(subDays(today, 2), 12),
-      type: 'internal-meeting' as const,
-      calendar: 'personal',
-      description: 'Review discovery documents for Williams litigation case.',
-    },
-    {
-      id: '8',
-      title: 'Client Meeting: Robert Davis',
-      start: addHours(today, 16),
-      end: addHours(today, 17),
-      type: 'client-meeting' as const,
-      calendar: 'personal',
-      location: 'Virtual - Zoom',
-      description: 'Follow-up meeting to discuss settlement options.',
-      attendees: ['Robert Davis'],
-    },
-    {
-      id: '9',
-      title: 'Mediator Conference',
-      start: addHours(addDays(today, 4), 10),
-      end: addHours(addDays(today, 4), 14),
-      type: 'court' as const,
-      calendar: 'firm',
-      location: 'Mediation Center - Suite 400',
-      description: 'Mediation session for Roberts divorce case.',
-      attendees: ['Mediator: James Wilson', 'Opposing Counsel: Jane Smith'],
-    },
-    {
-      id: '10',
-      title: 'Statute Deadline: Tax Filing',
-      start: addHours(addDays(today, 10), 23.5),
-      end: addHours(addDays(today, 10), 23.75),
-      type: 'deadline' as const,
-      calendar: 'statute',
-      description: 'Final deadline for corporate tax filing.',
-    },
-  ];
-};
-
-// Mock calendar data
-const mockCalendars = {
-  my: [
-    { id: 'personal', name: 'Personal', color: '#5cb85c', checked: true },
-    { id: 'firm', name: 'Firm Calendar', color: '#0e91e3', checked: true },
-    { id: 'statute', name: 'Statute of Limitations', color: '#d9534f', checked: true },
-  ],
-  other: [
-    { id: 'team-a', name: 'Team A', color: '#905ac7', checked: false },
-    { id: 'team-b', name: 'Team B', color: '#f0ad4e', checked: false },
-  ]
-};
 
 export default function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [currentView, setCurrentView] = useState<CalendarView>('week');
-  const [events, setEvents] = useState(generateDemoEvents());
-  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('view');
-  const [myCalendars, setMyCalendars] = useState(mockCalendars.my);
-  const [otherCalendars, setOtherCalendars] = useState(mockCalendars.other);
+
+  const {
+    myCalendars,
+    otherCalendars,
+    events,
+    loading,
+    updateCalendar,
+    createEvent,
+    updateEvent,
+    deleteEvent
+  } = useCalendarData();
   
   // Filter events based on selected calendars
   const filteredEvents = events.filter(event => {
@@ -154,21 +40,26 @@ export default function Calendar() {
   
   const handleCalendarToggle = (id: string, category: 'my' | 'other') => {
     if (category === 'my') {
-      setMyCalendars(prev => 
-        prev.map(cal => 
-          cal.id === id ? { ...cal, checked: !cal.checked } : cal
-        )
-      );
+      const calendar = myCalendars.find(cal => cal.id === id);
+      if (calendar) {
+        updateCalendar({
+          ...calendar,
+          checked: !calendar.checked
+        });
+      }
     } else {
-      setOtherCalendars(prev => 
-        prev.map(cal => 
-          cal.id === id ? { ...cal, checked: !cal.checked } : cal
-        )
-      );
+      const calendar = otherCalendars.find(cal => cal.id === id);
+      if (calendar) {
+        const updatedCalendar = {
+          ...calendar,
+          checked: !calendar.checked
+        };
+        updateCalendar(updatedCalendar);
+      }
     }
   };
   
-  const handleEventClick = (event: any) => {
+  const handleEventClick = (event: Event) => {
     setSelectedEvent(event);
     setModalMode('view');
     setModalOpen(true);
@@ -185,22 +76,41 @@ export default function Calendar() {
     setModalOpen(true);
   };
   
-  const handleSaveEvent = (event: any) => {
-    if (modalMode === 'create') {
-      setEvents(prev => [...prev, event]);
-      toast.success('Event created successfully!');
-    } else {
-      setEvents(prev => 
-        prev.map(e => e.id === event.id ? event : e)
-      );
-      toast.success('Event updated successfully!');
+  const handleSaveEvent = async (event: Event) => {
+    try {
+      if (modalMode === 'create') {
+        const { id, ...eventWithoutId } = event;
+        await createEvent(eventWithoutId);
+        toast.success('Event created successfully!');
+      } else {
+        await updateEvent(event);
+        toast.success('Event updated successfully!');
+      }
+      setModalOpen(false);
+    } catch (error) {
+      toast.error('Failed to save event');
+      console.error('Error saving event:', error);
     }
   };
   
-  const handleDeleteEvent = (id: string) => {
-    setEvents(prev => prev.filter(e => e.id !== id));
-    toast.success('Event deleted successfully!');
+  const handleDeleteEvent = async (id: string) => {
+    try {
+      await deleteEvent(id);
+      setModalOpen(false);
+      toast.success('Event deleted successfully!');
+    } catch (error) {
+      toast.error('Failed to delete event');
+      console.error('Error deleting event:', error);
+    }
   };
+  
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <p>Loading calendar data...</p>
+      </div>
+    );
+  }
   
   return (
     <div className="flex h-full flex-col">
