@@ -1,6 +1,8 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { addHours, format, startOfDay, addDays, subDays, subHours } from 'date-fns';
+import { toast } from 'sonner';
 
 export interface Calendar {
   id: string;
@@ -25,6 +27,26 @@ export interface Event {
   attendees?: string[];
   isRecurring?: boolean;
   reminder?: string;
+  // Legal-specific fields
+  caseId?: string;
+  clientName?: string;
+  assignedLawyer?: string;
+  courtInfo?: {
+    courtName?: string;
+    judgeDetails?: string;
+    docketNumber?: string;
+  };
+  documents?: Array<{id: string, name: string, url: string}>;
+  // Recurrence options
+  recurrencePattern?: {
+    frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
+    interval: number;
+    endDate?: Date;
+    weekdays?: number[]; // 0-6 for Sunday-Saturday
+    monthDay?: number;
+    occurrences?: number;
+  };
+  isAllDay?: boolean;
 }
 
 export const useCalendarData = () => {
@@ -44,25 +66,24 @@ export const useCalendarData = () => {
 
         if (calendarsError) throw calendarsError;
 
-        if (calendarsData) {
-          // For now, we'll use the demo data since we might not have a logged-in user
-          const myCalendarsData: Calendar[] = [
-            { id: 'personal', name: 'Personal', color: '#5cb85c', checked: true },
-            { id: 'firm', name: 'Firm Calendar', color: '#0e91e3', checked: true },
-            { id: 'statute', name: 'Statute of Limitations', color: '#d9534f', checked: true },
-          ];
-          
-          const otherCalendarsData: Calendar[] = [
-            { id: 'team-a', name: 'Team A', color: '#905ac7', checked: false },
-            { id: 'team-b', name: 'Team B', color: '#f0ad4e', checked: false },
-          ];
+        // For now, we'll use the demo data for development
+        const myCalendarsData: Calendar[] = [
+          { id: 'personal', name: 'Personal', color: '#5cb85c', checked: true },
+          { id: 'firm', name: 'Firm Calendar', color: '#0e91e3', checked: true },
+          { id: 'statute', name: 'Statute of Limitations', color: '#d9534f', checked: true },
+        ];
+        
+        const otherCalendarsData: Calendar[] = [
+          { id: 'team-a', name: 'Team A', color: '#905ac7', checked: false },
+          { id: 'team-b', name: 'Team B', color: '#f0ad4e', checked: false },
+        ];
 
-          setMyCalendars(myCalendarsData);
-          setOtherCalendars(otherCalendarsData);
-        }
+        setMyCalendars(myCalendarsData);
+        setOtherCalendars(otherCalendarsData);
       } catch (err) {
         console.error('Error fetching calendars:', err);
         setError('Failed to load calendars');
+        toast.error('Failed to load calendars');
       }
     };
 
@@ -90,7 +111,7 @@ export const useCalendarData = () => {
 
         if (eventsError) throw eventsError;
 
-        // For now, we'll use the demo events since we might not have actual data yet
+        // For development, create demo events with legal-specific fields
         const now = new Date();
         const today = startOfDay(now);
         
@@ -105,6 +126,10 @@ export const useCalendarData = () => {
             description: 'Initial consultation regarding divorce case.',
             location: 'Office - Room 305',
             attendees: ['John Smith'],
+            caseId: 'DIV-2023-105',
+            clientName: 'John Smith',
+            assignedLawyer: 'Jane Roberts',
+            isAllDay: false
           },
           {
             id: '2',
@@ -115,6 +140,7 @@ export const useCalendarData = () => {
             calendar: 'firm',
             description: 'Weekly team meeting to discuss case progress.',
             attendees: ['Amy Johnson', 'Michael Lee', 'Sarah Wilson'],
+            isAllDay: false
           },
           {
             id: '3',
@@ -125,6 +151,15 @@ export const useCalendarData = () => {
             calendar: 'firm',
             location: 'County Courthouse - Room 203',
             description: 'Preliminary hearing for custody case.',
+            caseId: 'FAM-2023-089',
+            clientName: 'Mary Smith',
+            assignedLawyer: 'Robert Johnson',
+            courtInfo: {
+              courtName: 'County Family Court',
+              judgeDetails: 'Judge William Harrington',
+              docketNumber: 'FC-2023-1234'
+            },
+            isAllDay: false
           },
           {
             id: '4',
@@ -134,6 +169,17 @@ export const useCalendarData = () => {
             type: 'deadline',
             calendar: 'statute',
             description: 'Last day to file estate documents.',
+            caseId: 'PRB-2023-042',
+            clientName: 'Johnson Family',
+            assignedLawyer: 'Stephanie Davis',
+            documents: [
+              {
+                id: 'doc1',
+                name: 'Estate Inventory',
+                url: 'https://example.com/documents/estate-inventory.pdf'
+              }
+            ],
+            isAllDay: false
           },
           {
             id: '5',
@@ -143,6 +189,7 @@ export const useCalendarData = () => {
             type: 'personal',
             calendar: 'personal',
             location: 'Café Bistro',
+            isAllDay: false
           },
           {
             id: '6',
@@ -154,6 +201,8 @@ export const useCalendarData = () => {
             description: 'Meeting with expert witness Dr. Phillips to prepare for trial testimony.',
             location: 'Conference Room B',
             attendees: ['Dr. Phillips', 'Amy Johnson'],
+            caseId: 'LIT-2023-078',
+            isAllDay: false
           },
           {
             id: '7',
@@ -163,6 +212,10 @@ export const useCalendarData = () => {
             type: 'internal-meeting',
             calendar: 'personal',
             description: 'Review discovery documents for Williams litigation case.',
+            caseId: 'LIT-2023-067',
+            clientName: 'Williams Corp',
+            assignedLawyer: 'Stephanie Davis',
+            isAllDay: false
           },
           {
             id: '8',
@@ -174,6 +227,10 @@ export const useCalendarData = () => {
             location: 'Virtual - Zoom',
             description: 'Follow-up meeting to discuss settlement options.',
             attendees: ['Robert Davis'],
+            caseId: 'SET-2023-042',
+            clientName: 'Robert Davis',
+            assignedLawyer: 'Jane Roberts',
+            isAllDay: false
           },
           {
             id: '9',
@@ -185,6 +242,10 @@ export const useCalendarData = () => {
             location: 'Mediation Center - Suite 400',
             description: 'Mediation session for Roberts divorce case.',
             attendees: ['Mediator: James Wilson', 'Opposing Counsel: Jane Smith'],
+            caseId: 'DIV-2023-091',
+            clientName: 'Roberts Family',
+            assignedLawyer: 'Sarah Wilson',
+            isAllDay: false
           },
           {
             id: '10',
@@ -194,7 +255,44 @@ export const useCalendarData = () => {
             type: 'deadline',
             calendar: 'statute',
             description: 'Final deadline for corporate tax filing.',
+            caseId: 'TAX-2023-028',
+            clientName: 'ABC Corporation',
+            assignedLawyer: 'Michael Lee',
+            isAllDay: false
           },
+          {
+            id: '11',
+            title: 'Bar Association Annual Conference',
+            start: addDays(today, 15),
+            end: addDays(today, 18),
+            type: 'personal',
+            calendar: 'personal',
+            location: 'Hilton Downtown Hotel',
+            description: 'Annual bar association conference with workshops and networking events.',
+            isRecurring: false,
+            isAllDay: true
+          },
+          {
+            id: '12',
+            title: 'Client Status Meeting (Recurring)',
+            start: addHours(addDays(today, 5), 11),
+            end: addHours(addDays(today, 5), 12),
+            type: 'client-meeting',
+            calendar: 'personal',
+            description: 'Biweekly status meeting with major corporate client',
+            location: 'Conference Room A',
+            attendees: ['John CEO', 'Sarah CFO'],
+            caseId: 'COR-2023-105',
+            clientName: 'Major Corp',
+            assignedLawyer: 'Jane Roberts',
+            isRecurring: true,
+            recurrencePattern: {
+              frequency: 'weekly',
+              interval: 2,
+              occurrences: 10
+            },
+            isAllDay: false
+          }
         ];
 
         setEvents(demoEvents);
@@ -202,6 +300,7 @@ export const useCalendarData = () => {
       } catch (err) {
         console.error('Error fetching events:', err);
         setError('Failed to load events');
+        toast.error('Failed to load events');
         setLoading(false);
       }
     };
@@ -215,12 +314,43 @@ export const useCalendarData = () => {
       console.log('Updating calendar:', calendar);
       
       // For now, we'll just update the local state
-      setMyCalendars(prev => 
-        prev.map(cal => cal.id === calendar.id ? calendar : cal)
-      );
+      if (myCalendars.some(cal => cal.id === calendar.id)) {
+        setMyCalendars(prev => 
+          prev.map(cal => cal.id === calendar.id ? calendar : cal)
+        );
+      } else {
+        setOtherCalendars(prev => 
+          prev.map(cal => cal.id === calendar.id ? calendar : cal)
+        );
+      }
+      
+      toast.success(`Updated calendar: ${calendar.name}`);
     } catch (err) {
       console.error('Error updating calendar:', err);
       setError('Failed to update calendar');
+      toast.error('Failed to update calendar');
+    }
+  };
+
+  const createCalendar = async (calendar: Omit<Calendar, 'id'>) => {
+    try {
+      // In a real implementation, we would create the calendar in Supabase
+      console.log('Creating calendar:', calendar);
+      
+      // For now, we'll just update the local state
+      const newCalendar = {
+        ...calendar,
+        id: Math.random().toString(36).substring(2, 9),
+      };
+      
+      setMyCalendars(prev => [...prev, newCalendar as Calendar]);
+      toast.success(`Created new calendar: ${newCalendar.name}`);
+      return newCalendar as Calendar;
+    } catch (err) {
+      console.error('Error creating calendar:', err);
+      setError('Failed to create calendar');
+      toast.error('Failed to create calendar');
+      throw err;
     }
   };
 
@@ -236,10 +366,12 @@ export const useCalendarData = () => {
       };
       
       setEvents(prev => [...prev, newEvent as Event]);
+      toast.success('Event created successfully!');
       return newEvent as Event;
     } catch (err) {
       console.error('Error creating event:', err);
       setError('Failed to create event');
+      toast.error('Failed to create event');
       throw err;
     }
   };
@@ -251,10 +383,12 @@ export const useCalendarData = () => {
       
       // For now, we'll just update the local state
       setEvents(prev => prev.map(e => e.id === event.id ? event : e));
+      toast.success('Event updated successfully!');
       return event;
     } catch (err) {
       console.error('Error updating event:', err);
       setError('Failed to update event');
+      toast.error('Failed to update event');
       throw err;
     }
   };
@@ -266,9 +400,11 @@ export const useCalendarData = () => {
       
       // For now, we'll just update the local state
       setEvents(prev => prev.filter(e => e.id !== id));
+      toast.success('Event deleted successfully!');
     } catch (err) {
       console.error('Error deleting event:', err);
       setError('Failed to delete event');
+      toast.error('Failed to delete event');
       throw err;
     }
   };
@@ -280,6 +416,7 @@ export const useCalendarData = () => {
     loading,
     error,
     updateCalendar,
+    createCalendar,
     createEvent,
     updateEvent,
     deleteEvent,

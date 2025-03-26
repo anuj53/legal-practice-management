@@ -1,6 +1,6 @@
 
 import React, { useRef, useEffect } from 'react';
-import { format, addMinutes, startOfDay, eachHourOfInterval, isSameDay } from 'date-fns';
+import { format, addMinutes, startOfDay, eachHourOfInterval, isSameDay, differenceInMinutes } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 interface Event {
@@ -37,7 +37,7 @@ export function DayView({ date, events, onEventClick }: DayViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const todayEvents = events.filter(event => isSameDay(event.start, date));
   
-  // Define the height for each hour in pixels
+  // Define the height for each hour in pixels - important for consistent positioning
   const hourHeight = 60;
   
   // Generate all hours for the day
@@ -57,22 +57,30 @@ export function DayView({ date, events, onEventClick }: DayViewProps) {
   // Current time indicator
   const now = new Date();
   const currentDay = isSameDay(date, now);
-  const minutesSinceMidnight = currentDay ? now.getHours() * 60 + now.getMinutes() : 0;
-  const currentTimePosition = currentDay ? (minutesSinceMidnight / 60) * hourHeight : null;
+  
+  // Function to calculate position in minutes since midnight
+  const getMinutesSinceMidnight = (date: Date) => {
+    return date.getHours() * 60 + date.getMinutes();
+  };
+  
+  const currentTimePosition = currentDay 
+    ? (getMinutesSinceMidnight(now) / 60) * hourHeight
+    : null;
   
   // Function to calculate event position and size
   const calculateEventPosition = (event: Event) => {
-    const startHours = event.start.getHours();
-    const startMinutes = event.start.getMinutes();
-    const endHours = event.end.getHours();
-    const endMinutes = event.end.getMinutes();
+    const dayStart = startOfDay(date);
     
-    const startMinutesSinceMidnight = (startHours * 60) + startMinutes;
-    const endMinutesSinceMidnight = (endHours * 60) + endMinutes;
+    // Get minutes since midnight for event start and end
+    const startMinutes = getMinutesSinceMidnight(event.start);
+    const endMinutes = getMinutesSinceMidnight(event.end);
+    
+    // For events ending next day, cap at end of day
+    const adjustedEndMinutes = endMinutes < startMinutes ? 24 * 60 : endMinutes;
     
     // Calculate position and height
-    const top = (startMinutesSinceMidnight / 60) * hourHeight;
-    const height = ((endMinutesSinceMidnight - startMinutesSinceMidnight) / 60) * hourHeight;
+    const top = (startMinutes / 60) * hourHeight;
+    const height = ((adjustedEndMinutes - startMinutes) / 60) * hourHeight;
     
     // Ensure minimum height for very short events
     return {
@@ -80,6 +88,58 @@ export function DayView({ date, events, onEventClick }: DayViewProps) {
       height: `${Math.max(height, 20)}px`,
     };
   };
+
+  // Group overlapping events to handle collisions
+  const organizeEvents = (events: Event[]) => {
+    if (!events.length) return [];
+    
+    // Sort events by start time
+    const sortedEvents = [...events].sort((a, b) => 
+      a.start.getTime() - b.start.getTime() || 
+      b.end.getTime() - a.end.getTime()
+    );
+    
+    // Track columns for events
+    const columns: Event[][] = [];
+    
+    sortedEvents.forEach(event => {
+      // Try to find a column where this event doesn't overlap
+      let placed = false;
+      for (let i = 0; i < columns.length; i++) {
+        const columnEvents = columns[i];
+        const lastEvent = columnEvents[columnEvents.length - 1];
+        
+        // If event starts after the last event in this column ends
+        if (getMinutesSinceMidnight(event.start) >= getMinutesSinceMidnight(lastEvent.end)) {
+          columnEvents.push(event);
+          placed = true;
+          break;
+        }
+      }
+      
+      // If event couldn't be placed in existing columns, create a new column
+      if (!placed) {
+        columns.push([event]);
+      }
+    });
+    
+    // Convert columns data to event display data
+    return sortedEvents.map(event => {
+      // Find which column this event is in
+      const columnIndex = columns.findIndex(column => 
+        column.some(e => e.id === event.id)
+      );
+      
+      // Calculate width and left position based on total columns and current column
+      return {
+        event,
+        columnCount: columns.length,
+        columnIndex
+      };
+    });
+  };
+  
+  const organizedEvents = organizeEvents(todayEvents);
   
   return (
     <div 
@@ -87,14 +147,14 @@ export function DayView({ date, events, onEventClick }: DayViewProps) {
       className="flex flex-col h-full overflow-y-auto custom-scrollbar"
     >
       <div className="flex flex-1">
-        <div className="time-column py-2">
+        <div className="time-column py-2 pr-2 w-16 text-right">
           {hours.map((hour) => (
             <div 
               key={hour.toString()} 
               className="hour-row flex items-start justify-end"
               style={{ height: `${hourHeight}px` }}
             >
-              <span className="text-xs -mt-2 pr-2">
+              <span className="text-xs -mt-2 pr-2 text-gray-500">
                 {format(hour, 'h a')}
               </span>
             </div>
@@ -119,7 +179,7 @@ export function DayView({ date, events, onEventClick }: DayViewProps) {
             </div>
           )}
           
-          {todayEvents.map((event) => {
+          {organizedEvents.map(({ event, columnCount, columnIndex }) => {
             const { top, height } = calculateEventPosition(event);
             const eventTypeClasses = {
               'client-meeting': 'bg-blue-100 border-blue-400 text-blue-800',
@@ -129,17 +189,23 @@ export function DayView({ date, events, onEventClick }: DayViewProps) {
               'personal': 'bg-orange-100 border-orange-400 text-orange-800',
             };
             
+            // Calculate width and left position for each event
+            const width = columnCount > 1 ? `calc(${95 / columnCount}%)` : '95%';
+            const left = columnCount > 1 ? `${(95 / columnCount) * columnIndex}%` : '0%';
+            
             return (
               <div
                 key={event.id}
                 className={cn(
-                  "absolute left-2 right-2 rounded px-2 border-l-4",
+                  "absolute rounded px-2 border-l-4",
                   eventTypeClasses[event.type],
                   "overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer"
                 )}
                 style={{
                   top,
                   height,
+                  width,
+                  left,
                   zIndex: 10
                 }}
                 onClick={() => onEventClick(event)}
@@ -151,6 +217,9 @@ export function DayView({ date, events, onEventClick }: DayViewProps) {
                   <p className="font-medium text-sm truncate">{event.title}</p>
                   {event.location && (
                     <p className="text-xs truncate opacity-75">{event.location}</p>
+                  )}
+                  {event.clientName && (
+                    <p className="text-xs truncate opacity-75">Client: {event.clientName}</p>
                   )}
                 </div>
               </div>

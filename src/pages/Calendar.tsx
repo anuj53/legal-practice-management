@@ -26,6 +26,7 @@ export default function Calendar() {
     events,
     loading,
     updateCalendar,
+    createCalendar,
     createEvent,
     updateEvent,
     deleteEvent
@@ -71,6 +72,17 @@ export default function Calendar() {
   };
   
   const handleCreateEvent = () => {
+    // Create a default event starting at the current time
+    const now = new Date();
+    const defaultEvent = {
+      title: '',
+      start: now,
+      end: new Date(now.getTime() + 60 * 60 * 1000), // 1 hour later
+      type: 'client-meeting' as const,
+      calendar: myCalendars[0]?.id || 'personal',
+      isAllDay: false
+    };
+    
     setSelectedEvent(null);
     setModalMode('create');
     setModalOpen(true);
@@ -79,12 +91,9 @@ export default function Calendar() {
   const handleSaveEvent = async (event: Event) => {
     try {
       if (modalMode === 'create') {
-        const { id, ...eventWithoutId } = event;
-        await createEvent(eventWithoutId);
-        toast.success('Event created successfully!');
+        await createEvent(event);
       } else {
         await updateEvent(event);
-        toast.success('Event updated successfully!');
       }
       setModalOpen(false);
     } catch (error) {
@@ -97,7 +106,6 @@ export default function Calendar() {
     try {
       await deleteEvent(id);
       setModalOpen(false);
-      toast.success('Event deleted successfully!');
     } catch (error) {
       toast.error('Failed to delete event');
       console.error('Error deleting event:', error);
@@ -120,6 +128,7 @@ export default function Calendar() {
         view={currentView}
         onDateChange={setCurrentDate}
         onViewChange={setCurrentView}
+        onCreateEvent={handleCreateEvent}
       />
       
       <div className="flex flex-1 overflow-hidden">
@@ -161,6 +170,7 @@ export default function Calendar() {
           myCalendars={myCalendars}
           otherCalendars={otherCalendars}
           onCalendarToggle={handleCalendarToggle}
+          onCreateEvent={handleCreateEvent}
         />
       </div>
       
