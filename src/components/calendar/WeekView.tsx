@@ -1,9 +1,10 @@
 
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { format, addDays, startOfWeek } from 'date-fns';
 import { CalendarEvent } from '@/types/calendar';
 import { cn } from '@/lib/utils';
 import { getHours } from '@/utils/dateUtils';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface WeekViewProps {
   currentDate: Date;
@@ -21,11 +22,35 @@ export const WeekView: React.FC<WeekViewProps> = ({
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const hours = getHours();
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [currentTimePosition, setCurrentTimePosition] = useState<number>(0);
+  
+  // Calculate current time indicator position and set up auto-scroll
+  useEffect(() => {
+    const updateCurrentTimePosition = () => {
+      const now = new Date();
+      const hours = now.getHours();
+      const minutes = now.getMinutes();
+      // Calculate position (each hour is 60px height)
+      const position = (hours * 60) + minutes;
+      setCurrentTimePosition(position);
+      
+      // Scroll to current time - 100px
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.scrollTop = position - 100;
+      }
+    };
+    
+    // Update position immediately
+    updateCurrentTimePosition();
+    
+    // Set timer to update position
+    const timer = setInterval(updateCurrentTimePosition, 60000); // every minute
+    
+    return () => clearInterval(timer);
+  }, []);
 
   const getEventsForDayAndHour = (day: Date, hour: number) => {
-    const startHour = hour === 12 ? 0 : hour % 12;
-    const isPM = hour >= 12;
-    
     return events.filter((event) => {
       const eventDate = new Date(event.start);
       const eventHour = eventDate.getHours();
@@ -53,64 +78,100 @@ export const WeekView: React.FC<WeekViewProps> = ({
     'personal': 'bg-yellow-500 text-black',
   };
 
+  // Check if today falls within this week
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayIndex = days.findIndex(day => {
+    const dayDate = new Date(day);
+    dayDate.setHours(0, 0, 0, 0);
+    return dayDate.getTime() === today.getTime();
+  });
+
   return (
-    <div className="week-view overflow-auto">
-      <div className="grid grid-cols-8 border-b border-gray-200">
+    <div className="week-view h-full flex flex-col">
+      <div className="grid grid-cols-8 border-b border-gray-200 sticky top-0 bg-background z-10">
         <div className="col-span-1 border-r border-gray-200 p-2 text-center font-medium">
           Hour
         </div>
         {days.map((day, index) => (
           <div key={index} className="col-span-1 p-2 text-center border-r border-gray-200">
             <div className="text-sm text-gray-500">{format(day, 'EEE')}</div>
-            <div className="text-lg font-medium">{format(day, 'd/M')}</div>
+            <div className={cn(
+              "text-lg font-medium",
+              new Date(day).setHours(0,0,0,0) === new Date().setHours(0,0,0,0) && "text-blue-600"
+            )}>
+              {format(day, 'd/M')}
+            </div>
           </div>
         ))}
       </div>
       
-      <div className="grid grid-cols-8">
-        {hours.map((hourLabel, hourIndex) => (
-          <React.Fragment key={hourIndex}>
-            <div className="col-span-1 border-r border-b border-gray-200 p-2 text-center">
-              {hourLabel}
-            </div>
-            
-            {days.map((day, dayIndex) => {
-              const hour = hourIndex % 24;
-              const dayEvents = getEventsForDayAndHour(day, hour);
+      <ScrollArea className="flex-1">
+        <div 
+          ref={scrollContainerRef} 
+          className="grid grid-cols-8 relative min-h-[1440px]"
+        >
+          {hours.map((hourLabel, hourIndex) => (
+            <React.Fragment key={hourIndex}>
+              <div className="col-span-1 border-r border-b border-gray-200 p-2 text-center sticky left-0 bg-background h-[60px]">
+                {hourLabel}
+              </div>
               
-              return (
-                <div 
-                  key={`${hourIndex}-${dayIndex}`} 
-                  className="col-span-1 border-r border-b border-gray-200 p-1 min-h-[60px]"
-                  onClick={() => {
-                    if (onTimeSlotClick) {
-                      const newDate = new Date(day);
-                      newDate.setHours(hour);
-                      onTimeSlotClick(newDate);
-                    }
-                  }}
-                >
-                  {dayEvents.map((event) => (
-                    <div
-                      key={event.id}
-                      className={cn(
-                        "p-1 rounded text-xs cursor-pointer",
-                        eventColors[event.type] || "bg-gray-500 text-white"
-                      )}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEventClick(event);
-                      }}
-                    >
-                      {format(event.start, 'h:mm')} {event.title}
-                    </div>
-                  ))}
-                </div>
-              );
-            })}
-          </React.Fragment>
-        ))}
-      </div>
+              {days.map((day, dayIndex) => {
+                const hour = hourIndex % 24;
+                const dayEvents = getEventsForDayAndHour(day, hour);
+                
+                return (
+                  <div 
+                    key={`${hourIndex}-${dayIndex}`} 
+                    className={cn(
+                      "col-span-1 border-r border-b border-gray-200 p-1 h-[60px] relative",
+                      new Date(day).setHours(0,0,0,0) === new Date().setHours(0,0,0,0) && "bg-blue-50/30"
+                    )}
+                    onClick={() => {
+                      if (onTimeSlotClick) {
+                        const newDate = new Date(day);
+                        newDate.setHours(hour);
+                        onTimeSlotClick(newDate);
+                      }
+                    }}
+                  >
+                    {dayEvents.map((event) => (
+                      <div
+                        key={event.id}
+                        className={cn(
+                          "p-1 rounded text-xs cursor-pointer truncate",
+                          eventColors[event.type] || "bg-gray-500 text-white"
+                        )}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEventClick(event);
+                        }}
+                      >
+                        {format(event.start, 'h:mm')} {event.title}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+            </React.Fragment>
+          ))}
+          
+          {/* Current time indicator - only show if today is in this week */}
+          {todayIndex !== -1 && (
+            <div 
+              className="absolute border-t-2 border-red-500 z-20 flex items-center"
+              style={{ 
+                top: `${currentTimePosition}px`, 
+                left: `${(100 / 8) * (todayIndex + 1)}%`,
+                right: '0'
+              }}
+            >
+              <div className="h-3 w-3 rounded-full bg-red-500 -ml-1.5 -mt-1.5"></div>
+            </div>
+          )}
+        </div>
+      </ScrollArea>
     </div>
   );
 };

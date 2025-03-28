@@ -53,3 +53,12 @@ export const parseDateString = (dateStr: string): Date => {
 export const createTimeForHour = (date: Date, hour: number): Date => {
   return setHours(date, hour);
 };
+
+// Get current time position for calendar views (in pixels)
+export const getCurrentTimePosition = (): number => {
+  const now = new Date();
+  const hours = now.getHours();
+  const minutes = now.getMinutes();
+  // Calculate position (each hour is 60px height)
+  return (hours * 60) + minutes;
+};
