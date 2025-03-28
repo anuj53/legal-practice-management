@@ -33,10 +33,10 @@ export function useCalendarPage() {
     createEvent,
     updateEvent,
     deleteEvent,
-    updateCalendar,
-    createCalendar,
-    deleteCalendar,
     toggleCalendar,
+    createCalendar,
+    updateCalendar,
+    deleteCalendar, 
   } = useCalendar();
   
   // Enhanced events with calendar color information
@@ -135,9 +135,11 @@ export function useCalendarPage() {
       }
       
       const newCalendar = createCalendar(calendar);
+      toast.success(`Calendar "${calendar.name}" created successfully!`);
       return newCalendar;
     } catch (error) {
       console.error('Error creating calendar:', error);
+      toast.error(`Failed to create calendar: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error;
     }
   };
@@ -150,9 +152,11 @@ export function useCalendarPage() {
       }
       
       updateCalendar(calendar);
+      toast.success(`Calendar "${calendar.name}" updated successfully!`);
       return calendar;
     } catch (error) {
       console.error('Error updating calendar:', error);
+      toast.error(`Failed to update calendar: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error;
     }
   };
@@ -161,8 +165,10 @@ export function useCalendarPage() {
     console.log("Delete calendar:", id);
     try {
       deleteCalendar(id);
+      toast.success("Calendar deleted successfully!");
     } catch (error) {
       console.error('Error deleting calendar:', error);
+      toast.error(`Failed to delete calendar: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error;
     }
   };
@@ -183,9 +189,10 @@ export function useCalendarPage() {
         
         const { id, calendarColor, ...eventWithoutId } = event;
         
-        createEvent(eventWithoutId);
+        const newEvent = createEvent(eventWithoutId);
         
-        console.log("New event created");
+        toast.success('Event created successfully!');
+        console.log("New event created:", newEvent);
       } 
       else {
         console.log("Updating existing event with ID:", event.id);
@@ -205,8 +212,9 @@ export function useCalendarPage() {
         
         const { calendarColor, ...eventToUpdate } = event;
         
-        updateEvent(eventToUpdate);
-        console.log("Event updated");
+        const updatedEvent = updateEvent(eventToUpdate);
+        toast.success('Event updated successfully!');
+        console.log("Event updated:", updatedEvent);
       }
       
       setModalOpen(false);
@@ -221,6 +229,7 @@ export function useCalendarPage() {
     
     try {
       deleteEvent(id);
+      toast.success('Event deleted successfully!');
       setModalOpen(false);
     } catch (error) {
       console.error('Error deleting event:', error);

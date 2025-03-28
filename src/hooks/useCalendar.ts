@@ -1,251 +1,215 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { addDays, addMonths, subMonths, startOfMonth, isSameDay } from 'date-fns';
 import { CalendarEvent, Calendar, CalendarViewType, CalendarShare } from '@/types/calendar';
-import { toast } from 'sonner';
-import { v4 as uuidv4 } from 'uuid';
 
-// Sample colors for new calendars
-const defaultColors = [
-  '#3B82F6', // blue
-  '#10B981', // green
-  '#F59E0B', // yellow
-  '#EF4444', // red
-  '#8B5CF6', // purple
-  '#EC4899', // pink
-  '#6366F1', // indigo
-  '#14B8A6', // teal
-  '#F97316', // orange
-  '#A855F7', // violet
-];
-
-// Function to get a random color from the array
-const getRandomColor = () => {
-  const randomIndex = Math.floor(Math.random() * defaultColors.length);
-  return defaultColors[randomIndex];
+// Sample data - in a real app, this would come from an API or database
+const generateSampleEvents = (calendars: Calendar[]): CalendarEvent[] => {
+  const now = new Date();
+  const events: CalendarEvent[] = [];
+  
+  // Generate some events for the current week
+  const calendarIds = calendars.map(cal => cal.id);
+  
+  // Event 1: Today at 12pm
+  events.push({
+    id: '1',
+    title: 'Meeting',
+    start: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0),
+    end: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 13, 0),
+    type: 'client-meeting',
+    calendar: calendarIds[0]
+  });
+  
+  // Event 2: Today at 12pm on a different calendar
+  events.push({
+    id: '2',
+    title: 'Client Call',
+    start: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0),
+    end: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 13, 0),
+    type: 'client-meeting',
+    calendar: calendarIds[1]
+  });
+  
+  // Event 3: Tomorrow at 12pm
+  const tomorrow = addDays(now, 1);
+  events.push({
+    id: '3',
+    title: 'Planning Session',
+    start: new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 12, 0),
+    end: new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 13, 0),
+    type: 'internal-meeting',
+    calendar: calendarIds[0]
+  });
+  
+  return events;
 };
 
-export function useCalendar() {
-  const [myCalendars, setMyCalendars] = useState<Calendar[]>([
+const generateSampleCalendars = (): Calendar[] => {
+  return [
     {
       id: '1',
-      name: 'Personal',
-      color: '#3B82F6',
+      name: 'My Calendar',
+      color: '#ff9800',
       checked: true,
+      isSelected: true,
+      isUserCalendar: true
     },
     {
       id: '2',
-      name: 'Work',
-      color: '#10B981',
+      name: 'Work Calendar',
+      color: '#4caf50',
       checked: true,
-    }
-  ]);
-  
-  const [otherCalendars, setOtherCalendars] = useState<Calendar[]>([
-    {
-      id: '3',
-      name: 'Team',
-      color: '#F59E0B',
-      checked: false,
-    },
-    {
-      id: '4',
-      name: 'Holidays',
-      color: '#EF4444',
-      checked: false,
-    }
-  ]);
-  
-  const [events, setEvents] = useState<CalendarEvent[]>([
-    {
-      id: '1',
-      title: 'Team Meeting',
-      start: new Date(new Date().setHours(10, 0, 0, 0)),
-      end: new Date(new Date().setHours(11, 30, 0, 0)),
-      calendar: '2', // Work calendar
-      type: 'internal-meeting', // Changed from 'meeting' to 'internal-meeting'
-      location: 'Conference Room A',
-      description: 'Weekly team sync-up',
-    },
-    {
-      id: '2',
-      title: 'Doctor Appointment',
-      start: new Date(new Date().setHours(14, 0, 0, 0)),
-      end: new Date(new Date().setHours(15, 0, 0, 0)),
-      calendar: '1', // Personal calendar
-      type: 'personal', // Changed from 'appointment' to 'personal'
-      location: 'Medical Center',
-      description: 'Annual check-up',
+      isSelected: true,
+      isUserCalendar: true
     },
     {
       id: '3',
-      title: 'Project Deadline',
-      start: new Date(new Date().setDate(new Date().getDate() + 2)),
-      end: new Date(new Date().setDate(new Date().getDate() + 2)),
-      calendar: '2', // Work calendar
-      type: 'deadline',
-      isAllDay: true,
-      description: 'Final submission for client project',
+      name: 'Other Calendar',
+      color: '#2196f3',
+      checked: true,
+      isSelected: false,
+      isUserCalendar: false,
+      sharedWith: [
+        { user_email: 'colleague@example.com', permission: 'view' }
+      ]
     }
-  ]);
+  ];
+};
 
-  // Toggle calendar visibility
-  const toggleCalendar = (id: string) => {
-    // Check if it's in myCalendars
-    const myCalIndex = myCalendars.findIndex(cal => cal.id === id);
-    if (myCalIndex !== -1) {
-      const updatedCalendars = [...myCalendars];
-      updatedCalendars[myCalIndex] = {
-        ...updatedCalendars[myCalIndex],
-        checked: !updatedCalendars[myCalIndex].checked
-      };
-      setMyCalendars(updatedCalendars);
-      return;
-    }
+export const useCalendar = () => {
+  const [currentDate, setCurrentDate] = useState<Date>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [view, setView] = useState<CalendarViewType>('week');
+  const [calendars, setCalendars] = useState<Calendar[]>(generateSampleCalendars());
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  
+  const [myCalendars, setMyCalendars] = useState<Calendar[]>([]);
+  const [otherCalendars, setOtherCalendars] = useState<Calendar[]>([]);
+  
+  useEffect(() => {
+    // In a real app, you would fetch events from an API
+    const sampleEvents = generateSampleEvents(calendars);
+    setEvents(sampleEvents);
     
-    // Check if it's in otherCalendars
-    const otherCalIndex = otherCalendars.findIndex(cal => cal.id === id);
-    if (otherCalIndex !== -1) {
-      const updatedCalendars = [...otherCalendars];
-      updatedCalendars[otherCalIndex] = {
-        ...updatedCalendars[otherCalIndex],
-        checked: !updatedCalendars[otherCalIndex].checked
-      };
-      setOtherCalendars(updatedCalendars);
-    }
-  };
-
-  // Create new calendar
-  const createCalendar = (calendar: Omit<Calendar, 'id'>) => {
-    try {
-      const newCalendar: Calendar = {
-        ...calendar,
-        id: uuidv4(),
-        color: calendar.color || getRandomColor(),
-        checked: true,
-      };
-      
-      setMyCalendars([...myCalendars, newCalendar]);
-      toast.success(`Calendar "${calendar.name}" created successfully`);
-      return newCalendar;
-    } catch (error) {
-      console.error('Error creating calendar:', error);
-      toast.error('Failed to create calendar');
-      throw error;
-    }
+    // Update myCalendars and otherCalendars
+    setMyCalendars(calendars.filter(cal => cal.isUserCalendar));
+    setOtherCalendars(calendars.filter(cal => !cal.isUserCalendar));
+  }, [calendars]);
+  
+  // Get only events from visible calendars
+  const visibleEvents = events.filter(event => {
+    const calendar = calendars.find(cal => cal.id === event.calendar);
+    return calendar && calendar.checked;
+  });
+  
+  const goToToday = () => {
+    setCurrentDate(new Date());
+    setSelectedDate(new Date());
   };
   
-  // Update calendar
-  const updateCalendar = (calendar: Calendar) => {
-    try {
-      const calendarIndex = myCalendars.findIndex(cal => cal.id === calendar.id);
-      
-      if (calendarIndex !== -1) {
-        const updatedCalendars = [...myCalendars];
-        updatedCalendars[calendarIndex] = calendar;
-        setMyCalendars(updatedCalendars);
-        toast.success(`Calendar "${calendar.name}" updated successfully`);
-        return calendar;
-      } else {
-        throw new Error('Calendar not found');
-      }
-    } catch (error) {
-      console.error('Error updating calendar:', error);
-      toast.error('Failed to update calendar');
-      throw error;
-    }
+  const nextMonth = () => {
+    setCurrentDate(addMonths(currentDate, 1));
   };
   
-  // Delete calendar
-  const deleteCalendar = (id: string) => {
-    try {
-      const calendarExists = myCalendars.some(cal => cal.id === id);
-      
-      if (!calendarExists) {
-        throw new Error('Calendar not found');
-      }
-      
-      // Remove calendar
-      setMyCalendars(myCalendars.filter(cal => cal.id !== id));
-      
-      // Remove events associated with this calendar
-      setEvents(events.filter(event => event.calendar !== id));
-      
-      toast.success('Calendar deleted successfully');
-    } catch (error) {
-      console.error('Error deleting calendar:', error);
-      toast.error('Failed to delete calendar');
-      throw error;
-    }
+  const prevMonth = () => {
+    setCurrentDate(subMonths(currentDate, 1));
   };
   
-  // Create event
+  const nextWeek = () => {
+    setCurrentDate(addDays(currentDate, 7));
+  };
+  
+  const prevWeek = () => {
+    setCurrentDate(addDays(currentDate, -7));
+  };
+  
+  const nextDay = () => {
+    setCurrentDate(addDays(currentDate, 1));
+  };
+  
+  const prevDay = () => {
+    setCurrentDate(addDays(currentDate, -1));
+  };
+  
+  const toggleCalendar = (calendarId: string) => {
+    setCalendars(calendars.map(calendar => 
+      calendar.id === calendarId 
+        ? { ...calendar, checked: !calendar.checked } 
+        : calendar
+    ));
+  };
+  
   const createEvent = (event: Omit<CalendarEvent, 'id'>) => {
-    try {
-      const newEvent: CalendarEvent = {
-        ...event,
-        id: uuidv4(),
-      };
-      
-      setEvents([...events, newEvent]);
-      toast.success('Event created successfully');
-      return newEvent;
-    } catch (error) {
-      console.error('Error creating event:', error);
-      toast.error('Failed to create event');
-      throw error;
-    }
+    const newEvent: CalendarEvent = {
+      ...event,
+      id: Math.random().toString(36).substring(2, 11)
+    };
+    
+    setEvents([...events, newEvent]);
+    return newEvent;
   };
   
-  // Update event
-  const updateEvent = (event: CalendarEvent) => {
-    try {
-      const eventIndex = events.findIndex(e => e.id === event.id);
-      
-      if (eventIndex !== -1) {
-        const updatedEvents = [...events];
-        updatedEvents[eventIndex] = event;
-        setEvents(updatedEvents);
-        toast.success('Event updated successfully');
-        return event;
-      } else {
-        throw new Error('Event not found');
-      }
-    } catch (error) {
-      console.error('Error updating event:', error);
-      toast.error('Failed to update event');
-      throw error;
-    }
+  const updateEvent = (updatedEvent: CalendarEvent) => {
+    setEvents(events.map(event => 
+      event.id === updatedEvent.id ? updatedEvent : event
+    ));
+    return updatedEvent;
   };
   
-  // Delete event
-  const deleteEvent = (id: string) => {
-    try {
-      const eventExists = events.some(event => event.id === id);
-      
-      if (!eventExists) {
-        throw new Error('Event not found');
-      }
-      
-      setEvents(events.filter(event => event.id !== id));
-      toast.success('Event deleted successfully');
-    } catch (error) {
-      console.error('Error deleting event:', error);
-      toast.error('Failed to delete event');
-      throw error;
-    }
+  const deleteEvent = (eventId: string) => {
+    setEvents(events.filter(event => event.id !== eventId));
   };
-
+  
+  const createCalendar = (calendar: Omit<Calendar, 'id'>) => {
+    // Generate a random ID for the new calendar
+    const newCalendar: Calendar = {
+      ...calendar,
+      id: Math.random().toString(36).substring(2, 11)
+    };
+    
+    console.log('Creating new calendar with sharing permissions:', calendar.sharedWith);
+    
+    setCalendars([...calendars, newCalendar]);
+    return newCalendar;
+  };
+  
+  const updateCalendar = (updatedCalendar: Calendar) => {
+    setCalendars(calendars.map(calendar => 
+      calendar.id === updatedCalendar.id ? updatedCalendar : calendar
+    ));
+    return updatedCalendar;
+  };
+  
+  const deleteCalendar = (calendarId: string) => {
+    setCalendars(calendars.filter(calendar => calendar.id !== calendarId));
+    // Also remove events for this calendar
+    setEvents(events.filter(event => event.calendar !== calendarId));
+  };
+  
   return {
+    currentDate,
+    selectedDate,
+    view,
+    calendars,
+    events: visibleEvents,
     myCalendars,
     otherCalendars,
-    events,
-    loading: false,
-    error: null,
+    setCurrentDate,
+    setSelectedDate,
+    setView,
+    goToToday,
+    nextMonth,
+    prevMonth,
+    nextWeek,
+    prevWeek,
+    nextDay,
+    prevDay,
     toggleCalendar,
-    createCalendar,
-    updateCalendar,
-    deleteCalendar,
     createEvent,
     updateEvent,
     deleteEvent,
+    createCalendar,
+    updateCalendar,
+    deleteCalendar
   };
-}
+};

@@ -39,18 +39,21 @@ export default function Calendar() {
     handleDeleteCalendar,
   } = useCalendarPage();
   
+  // Wrapper function to open the calendar dialog for creation
   const createCalendarWrapper = () => {
     setCalendarDialogMode('create');
     setSelectedCalendar(null);
     setCalendarDialogOpen(true);
   };
   
+  // Wrapper function to open the calendar dialog for editing
   const editCalendarWrapper = (calendar: CalendarType) => {
     setCalendarDialogMode('edit');
     setSelectedCalendar(calendar);
     setCalendarDialogOpen(true);
   };
   
+  // Wrapper for creating calendar that will close the dialog after creation
   const onCreateCalendar = (calendar: Omit<CalendarType, 'id'>) => {
     try {
       handleCreateCalendar(calendar);
@@ -62,6 +65,7 @@ export default function Calendar() {
     }
   };
   
+  // Wrapper for updating calendar
   const onUpdateCalendar = (calendar: CalendarType) => {
     try {
       handleUpdateCalendar(calendar);
@@ -73,6 +77,7 @@ export default function Calendar() {
     }
   };
   
+  // Wrapper for deleting calendar
   const onDeleteCalendar = (id: string) => {
     try {
       handleDeleteCalendar(id);
@@ -94,6 +99,7 @@ export default function Calendar() {
   
   return (
     <div className="flex h-full flex-col overflow-hidden">
+      {/* Calendar Header - Fixed at top */}
       <div className="flex-shrink-0">
         <CalendarHeader
           currentDate={currentDate}
@@ -105,7 +111,9 @@ export default function Calendar() {
         />
       </div>
       
+      {/* Main content area with sidebar - Both at full height */}
       <div className="flex flex-1 overflow-hidden">
+        {/* Main Calendar Area - This will scroll independently */}
         <div className="flex-1 overflow-hidden">
           <CalendarMain
             view={currentView}
@@ -116,6 +124,7 @@ export default function Calendar() {
           />
         </div>
         
+        {/* Sidebar - Fixed, not scrolling with calendar content */}
         <div className="w-64 border-l border-gray-200 flex-shrink-0 bg-white overflow-hidden">
           <CalendarSidebar
             myCalendars={myCalendars}
@@ -126,8 +135,10 @@ export default function Calendar() {
         </div>
       </div>
       
+      {/* Floating new event button - visible on mobile when sidebar is hidden */}
       <MobileActionButton onClick={handleCreateEvent} />
       
+      {/* Event Modal */}
       <EventModal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
@@ -139,6 +150,7 @@ export default function Calendar() {
         otherCalendars={otherCalendars}
       />
       
+      {/* Calendar Creation/Editing Dialog */}
       <Dialog open={calendarDialogOpen} onOpenChange={setCalendarDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <CalendarManagement

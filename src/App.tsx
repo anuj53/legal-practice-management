@@ -20,7 +20,7 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
-          {/* Use only one toast system at a time - in this case we'll use Sonner */}
+          <Toaster />
           <Sonner />
           <BrowserRouter>
             <Routes>

@@ -71,9 +71,6 @@ export function generateRecurringEventInstances(
   }
 
   console.log(`Generating instances for recurring event: ${event.title}`);
-  console.log(`Event recurrence pattern:`, event.recurrencePattern);
-  console.log(`Date range: ${rangeStart.toISOString()} to ${rangeEnd.toISOString()}`);
-  
   const instances: Event[] = [];
   const { frequency, interval, endDate, weekdays, monthDay, occurrences } = event.recurrencePattern;
   
@@ -84,22 +81,10 @@ export function generateRecurringEventInstances(
   let currentDate = new Date(event.start);
   let instanceCount = 0;
   
-  // Set to track dates we've already added to prevent duplicates
-  const addedDates = new Set<string>();
-  
   // Function to add a new event instance
   const addInstance = (date: Date) => {
     const newStart = new Date(date);
     const newEnd = new Date(newStart.getTime() + durationMs);
-    
-    // Format date to string to use as key in our Set
-    const dateKey = newStart.toISOString();
-    
-    // Skip if we've already added this date (prevent duplicates)
-    if (addedDates.has(dateKey)) {
-      console.log(`Skipping duplicate date: ${dateKey}`);
-      return newStart;
-    }
     
     // Only add if the instance falls within our display range
     if (
@@ -107,34 +92,27 @@ export function generateRecurringEventInstances(
       (newEnd > rangeStart && newEnd <= rangeEnd) ||
       (newStart <= rangeStart && newEnd >= rangeEnd)
     ) {
-      // Mark this date as added
-      addedDates.add(dateKey);
-      
       instances.push({
         ...event,
-        id: `${event.id}-instance-${instanceCount}`, // Ensure unique ID for each instance
         start: newStart,
         end: newEnd,
         isRecurringInstance: true // Mark as an instance of a recurring event
       });
-      
-      instanceCount++;
-      console.log(`Added instance ${instanceCount} at ${newStart.toISOString()}`);
     }
     
     return newStart;
   };
   
-  // For the first instance, include it only if it falls within our range and only if it's not already passed
+  // For the first instance, include it if it falls within our range
   if (currentDate >= rangeStart && currentDate < rangeEnd) {
     addInstance(currentDate);
+    instanceCount++;
   }
 
   // Generate additional instances
   while (true) {
     // Stop if we've reached the specified number of occurrences
     if (occurrences && instanceCount >= occurrences) {
-      console.log(`Stopping: reached ${occurrences} occurrences`);
       break;
     }
     
@@ -146,46 +124,16 @@ export function generateRecurringEventInstances(
         
       case 'weekly':
         if (weekdays && weekdays.length > 0) {
-          // Completely rewritten weekly recurrence logic
-          const currentDayOfWeek = getDay(currentDate); // 0-6 for Sunday-Saturday
+          // For weekly recurrence with specific weekdays
+          currentDate = addDays(currentDate, 1);
           
-          // Sort weekdays to ensure they're in ascending order
-          const sortedWeekdays = [...weekdays].sort((a, b) => a - b);
-          console.log(`Current date: ${currentDate.toISOString()}, current day of week: ${currentDayOfWeek}`);
-          console.log(`Selected weekdays (sorted): ${sortedWeekdays.join(', ')}`);
-          
-          // Find the next weekday in the current week
-          let foundNextDay = false;
-          for (const weekday of sortedWeekdays) {
-            if (weekday > currentDayOfWeek) {
-              // Found a day later this week
-              const daysToAdd = weekday - currentDayOfWeek;
-              console.log(`Found next day in current week: ${weekday}, adding ${daysToAdd} days`);
-              
-              currentDate = addDays(currentDate, daysToAdd);
-              foundNextDay = true;
-              break;
-            }
-          }
-          
-          if (!foundNextDay) {
-            // No days found later this week, jump to first day in next week
-            const nextWeekFirstDay = sortedWeekdays[0];
-            
-            // Calculate days to add:
-            // Days until end of current week (7 - currentDayOfWeek) 
-            // + days from start of week to first selected day in next week (nextWeekFirstDay)
-            // + extra weeks based on interval (interval - 1) * 7
-            const daysToEndOfWeek = 7 - currentDayOfWeek;
-            const daysToAdd = daysToEndOfWeek + nextWeekFirstDay + ((interval - 1) * 7);
-            
-            console.log(`No more days this week. Adding ${daysToAdd} days to jump to next occurrence`);
-            currentDate = addDays(currentDate, daysToAdd);
+          // Find the next matching weekday
+          while (!weekdays.includes(getDay(currentDate))) {
+            currentDate = addDays(currentDate, 1);
           }
         } else {
-          // Simple weekly recurrence (same day each week)
-          console.log(`Simple weekly recurrence, adding ${interval} week(s)`);
-          currentDate = addWeeks(currentDate, interval);
+          // Simple weekly recurrence
+          currentDate = addDays(currentDate, 7 * interval);
         }
         break;
         
@@ -206,35 +154,27 @@ export function generateRecurringEventInstances(
         break;
         
       default:
-        console.log("Unknown frequency type:", frequency);
         return instances; // Unknown frequency
     }
     
     // Stop if we've reached the endDate (if specified)
     if (endDate && currentDate > endDate) {
-      console.log(`Stopping: reached end date ${endDate.toISOString()}`);
       break;
     }
     
     // Stop if we're beyond our display range
     if (currentDate > rangeEnd) {
-      console.log(`Stopping: beyond display range ${rangeEnd.toISOString()}`);
       break;
     }
     
-    // Add this instance if it's within our range
+    // Add this instance if it's within our range and increment the counter
     if (currentDate >= rangeStart) {
       addInstance(currentDate);
-    }
-    
-    // Safety measure: prevent infinite loops by limiting the total iterations
-    if (instanceCount > 100) {
-      console.warn("Safety limit reached: generated 100 instances, stopping to prevent infinite loop");
-      break;
+      instanceCount++; // Increment counter after successfully adding an instance
     }
   }
   
-  console.log(`Generated ${instances.length} total instances for event "${event.title}"`);
+  console.log(`Generated ${instances.length} instances for event "${event.title}"`);
   return instances;
 }
 
