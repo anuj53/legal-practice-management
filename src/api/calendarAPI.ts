@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Calendar, Event, convertDbEventToEvent, convertEventToDbEvent, isValidUUID } from '@/utils/calendarUtils';
@@ -70,7 +69,10 @@ export const fetchEvents = async () => {
         is_recurring,
         type,
         calendar_id,
-        recurrence_pattern
+        recurrence_pattern,
+        user_id,
+        created_at,
+        updated_at
       `);
 
     if (eventsError) {

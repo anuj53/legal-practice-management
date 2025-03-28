@@ -133,6 +133,7 @@ export type Database = {
           id: string
           is_recurring: boolean | null
           location: string | null
+          recurrence_pattern: Json | null
           start_time: string
           title: string
           type: string | null
@@ -147,6 +148,7 @@ export type Database = {
           id?: string
           is_recurring?: boolean | null
           location?: string | null
+          recurrence_pattern?: Json | null
           start_time: string
           title: string
           type?: string | null
@@ -161,6 +163,7 @@ export type Database = {
           id?: string
           is_recurring?: boolean | null
           location?: string | null
+          recurrence_pattern?: Json | null
           start_time?: string
           title?: string
           type?: string | null
