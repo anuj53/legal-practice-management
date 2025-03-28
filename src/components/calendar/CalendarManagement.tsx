@@ -11,11 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  Switch,
-  SwitchThumb,
-  SwitchTrack,
-} from '@/components/ui/switch';
+import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 
 interface CalendarManagementProps {
@@ -233,9 +229,7 @@ export function CalendarManagement({
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium">Firm Calendar</label>
-                <Switch checked={isFirm} onCheckedChange={setIsFirm}>
-                  <SwitchThumb />
-                </Switch>
+                <Switch checked={isFirm} onCheckedChange={setIsFirm} />
               </div>
               <p className="text-xs text-gray-500">Official firm calendars are visible to all team members.</p>
             </div>
@@ -243,9 +237,7 @@ export function CalendarManagement({
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium">Statute Calendar</label>
-                <Switch checked={isStatute} onCheckedChange={setIsStatute}>
-                  <SwitchThumb />
-                </Switch>
+                <Switch checked={isStatute} onCheckedChange={setIsStatute} />
               </div>
               <p className="text-xs text-gray-500">Use for statute of limitations and important deadlines.</p>
             </div>
@@ -253,9 +245,7 @@ export function CalendarManagement({
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium">Public Calendar</label>
-                <Switch checked={isPublic} onCheckedChange={setIsPublic}>
-                  <SwitchThumb />
-                </Switch>
+                <Switch checked={isPublic} onCheckedChange={setIsPublic} />
               </div>
               <p className="text-xs text-gray-500">Make this calendar visible to other team members.</p>
             </div>
