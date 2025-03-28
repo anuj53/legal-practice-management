@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { CalendarEvent, RecurrencePattern } from '@/types/calendar';
 import { useCalendar } from '@/hooks/useCalendar';
@@ -108,7 +107,6 @@ export function useEventManagement() {
         
         let newEvent = await createEvent(eventWithoutId);
         
-        // If this is a recurring event, make it recurring
         if (recurrencePattern && newEvent) {
           newEvent = await makeEventRecurring(newEvent, recurrencePattern);
         }
@@ -117,14 +115,12 @@ export function useEventManagement() {
         console.log("New event created:", newEvent);
       } 
       else if (event.isRecurring && recurrenceEditMode !== 'single') {
-        // Handle editing recurring events
         console.log(`Updating ${recurrenceEditMode === 'all' ? 'all occurrences' : 'future occurrences'} of recurring event`);
         
-        // For simplicity, we're just updating this occurrence for now
         console.log("Updating recurring event instance. In a production system, we would handle the recurrence properly");
         
         const { calendarColor, ...eventToUpdate } = event;
-        const updatedEvent = await updateEvent(eventToUpdate);
+        const updatedEvent = await updateEvent(eventToUpdate as any);
         
         toast.success('Recurring event updated successfully!');
       }
@@ -144,21 +140,16 @@ export function useEventManagement() {
           return;
         }
         
-        // Regular event update
         const { calendarColor, ...eventToUpdate } = event;
         
-        // Update recurrence settings
         if (recurrencePattern && !event.isRecurring) {
-          // Make the event recurring
-          const updatedEvent = await makeEventRecurring(eventToUpdate, recurrencePattern);
+          const updatedEvent = await makeEventRecurring(eventToUpdate as any, recurrencePattern);
           toast.success('Event updated with recurring settings!');
         } else if (event.isRecurring && !recurrencePattern) {
-          // Remove recurrence from the event
-          const updatedEvent = await makeEventNonRecurring(eventToUpdate);
+          const updatedEvent = await makeEventNonRecurring(eventToUpdate as any);
           toast.success('Recurring settings removed from event!');
         } else {
-          // Normal update
-          const updatedEvent = await updateEvent(eventToUpdate);
+          const updatedEvent = await updateEvent(eventToUpdate as any);
           toast.success('Event updated successfully!');
         }
         
@@ -178,10 +169,8 @@ export function useEventManagement() {
     
     try {
       if (recurrenceEditMode && recurrenceEditMode !== 'single') {
-        // Handle deleting recurring events
         console.log(`Deleting ${recurrenceEditMode === 'all' ? 'all occurrences' : 'future occurrences'} of recurring event`);
         
-        // For simplicity, we're just deleting this occurrence for now
         console.log("Deleting recurring event instance. In a production system, we would handle the recurrence properly");
       }
       

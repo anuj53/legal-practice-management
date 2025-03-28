@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { CalendarEvent, CalendarViewType, RecurrencePattern } from '@/types/calendar';
 import { useCalendar } from '@/hooks/useCalendar';
@@ -11,22 +10,19 @@ export function useCalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [currentView, setCurrentView] = useState<CalendarViewType>('week');
   const [displayedEvents, setDisplayedEvents] = useState<CalendarEvent[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const {
     myCalendars,
     otherCalendars,
     events: rawEvents,
-    error,
-    dataUpdated
   } = useCalendar();
   
-  const [loading, setLoading] = useState(true);
-  
   useEffect(() => {
-    if (rawEvents.length > 0 || dataUpdated > 0) {
+    if (rawEvents.length > 0) {
       setLoading(false);
     }
-  }, [rawEvents, dataUpdated]);
+  }, [rawEvents]);
   
   const {
     selectedEvent,
@@ -51,17 +47,15 @@ export function useCalendarPage() {
     handleDeleteCalendar,
   } = useCalendarManagement();
   
-  // Enhanced events with calendar color information
   const events = rawEvents.map(event => {
     const calendar = [...myCalendars, ...otherCalendars].find(cal => cal.id === event.calendar);
     return {
       ...event,
-      calendarColor: calendar?.color || '#9CA3AF', // Default gray color if calendar not found
-      type: event.type || 'client-meeting' // Ensure type is always set
+      calendarColor: calendar?.color || '#9CA3AF',
+      type: event.type || 'client-meeting'
     } as CalendarEvent;
   });
   
-  // Calculate view date range based on current view and date
   useEffect(() => {
     let viewStart: Date;
     let viewEnd: Date;
@@ -94,21 +88,22 @@ export function useCalendarPage() {
         viewEnd.setHours(23, 59, 59, 999);
     }
 
-    // Process recurring events to generate instances for the view range
     const processedEvents = [...events];
     
-    // Find recurring events and generate their instances
     events.forEach(event => {
       if (event.isRecurring && event.recurrencePattern) {
         const instances = generateRecurringInstances(
-          event,
+          event as any,
           event.recurrencePattern,
           viewStart,
           viewEnd
         );
         
-        // Add the generated instances to the processed events
-        processedEvents.push(...instances.slice(1)); // Exclude the first one which is the base event
+        processedEvents.push(...instances.slice(1).map(instance => ({
+          ...instance,
+          type: instance.type || 'client-meeting',
+          calendarColor: event.calendarColor
+        } as CalendarEvent)));
       }
     });
     
@@ -140,7 +135,7 @@ export function useCalendarPage() {
     setRecurrenceEditMode,
     myCalendars,
     otherCalendars,
-    events: displayedEvents, // Use processed events with recurring instances
+    events: displayedEvents,
     loading: loading,
     handleCalendarToggle,
     handleEventClick,
