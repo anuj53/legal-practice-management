@@ -12,7 +12,7 @@ export interface CalendarEvent {
   description?: string;
   location?: string;
   attendees?: string[];
-  reminder?: string;
+  reminder?: 'none' | '5min' | '15min' | '30min' | '1hour' | '1day';
   caseId?: string;
   clientName?: string;
   assignedLawyer?: string;
@@ -22,6 +22,23 @@ export interface CalendarEvent {
     docketNumber?: string;
   };
   documents?: Array<{id: string, name: string, url: string}>;
+  
+  // Recurrence-related properties
+  isRecurring?: boolean;
+  recurrenceId?: string;
+  recurrencePattern?: RecurrencePattern;
+  isException?: boolean;
+  originalDate?: Date;
+  seriesId?: string;
+}
+
+export interface RecurrencePattern {
+  frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  interval: number;
+  weekDays?: string[]; // For weekly recurrence, e.g. ['MO', 'WE', 'FR']
+  monthDays?: number[]; // For monthly recurrence, e.g. [1, 15, 30]
+  endsOn?: Date; // If it ends on a specific date
+  endsAfter?: number; // Or ends after N occurrences
 }
 
 export interface Calendar {
@@ -35,13 +52,15 @@ export interface Calendar {
   isSelected?: boolean;
   isUserCalendar?: boolean;
   user_id?: string;
+  owner_user_id?: string;
+  type?: 'personal' | 'firm' | 'statute' | 'public';
   sharedWith?: CalendarShare[];
 }
 
 export interface CalendarShare {
   id?: string;
   user_email: string;
-  permission: 'view' | 'edit' | 'admin';
+  permission: 'view' | 'edit' | 'owner';
 }
 
 export type CalendarViewType = 'day' | 'week' | 'month' | 'agenda';
