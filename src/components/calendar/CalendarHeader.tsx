@@ -18,7 +18,7 @@ export interface CalendarHeaderProps {
   onViewChange: (view: CalendarViewType) => void;
   onDateChange: (date: Date) => void;
   onCreateEvent: () => void;
-  onCreateCalendar?: () => void; // Changed to match expected function signature
+  onCreateCalendar?: () => void;
 }
 
 export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
@@ -79,16 +79,16 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
   return (
     <div className="flex justify-between items-center mb-4">
       <div className="flex items-center space-x-2">
-        <Button variant="outline" size="sm" onClick={handleToday}>
+        <Button variant="outline" size="sm" onClick={handleToday} className="bg-gray-50">
           Today
         </Button>
-        <Button variant="ghost" size="icon" onClick={handlePrevious}>
+        <Button variant="ghost" size="icon" onClick={handlePrevious} className="bg-gray-50/50">
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <span className="text-lg font-medium px-2 min-w-[180px] text-center">
           {formatDateRange()}
         </span>
-        <Button variant="ghost" size="icon" onClick={handleNext}>
+        <Button variant="ghost" size="icon" onClick={handleNext} className="bg-gray-50/50">
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
@@ -98,7 +98,7 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
           value={view}
           onValueChange={(value) => onViewChange(value as CalendarViewType)}
         >
-          <SelectTrigger className="w-[120px]">
+          <SelectTrigger className="w-[120px] bg-gray-50/70">
             <SelectValue placeholder="View" />
           </SelectTrigger>
           <SelectContent>
@@ -112,7 +112,7 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
         <Button 
           variant="outline" 
           size="sm" 
-          className="gap-1" 
+          className="gap-1 bg-gray-50" 
           onClick={onCreateEvent}
         >
           <Plus className="h-4 w-4" />
@@ -123,7 +123,7 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
           <Button 
             variant="outline" 
             size="sm" 
-            className="gap-1" 
+            className="gap-1 bg-gray-50" 
             onClick={onCreateCalendar}
           >
             <Calendar className="h-4 w-4" />
