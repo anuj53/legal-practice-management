@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { CalendarHeader } from '@/components/calendar/CalendarHeader';
 import { CalendarSidebar } from '@/components/calendar/CalendarSidebar';
 import { CalendarMain } from '@/components/calendar/CalendarMain';
@@ -7,8 +7,13 @@ import { EventModal } from '@/components/calendar/EventModal';
 import { MobileActionButton } from '@/components/calendar/MobileActionButton';
 import { useCalendarPage } from '@/hooks/useCalendarPage';
 import { toast } from 'sonner';
+import { CalendarManagement } from '@/components/calendar/CalendarManagement';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Calendar as CalendarType } from '@/types/calendar';
 
 export default function Calendar() {
+  const [calendarDialogOpen, setCalendarDialogOpen] = useState(false);
+  
   const {
     currentDate,
     setCurrentDate,
@@ -31,26 +36,30 @@ export default function Calendar() {
     handleCreateCalendar,
   } = useCalendarPage();
   
-  // Wrapper function to match the expected signature
+  // Wrapper function to open the calendar dialog
   const createCalendarWrapper = () => {
-    // Using a dialog/modal to get data and call handleCreateCalendar
-    const calendarData = {
-      name: "New Calendar",
-      color: "#4caf50",
-      checked: true,
-      isSelected: true,
-      isUserCalendar: true,
-      is_public: false,
-      sharedWith: []
-    };
-    
+    setCalendarDialogOpen(true);
+  };
+  
+  // Wrapper for creating calendar that will close the dialog after creation
+  const onCreateCalendar = (calendar: Omit<CalendarType, 'id'>) => {
     try {
-      handleCreateCalendar(calendarData);
-      toast.info("Opening calendar creation dialog");
+      handleCreateCalendar(calendar);
+      setCalendarDialogOpen(false);
+      toast.success(`Calendar "${calendar.name}" created successfully!`);
     } catch (error) {
       console.error("Error creating calendar:", error);
       toast.error("Failed to create calendar");
     }
+  };
+  
+  // Dummy functions for update/delete since we're only focusing on create functionality
+  const onUpdateCalendar = (calendar: CalendarType) => {
+    toast.info("Calendar update functionality not implemented");
+  };
+  
+  const onDeleteCalendar = (id: string) => {
+    toast.info("Calendar deletion functionality not implemented");
   };
   
   if (loading) {
@@ -94,7 +103,6 @@ export default function Calendar() {
             myCalendars={myCalendars}
             otherCalendars={otherCalendars}
             onCalendarToggle={handleCalendarToggle}
-            onCreateEvent={handleCreateEvent}
           />
         </div>
       </div>
@@ -111,6 +119,21 @@ export default function Calendar() {
         onSave={handleSaveEvent}
         onDelete={handleDeleteEvent}
       />
+      
+      {/* Calendar Creation Dialog */}
+      <Dialog open={calendarDialogOpen} onOpenChange={setCalendarDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <CalendarManagement
+            myCalendars={myCalendars}
+            otherCalendars={otherCalendars}
+            onCalendarToggle={handleCalendarToggle}
+            onCreateCalendar={onCreateCalendar}
+            onUpdateCalendar={onUpdateCalendar}
+            onDeleteCalendar={onDeleteCalendar}
+            dialogMode={true}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

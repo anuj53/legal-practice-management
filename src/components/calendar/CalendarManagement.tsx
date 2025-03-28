@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Edit2, Trash2, X } from 'lucide-react';
-import { Calendar } from '@/utils/calendarUtils';
+import { Calendar } from '@/types/calendar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -21,6 +21,7 @@ interface CalendarManagementProps {
   onCreateCalendar: (calendar: Omit<Calendar, 'id'>) => void;
   onUpdateCalendar: (calendar: Calendar) => void;
   onDeleteCalendar: (id: string) => void;
+  dialogMode?: boolean; // Whether component is used inside a dialog
 }
 
 export function CalendarManagement({
@@ -29,7 +30,8 @@ export function CalendarManagement({
   onCalendarToggle,
   onCreateCalendar,
   onUpdateCalendar,
-  onDeleteCalendar
+  onDeleteCalendar,
+  dialogMode = false
 }: CalendarManagementProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [editMode, setEditMode] = useState<'create' | 'edit'>('create');
@@ -39,6 +41,17 @@ export function CalendarManagement({
   const [isFirm, setIsFirm] = useState(false);
   const [isStatute, setIsStatute] = useState(false);
   const [isPublic, setIsPublic] = useState(false);
+  
+  React.useEffect(() => {
+    if (dialogMode) {
+      setEditMode('create');
+      setCalendarName('');
+      setCalendarColor('#5cb85c');
+      setIsFirm(false);
+      setIsStatute(false);
+      setIsPublic(false);
+    }
+  }, [dialogMode]);
   
   const handleOpenDialog = (mode: 'create' | 'edit', calendar?: Calendar) => {
     setEditMode(mode);
@@ -73,9 +86,12 @@ export function CalendarManagement({
         checked: true,
         is_firm: isFirm,
         is_statute: isStatute,
-        is_public: isPublic
+        is_public: isPublic,
+        sharedWith: []
       });
-      toast.success('Calendar created successfully');
+      if (!dialogMode) {
+        toast.success('Calendar created successfully');
+      }
     } else if (selectedCalendar) {
       onUpdateCalendar({
         ...selectedCalendar,
@@ -88,7 +104,9 @@ export function CalendarManagement({
       toast.success('Calendar updated successfully');
     }
     
-    setIsOpen(false);
+    if (!dialogMode) {
+      setIsOpen(false);
+    }
   };
   
   const handleDelete = () => {
@@ -109,6 +127,77 @@ export function CalendarManagement({
     '#fd7e14', // Deep Orange
     '#343a40', // Dark Gray
   ];
+  
+  if (dialogMode) {
+    return (
+      <>
+        <DialogHeader>
+          <DialogTitle>Create New Calendar</DialogTitle>
+          <DialogDescription>
+            Add a new calendar to organize your events
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Calendar Name</label>
+            <Input 
+              value={calendarName}
+              onChange={(e) => setCalendarName(e.target.value)}
+              placeholder="Enter calendar name"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Calendar Color</label>
+            <div className="flex gap-2">
+              {availableColors.map(color => (
+                <div 
+                  key={color} 
+                  onClick={() => setCalendarColor(color)}
+                  className={cn(
+                    "w-6 h-6 rounded-full cursor-pointer",
+                    calendarColor === color && "ring-2 ring-offset-2 ring-gray-400"
+                  )}
+                  style={{ backgroundColor: color }}
+                />
+              ))}
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium">Firm Calendar</label>
+              <Switch checked={isFirm} onCheckedChange={setIsFirm} />
+            </div>
+            <p className="text-xs text-gray-500">Official firm calendars are visible to all team members.</p>
+          </div>
+          
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium">Statute Calendar</label>
+              <Switch checked={isStatute} onCheckedChange={setIsStatute} />
+            </div>
+            <p className="text-xs text-gray-500">Use for statute of limitations and important deadlines.</p>
+          </div>
+          
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium">Public Calendar</label>
+              <Switch checked={isPublic} onCheckedChange={setIsPublic} />
+            </div>
+            <p className="text-xs text-gray-500">Make this calendar visible to other team members.</p>
+          </div>
+        </div>
+        
+        <DialogFooter className="flex justify-end">
+          <Button onClick={handleSubmit}>
+            Create Calendar
+          </Button>
+        </DialogFooter>
+      </>
+    );
+  }
   
   return (
     <div className="bg-white rounded-lg shadow p-4 mb-4">
@@ -276,7 +365,6 @@ export function CalendarManagement({
   );
 }
 
-// Helper function
 const cn = (...classes: (string | boolean | undefined)[]) => {
   return classes.filter(Boolean).join(' ');
 };
