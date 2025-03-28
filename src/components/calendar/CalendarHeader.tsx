@@ -106,9 +106,6 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
             <SelectItem value="agenda">Agenda</SelectItem>
           </SelectContent>
         </Select>
-        <Button variant="default" onClick={onCreateEvent}>
-          Add Event
-        </Button>
       </div>
     </div>
   );
