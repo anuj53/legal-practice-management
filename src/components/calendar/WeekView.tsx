@@ -94,7 +94,7 @@ export const WeekView: React.FC<WeekViewProps> = ({
   return (
     <div className="week-view h-full flex flex-col">
       {/* Headers row - always visible at the top */}
-      <div className="grid grid-cols-8 border-b border-gray-200 bg-background sticky top-0 z-10 shadow-sm">
+      <div className="grid grid-cols-8 border-b border-gray-200 bg-white sticky top-0 z-10 shadow-sm">
         {/* Corner cell - top left empty cell */}
         <div className="col-span-1 border-r border-gray-200 p-2 text-center font-medium">
           Hour
@@ -127,7 +127,7 @@ export const WeekView: React.FC<WeekViewProps> = ({
             {hours.map((hourLabel, hourIndex) => (
               <React.Fragment key={hourIndex}>
                 {/* Hour label - left side - fixed */}
-                <div className="col-span-1 border-r border-b border-gray-200 p-2 text-center sticky left-0 bg-background h-[60px]">
+                <div className="col-span-1 border-r border-b border-gray-200 p-2 text-center sticky left-0 bg-white h-[60px]">
                   {hourLabel}
                 </div>
                 
