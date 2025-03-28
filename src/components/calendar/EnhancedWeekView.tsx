@@ -13,7 +13,7 @@ import {
   getMonth,
   getYear
 } from 'date-fns';
-import { ChevronLeft, ChevronRight, Plus, MoreVertical } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Calendar, MoreVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Event } from '@/utils/calendarUtils';
 import { Button } from '@/components/ui/button';
@@ -228,11 +228,13 @@ export function EnhancedWeekView({
               </Select>
               
               <Button 
-                className="bg-blue-600 hover:bg-blue-700 gap-1"
+                variant="outline" 
+                size="sm" 
+                className="gap-1"
                 onClick={onCreateEvent}
               >
                 <Plus className="h-4 w-4" />
-                Add New Event
+                New Event
               </Button>
               
               <DropdownMenu>

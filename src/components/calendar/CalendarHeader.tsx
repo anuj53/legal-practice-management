@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Calendar } from 'lucide-react';
 import { CalendarViewType } from '@/types/calendar';
 
 export interface CalendarHeaderProps {
@@ -18,6 +18,7 @@ export interface CalendarHeaderProps {
   onViewChange: (view: CalendarViewType) => void;
   onDateChange: (date: Date) => void;
   onCreateEvent: () => void;
+  onCreateCalendar?: () => void;
 }
 
 export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
@@ -25,7 +26,8 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
   view,
   onViewChange,
   onDateChange,
-  onCreateEvent
+  onCreateEvent,
+  onCreateCalendar
 }) => {
   const formatDateRange = () => {
     if (view === 'month') {
@@ -106,6 +108,28 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
             <SelectItem value="agenda">Agenda</SelectItem>
           </SelectContent>
         </Select>
+
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="gap-1" 
+          onClick={onCreateEvent}
+        >
+          <Plus className="h-4 w-4" />
+          New Event
+        </Button>
+
+        {onCreateCalendar && (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="gap-1" 
+            onClick={onCreateCalendar}
+          >
+            <Calendar className="h-4 w-4" />
+            New Calendar
+          </Button>
+        )}
       </div>
     </div>
   );

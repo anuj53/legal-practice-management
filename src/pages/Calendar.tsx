@@ -49,6 +49,7 @@ export default function Calendar() {
           onViewChange={setCurrentView}
           onDateChange={setCurrentDate}
           onCreateEvent={handleCreateEvent}
+          onCreateCalendar={handleCreateCalendar}
         />
       </div>
       
@@ -71,7 +72,6 @@ export default function Calendar() {
             myCalendars={myCalendars}
             otherCalendars={otherCalendars}
             onCalendarToggle={handleCalendarToggle}
-            onCreateEvent={handleCreateEvent}
             onCreateCalendar={handleCreateCalendar}
           />
         </div>
