@@ -1,10 +1,11 @@
 
 import React, { useEffect, useRef, useState } from 'react';
-import { format } from 'date-fns';
+import { format, addDays, getDate, isSameDay } from 'date-fns';
 import { CalendarEvent } from '@/types/calendar';
 import { cn } from '@/lib/utils';
 import { getHours } from '@/utils/dateUtils';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { generateRecurringEventInstances } from '@/utils/calendarUtils';
 
 interface DayViewProps {
   currentDate: Date;
@@ -22,6 +23,24 @@ export const DayView: React.FC<DayViewProps> = ({
   const hours = getHours();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [currentTimePosition, setCurrentTimePosition] = useState<number>(0);
+  
+  // Process events to include recurring event instances
+  const processedEvents = React.useMemo(() => {
+    // First add all non-recurring events
+    const allEvents = [...events.filter(event => !event.isRecurring)];
+    
+    // Then add instances of recurring events for the current day
+    events.filter(event => event.isRecurring && event.recurrencePattern).forEach(recurringEvent => {
+      const instances = generateRecurringEventInstances(
+        recurringEvent, 
+        currentDate, 
+        new Date(currentDate.getTime() + 24 * 60 * 60 * 1000) // next day
+      );
+      allEvents.push(...instances);
+    });
+    
+    return allEvents;
+  }, [events, currentDate]);
   
   // Calculate current time indicator position and set up auto-scroll
   useEffect(() => {
@@ -56,7 +75,7 @@ export const DayView: React.FC<DayViewProps> = ({
   
   // Event filtering and display logic
   const getEventsForHour = (hour: number) => {
-    return events.filter((event) => {
+    return processedEvents.filter((event) => {
       const eventDate = new Date(event.start);
       const eventHour = eventDate.getHours();
       const eventDay = new Date(eventDate);
@@ -144,10 +163,11 @@ export const DayView: React.FC<DayViewProps> = ({
                   >
                     {hourEvents.map((event) => (
                       <div
-                        key={event.id}
+                        key={`${event.id}-${event.start.getTime()}`}
                         className={cn(
                           "p-2 rounded cursor-pointer",
-                          eventColors[event.type] || "bg-gray-500 text-white"
+                          eventColors[event.type] || "bg-gray-500 text-white",
+                          event.isRecurring && "border-l-4 border-white"
                         )}
                         style={getEventStyle(event)}
                         onClick={(e) => {
@@ -158,6 +178,7 @@ export const DayView: React.FC<DayViewProps> = ({
                         <div className="h-full w-full flex flex-col">
                           <div className="truncate font-medium">{format(new Date(event.start), 'h:mm')} {event.title}</div>
                           {event.description && <div className="truncate text-xs opacity-90">{event.description}</div>}
+                          {event.isRecurring && <div className="text-xs mt-1">↺ Recurring</div>}
                         </div>
                       </div>
                     ))}
