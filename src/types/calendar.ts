@@ -64,3 +64,6 @@ export interface CalendarShare {
 }
 
 export type CalendarViewType = 'day' | 'week' | 'month' | 'agenda';
+
+// Add Event type here to fix the import issues in other files
+export type Event = CalendarEvent;

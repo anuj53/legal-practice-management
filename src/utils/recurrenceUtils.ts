@@ -1,6 +1,6 @@
 
 import { addDays, addWeeks, addMonths, addYears, isBefore } from 'date-fns';
-import { Event, RecurrencePattern } from '@/types/calendar';
+import { CalendarEvent as Event, RecurrencePattern } from '@/types/calendar';
 
 /**
  * Generate recurring event instances within a date range

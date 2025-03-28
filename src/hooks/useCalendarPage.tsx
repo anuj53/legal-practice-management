@@ -17,14 +17,14 @@ export function useCalendarPage() {
     myCalendars,
     otherCalendars,
     events: rawEvents,
-    loading
+    dataUpdated // Changed from loading to dataUpdated
   } = useCalendar();
   
   useEffect(() => {
-    if (!loading && rawEvents.length > 0) {
+    if (rawEvents.length > 0) {
       setIsLoading(false);
     }
-  }, [rawEvents, loading]);
+  }, [rawEvents, dataUpdated]);
   
   const {
     selectedEvent,
@@ -141,7 +141,7 @@ export function useCalendarPage() {
     myCalendars,
     otherCalendars,
     events: displayedEvents,
-    loading: isLoading,
+    loading: isLoading, // Return isLoading instead
     handleCalendarToggle,
     handleEventClick,
     handleDayClick,

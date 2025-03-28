@@ -8,7 +8,8 @@ import {
   SelectValue
 } from "@/components/ui/select";
 
-type ReminderType = 'none' | '5m' | '10m' | '15m' | '30m' | '1h' | '2h' | '1d' | '2d';
+// Update ReminderType to align with the values used in calendar.ts
+type ReminderType = 'none' | '5min' | '15min' | '30min' | '1hour' | '1day';
 
 interface ReminderSelectProps {
   value: ReminderType;
@@ -32,14 +33,11 @@ export function ReminderSelect({
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="none">No reminder</SelectItem>
-        <SelectItem value="5m">5 minutes before</SelectItem>
-        <SelectItem value="10m">10 minutes before</SelectItem>
-        <SelectItem value="15m">15 minutes before</SelectItem>
-        <SelectItem value="30m">30 minutes before</SelectItem>
-        <SelectItem value="1h">1 hour before</SelectItem>
-        <SelectItem value="2h">2 hours before</SelectItem>
-        <SelectItem value="1d">1 day before</SelectItem>
-        <SelectItem value="2d">2 days before</SelectItem>
+        <SelectItem value="5min">5 minutes before</SelectItem>
+        <SelectItem value="15min">15 minutes before</SelectItem>
+        <SelectItem value="30min">30 minutes before</SelectItem>
+        <SelectItem value="1hour">1 hour before</SelectItem>
+        <SelectItem value="1day">1 day before</SelectItem>
       </SelectContent>
     </Select>
   );

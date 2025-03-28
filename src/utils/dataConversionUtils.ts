@@ -1,5 +1,5 @@
 
-import { Event, RecurrencePattern } from '@/types/calendar';
+import { CalendarEvent as Event, RecurrencePattern } from '@/types/calendar';
 
 // Convert database event to app event
 export const convertDbEventToEvent = (dbEvent: any): Event => {
