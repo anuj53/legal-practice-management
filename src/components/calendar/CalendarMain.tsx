@@ -22,6 +22,9 @@ export function CalendarMain({ view, date, events, onEventClick, onDayClick }: C
   const processedEvents = useMemo(() => {
     console.log(`Processing events for ${view} view with ${events.length} events`);
     
+    // Create a Set to track event IDs to prevent duplicates
+    const processedEventIds = new Set<string>();
+    
     // Separate recurring and non-recurring events
     const recurringEvents = events.filter(event => event.isRecurring && event.recurrencePattern);
     const regularEvents = events.filter(event => !event.isRecurring || !event.recurrencePattern);
@@ -32,8 +35,17 @@ export function CalendarMain({ view, date, events, onEventClick, onDayClick }: C
     console.log(`Found ${recurringEvents.length} recurring events to process`);
     console.log(`Found ${filteredRegularEvents.length} regular events to display`);
     
+    // Add regular events to our result
+    const result: CalendarEvent[] = [];
+    
+    // Add all regular events first and track their IDs
+    filteredRegularEvents.forEach(event => {
+      processedEventIds.add(event.id);
+      result.push(event);
+    });
+    
     if (recurringEvents.length === 0) {
-      return filteredRegularEvents;
+      return result;
     }
     
     // Determine the appropriate date range for recurring events based on view
@@ -62,25 +74,32 @@ export function CalendarMain({ view, date, events, onEventClick, onDayClick }: C
         rangeEnd.setDate(rangeEnd.getDate() + 30); // One month forward
         break;
       default:
-        return filteredRegularEvents;
+        return result;
     }
     
     console.log(`Date range for recurring events: ${rangeStart.toISOString()} to ${rangeEnd.toISOString()}`);
     
     // Generate instances for each recurring event
-    let recurringInstances: CalendarEvent[] = [];
-    
     recurringEvents.forEach(event => {
       if (event.recurrencePattern) {
         console.log(`Generating instances for event: ${event.title} with pattern:`, event.recurrencePattern);
         const instances = generateRecurringEventInstances(event, rangeStart, rangeEnd);
         console.log(`Generated ${instances.length} instances`);
-        recurringInstances = [...recurringInstances, ...instances];
+        
+        // Only add instances that don't duplicate existing events
+        instances.forEach(instance => {
+          if (!processedEventIds.has(instance.id)) {
+            processedEventIds.add(instance.id);
+            result.push(instance);
+          } else {
+            console.log(`Skipping duplicate instance with ID: ${instance.id}`);
+          }
+        });
       }
     });
     
-    // Combine regular events with recurring instances
-    return [...filteredRegularEvents, ...recurringInstances];
+    console.log(`Total events after processing: ${result.length}`);
+    return result;
   }, [events, date, view]);
 
   return (
