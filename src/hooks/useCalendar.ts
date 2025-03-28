@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { addDays, addMonths, subMonths, startOfMonth, isSameDay } from 'date-fns';
 import { CalendarEvent, Calendar, CalendarViewType, CalendarShare } from '@/types/calendar';
@@ -84,10 +83,17 @@ export const useCalendar = () => {
   const [calendars, setCalendars] = useState<Calendar[]>(generateSampleCalendars());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   
+  const [myCalendars, setMyCalendars] = useState<Calendar[]>([]);
+  const [otherCalendars, setOtherCalendars] = useState<Calendar[]>([]);
+  
   useEffect(() => {
     // In a real app, you would fetch events from an API
     const sampleEvents = generateSampleEvents(calendars);
     setEvents(sampleEvents);
+    
+    // Update myCalendars and otherCalendars
+    setMyCalendars(calendars.filter(cal => cal.isUserCalendar));
+    setOtherCalendars(calendars.filter(cal => !cal.isUserCalendar));
   }, [calendars]);
   
   // Get only events from visible calendars
@@ -167,12 +173,27 @@ export const useCalendar = () => {
     return newCalendar;
   };
   
+  const updateCalendar = (updatedCalendar: Calendar) => {
+    setCalendars(calendars.map(calendar => 
+      calendar.id === updatedCalendar.id ? updatedCalendar : calendar
+    ));
+    return updatedCalendar;
+  };
+  
+  const deleteCalendar = (calendarId: string) => {
+    setCalendars(calendars.filter(calendar => calendar.id !== calendarId));
+    // Also remove events for this calendar
+    setEvents(events.filter(event => event.calendar !== calendarId));
+  };
+  
   return {
     currentDate,
     selectedDate,
     view,
     calendars,
     events: visibleEvents,
+    myCalendars,
+    otherCalendars,
     setCurrentDate,
     setSelectedDate,
     setView,
@@ -187,6 +208,8 @@ export const useCalendar = () => {
     createEvent,
     updateEvent,
     deleteEvent,
-    createCalendar
+    createCalendar,
+    updateCalendar,
+    deleteCalendar
   };
 };

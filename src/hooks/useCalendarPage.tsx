@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { CalendarEvent, Calendar, CalendarViewType, CalendarShare } from '@/types/calendar';
 import { useCalendar } from '@/hooks/useCalendar';
@@ -12,7 +11,7 @@ export function useCalendarPage() {
   const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('view');
 
   const {
-    myCalendars: calendars,
+    myCalendars,
     otherCalendars,
     events,
     createEvent,
@@ -24,14 +23,8 @@ export function useCalendarPage() {
     deleteCalendar, 
   } = useCalendar();
   
-  // Split calendars into my calendars and other calendars
-  const myCalendars = calendars.filter(cal => cal.isUserCalendar);
-  
-  // Get only events from selected calendars
-  const filteredEvents = events.filter(event => {
-    const calendar = calendars.find(cal => cal.id === event.calendar);
-    return calendar && calendar.checked;
-  });
+  // Get only events from selected calendars - we don't need to manually split calendars now
+  const filteredEvents = events;
   
   const handleCalendarToggle = (id: string, category: 'my' | 'other') => {
     toggleCalendar(id);
@@ -95,7 +88,7 @@ export function useCalendarPage() {
     }
   };
 
-  // Add the missing functions for updating and deleting calendars
+  // Add the functions for updating and deleting calendars
   const handleUpdateCalendar = (calendar: Calendar) => {
     console.log("Update calendar:", calendar);
     try {
