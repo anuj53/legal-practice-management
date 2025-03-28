@@ -93,11 +93,14 @@ export const WeekView: React.FC<WeekViewProps> = ({
 
   return (
     <div className="week-view h-full flex flex-col">
-      {/* Headers row - stays fixed at the top with sticky positioning */}
-      <div className="grid grid-cols-8 border-b border-gray-200 bg-background sticky top-0 z-10">
+      {/* Headers row - always visible at the top */}
+      <div className="grid grid-cols-8 border-b border-gray-200 bg-background sticky top-0 z-10 shadow-sm">
+        {/* Corner cell - top left empty cell */}
         <div className="col-span-1 border-r border-gray-200 p-2 text-center font-medium">
           Hour
         </div>
+        
+        {/* Day headers */}
         {days.map((day, index) => (
           <div key={index} className={cn(
             "col-span-1 p-2 text-center border-r border-gray-200",
@@ -123,7 +126,7 @@ export const WeekView: React.FC<WeekViewProps> = ({
           <div className="grid grid-cols-8 relative">
             {hours.map((hourLabel, hourIndex) => (
               <React.Fragment key={hourIndex}>
-                {/* Hour label - left side */}
+                {/* Hour label - left side - fixed */}
                 <div className="col-span-1 border-r border-b border-gray-200 p-2 text-center sticky left-0 bg-background h-[60px]">
                   {hourLabel}
                 </div>
@@ -169,7 +172,7 @@ export const WeekView: React.FC<WeekViewProps> = ({
               </React.Fragment>
             ))}
             
-            {/* Current time indicator - only show if today is in this week */}
+            {/* Current time indicator */}
             {todayIndex !== -1 && (
               <div 
                 className="absolute border-t-2 border-red-500 z-20 flex items-center"
