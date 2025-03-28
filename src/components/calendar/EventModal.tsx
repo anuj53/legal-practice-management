@@ -18,7 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from '@/components/ui/separator';
-import { CalendarEvent } from '@/types/calendar';
+import { CalendarEvent, Calendar } from '@/types/calendar';
 
 interface EventModalProps {
   isOpen: boolean;
@@ -27,9 +27,20 @@ interface EventModalProps {
   mode: 'create' | 'edit' | 'view';
   onSave: (event: CalendarEvent) => void;
   onDelete?: (id: string) => void;
+  myCalendars?: Calendar[];
+  otherCalendars?: Calendar[];
 }
 
-export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: EventModalProps) {
+export function EventModal({ 
+  isOpen, 
+  onClose, 
+  event, 
+  mode, 
+  onSave, 
+  onDelete,
+  myCalendars = [],
+  otherCalendars = []
+}: EventModalProps) {
   const defaultEvent: CalendarEvent = {
     id: Math.random().toString(36).substring(2, 9),
     title: '',
@@ -247,6 +258,11 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
   
   const isViewOnly = !editMode;
   
+  const getCalendarColor = (calendarId: string): string => {
+    const calendar = [...myCalendars, ...otherCalendars].find(cal => cal.id === calendarId);
+    return calendar?.color || '#808080';
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[700px] p-0 overflow-hidden">
@@ -379,11 +395,39 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
                           <SelectValue placeholder="Select calendar" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="personal">Personal</SelectItem>
-                          <SelectItem value="firm">Firm Calendar</SelectItem>
-                          <SelectItem value="statute">Statute of Limitations</SelectItem>
-                          <SelectItem value="team-a">Team A</SelectItem>
-                          <SelectItem value="team-b">Team B</SelectItem>
+                          {myCalendars && myCalendars.length > 0 && (
+                            <SelectGroup>
+                              <SelectLabel>My Calendars</SelectLabel>
+                              {myCalendars.map(cal => (
+                                <SelectItem key={cal.id} value={cal.id}>
+                                  <div className="flex items-center">
+                                    <div 
+                                      className="w-3 h-3 rounded-full mr-2" 
+                                      style={{backgroundColor: cal.color}}
+                                    />
+                                    {cal.name}
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectGroup>
+                          )}
+                          
+                          {otherCalendars && otherCalendars.length > 0 && (
+                            <SelectGroup>
+                              <SelectLabel>Other Calendars</SelectLabel>
+                              {otherCalendars.map(cal => (
+                                <SelectItem key={cal.id} value={cal.id}>
+                                  <div className="flex items-center">
+                                    <div 
+                                      className="w-3 h-3 rounded-full mr-2" 
+                                      style={{backgroundColor: cal.color}}
+                                    />
+                                    {cal.name}
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectGroup>
+                          )}
                         </SelectContent>
                       </Select>
                     </div>
@@ -764,12 +808,15 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
                     <CalendarClock className="h-5 w-5 text-gray-500 mt-0.5" />
                     <div>
                       <div className="font-medium">Calendar</div>
-                      <div className="text-gray-700">
-                        {formData.calendar === 'personal' ? 'Personal Calendar' : 
-                         formData.calendar === 'firm' ? 'Firm Calendar' : 
-                         formData.calendar === 'statute' ? 'Statute of Limitations' :
-                         formData.calendar === 'team-a' ? 'Team A' :
-                         'Team B'}
+                      <div className="flex items-center text-gray-700">
+                        <div 
+                          className="w-3 h-3 rounded-full mr-2" 
+                          style={{backgroundColor: getCalendarColor(formData.calendar)}}
+                        />
+                        {(() => {
+                          const calendar = [...myCalendars, ...otherCalendars].find(cal => cal.id === formData.calendar);
+                          return calendar ? calendar.name : 'Unknown Calendar';
+                        })()}
                       </div>
                     </div>
                   </div>

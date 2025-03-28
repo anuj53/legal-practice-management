@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { CalendarHeader } from '@/components/calendar/CalendarHeader';
 import { CalendarSidebar } from '@/components/calendar/CalendarSidebar';
@@ -147,6 +146,8 @@ export default function Calendar() {
         mode={modalMode}
         onSave={handleSaveEvent}
         onDelete={handleDeleteEvent}
+        myCalendars={myCalendars}
+        otherCalendars={otherCalendars}
       />
       
       {/* Calendar Creation/Editing Dialog */}
