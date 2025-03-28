@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { CalendarEvent, Calendar, CalendarViewType, CalendarShare } from '@/types/calendar';
 import { useCalendar } from '@/hooks/useCalendar';
@@ -46,7 +47,7 @@ export function useCalendarPage() {
     console.log("Create event clicked");
     
     // Use the first calendar ID
-    const defaultCalendarId = calendars.length > 0 ? calendars[0].id : '';
+    const defaultCalendarId = myCalendars.length > 0 ? myCalendars[0].id : '';
     
     if (!defaultCalendarId) {
       toast.error("Cannot create event: No calendars available");
