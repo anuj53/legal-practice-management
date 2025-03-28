@@ -117,8 +117,8 @@ export const WeekView: React.FC<WeekViewProps> = ({
         ))}
       </div>
       
-      {/* Scrollable content area */}
-      <div className="flex-1 overflow-hidden">
+      {/* Scrollable content area with fixed hour column */}
+      <div className="flex-1 relative overflow-hidden">
         <div 
           className="h-full overflow-y-auto" 
           ref={scrollContainerRef}
@@ -127,7 +127,7 @@ export const WeekView: React.FC<WeekViewProps> = ({
             {hours.map((hourLabel, hourIndex) => (
               <React.Fragment key={hourIndex}>
                 {/* Hour label - left side - fixed */}
-                <div className="col-span-1 border-r border-b border-gray-200 p-2 text-center sticky left-0 bg-white h-[60px]">
+                <div className="col-span-1 border-r border-b border-gray-200 p-2 text-center sticky left-0 bg-white h-[60px] z-10">
                   {hourLabel}
                 </div>
                 
