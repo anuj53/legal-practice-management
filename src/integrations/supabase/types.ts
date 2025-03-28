@@ -185,7 +185,45 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      check_table_exists: {
+        Args: {
+          table_name: string
+        }
+        Returns: boolean
+      }
+      create_recurrence_rule: {
+        Args: {
+          frequency: string
+          interval_val?: number
+          week_days_val?: string[]
+          month_days_val?: number[]
+          ends_on_val?: string
+          ends_after_val?: number
+        }
+        Returns: string
+      }
+      create_recurrence_rules_table: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      delete_recurrence_rule: {
+        Args: {
+          rule_id: string
+        }
+        Returns: boolean
+      }
+      update_recurrence_rule: {
+        Args: {
+          rule_id: string
+          frequency: string
+          interval_val?: number
+          week_days_val?: string[]
+          month_days_val?: number[]
+          ends_on_val?: string
+          ends_after_val?: number
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { CalendarEvent, RecurrencePattern } from '@/types/calendar';
 import { useCalendar } from '@/hooks/useCalendar';
@@ -51,6 +52,7 @@ export function useEventManagement() {
       isAllDay: false,
       description: '',
       location: '',
+      calendarColor: myCalendars[0].color || '#5cb85c'
     };
     
     setSelectedEvent(defaultEvent as CalendarEvent);
@@ -81,6 +83,7 @@ export function useEventManagement() {
       isAllDay: false,
       description: '',
       location: '',
+      calendarColor: myCalendars[0].color || '#5cb85c'
     };
     
     setSelectedEvent(defaultEvent as CalendarEvent);
@@ -122,7 +125,7 @@ export function useEventManagement() {
         console.log("Updating recurring event instance. In a production system, we would handle the recurrence properly");
         
         const { calendarColor, ...eventToUpdate } = event;
-        const updatedEvent = await updateEvent(eventToUpdate as any);
+        const updatedEvent = await updateEvent(eventToUpdate);
         console.log("Updated recurring event:", updatedEvent);
         
         toast.success('Recurring event updated successfully!');
@@ -147,17 +150,17 @@ export function useEventManagement() {
         
         if (recurrencePattern && !event.isRecurring) {
           console.log("Adding recurrence to non-recurring event");
-          const updatedEvent = await makeEventRecurring(eventToUpdate as any, recurrencePattern);
+          const updatedEvent = await makeEventRecurring(eventToUpdate, recurrencePattern);
           console.log("Event now has recurrence:", updatedEvent);
           toast.success('Event updated with recurring settings!');
         } else if (event.isRecurring && !recurrencePattern) {
           console.log("Removing recurrence from recurring event");
-          const updatedEvent = await makeEventNonRecurring(eventToUpdate as any);
+          const updatedEvent = await makeEventNonRecurring(eventToUpdate);
           console.log("Event no longer recurring:", updatedEvent);
           toast.success('Recurring settings removed from event!');
         } else {
           console.log("Regular update to event");
-          const updatedEvent = await updateEvent(eventToUpdate as any);
+          const updatedEvent = await updateEvent(eventToUpdate);
           console.log("Updated event:", updatedEvent);
           toast.success('Event updated successfully!');
         }

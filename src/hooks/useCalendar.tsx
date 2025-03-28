@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { 
   Calendar, 
@@ -28,6 +27,63 @@ export const useCalendar = () => {
   
   // Track if data has been updated to trigger a re-fetch
   const [dataUpdated, setDataUpdated] = useState(0);
+
+  // Fetch calendars and events when component mounts or data is updated
+  useEffect(() => {
+    const loadCalendarData = async () => {
+      setLoading(true);
+      try {
+        // First fetch calendars
+        const calendarsResult = await fetchCalendars();
+        if (calendarsResult) {
+          setMyCalendars(calendarsResult.myCalendars);
+          setOtherCalendars(calendarsResult.otherCalendars);
+          
+          console.log('Calendars loaded:', {
+            myCalendars: calendarsResult.myCalendars.length,
+            otherCalendars: calendarsResult.otherCalendars.length
+          });
+        }
+        
+        // Then fetch events
+        const eventsResult = await fetchEvents();
+        if (eventsResult) {
+          console.log('Events loaded:', eventsResult.length);
+          setEvents(eventsResult);
+        }
+        
+        setLoading(false);
+      } catch (err) {
+        console.error('Error loading calendar data:', err);
+        setError('Failed to load calendar data');
+        setLoading(false);
+        toast.error('Failed to load calendar data');
+      }
+    };
+    
+    loadCalendarData();
+  }, [dataUpdated]);
+  
+  // Toggle calendar visibility
+  const toggleCalendar = (id: string) => {
+    // First check if it's in myCalendars
+    const calendarInMy = myCalendars.find(cal => cal.id === id);
+    
+    if (calendarInMy) {
+      setMyCalendars(prev => 
+        prev.map(cal => 
+          cal.id === id ? { ...cal, checked: !cal.checked } : cal
+        )
+      );
+    } else {
+      // Otherwise check in otherCalendars
+      setOtherCalendars(prev => 
+        prev.map(cal => 
+          cal.id === id ? { ...cal, checked: !cal.checked } : cal
+        )
+      );
+    }
+  };
 
   // Update calendar
   const updateCalendar = async (calendar: Calendar) => {
@@ -242,6 +298,7 @@ export const useCalendar = () => {
     setEvents,
     setLoading,
     setError,
+    toggleCalendar,
     updateCalendar,
     createCalendar,
     createEvent,

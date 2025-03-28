@@ -17,13 +17,14 @@ export function useCalendarPage() {
     myCalendars,
     otherCalendars,
     events: rawEvents,
+    loading
   } = useCalendar();
   
   useEffect(() => {
-    if (rawEvents.length > 0) {
+    if (!loading && rawEvents.length > 0) {
       setIsLoading(false);
     }
-  }, [rawEvents]);
+  }, [rawEvents, loading]);
   
   const {
     selectedEvent,
@@ -103,15 +104,14 @@ export function useCalendarPage() {
           viewEnd
         );
         
-        processedEvents.push(...instances.slice(1).map(instance => ({
-          ...instance,
-          type: instance.type || 'client-meeting',
-          calendarColor: event.calendarColor
-        } as CalendarEvent)));
+        if (instances.length > 0) {
+          console.log(`Adding ${instances.length} recurring instances for event ${event.title}`);
+          processedEvents.push(...instances);
+        }
       }
     });
     
-    console.log("Displayed events being set:", processedEvents);
+    console.log("Total displayed events being set:", processedEvents.length);
     setDisplayedEvents(processedEvents);
   }, [events, currentDate, currentView]);
   

@@ -1,7 +1,6 @@
 
-import { addDays, addWeeks, addMonths, addYears, isBefore, isAfter, isSameDay } from 'date-fns';
-import { Event } from '@/types/calendar';
-import { RecurrencePattern } from '@/types/calendar';
+import { addDays, addWeeks, addMonths, addYears, isBefore } from 'date-fns';
+import { Event, RecurrencePattern } from '@/types/calendar';
 
 /**
  * Generate recurring event instances within a date range
@@ -16,7 +15,7 @@ export const generateRecurringInstances = (
   console.log("Pattern:", pattern);
   console.log("Date range:", startDate, "to", endDate);
   
-  const instances: Event[] = [baseEvent]; // Include original event
+  const instances: Event[] = []; // Don't include original event
   let currentDate = new Date(baseEvent.start);
   const duration = baseEvent.end.getTime() - baseEvent.start.getTime();
   
@@ -27,19 +26,19 @@ export const generateRecurringInstances = (
   const patternEndDate = pattern.endsOn ? new Date(pattern.endsOn) : null;
   
   // Track how many instances we've added
-  let instanceCount = 1; // Original event counts as 1
+  let instanceCount = 0;
   
   // Generate next occurrence date
   const getNextDate = (date: Date): Date => {
     switch (pattern.frequency) {
       case 'daily':
-        return addDays(date, pattern.interval);
+        return addDays(date, pattern.interval || 1);
       case 'weekly':
-        return addWeeks(date, pattern.interval);
+        return addWeeks(date, pattern.interval || 1);
       case 'monthly':
-        return addMonths(date, pattern.interval);
+        return addMonths(date, pattern.interval || 1);
       case 'yearly':
-        return addYears(date, pattern.interval);
+        return addYears(date, pattern.interval || 1);
       default:
         return addDays(date, 1);
     }

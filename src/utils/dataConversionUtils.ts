@@ -1,9 +1,10 @@
 
-import { Event } from '@/types/calendar';
-import { RecurrencePattern } from '@/types/calendar';
+import { Event, RecurrencePattern } from '@/types/calendar';
 
 // Convert database event to app event
 export const convertDbEventToEvent = (dbEvent: any): Event => {
+  console.log('Converting DB event to Event:', dbEvent);
+  
   const event: Event = {
     id: dbEvent.id,
     title: dbEvent.title,
@@ -38,6 +39,7 @@ export const convertDbEventToEvent = (dbEvent: any): Event => {
     event.recurrencePattern = dbEvent.recurrence_pattern as RecurrencePattern;
   }
   
+  console.log('Converted event:', event);
   return event;
 };
 
@@ -79,6 +81,7 @@ export const convertEventToDbEvent = (event: Event): any => {
     dbEvent.recurrence_pattern = event.recurrencePattern;
   }
   
+  console.log('Converted DB event:', dbEvent);
   return dbEvent;
 };
 
