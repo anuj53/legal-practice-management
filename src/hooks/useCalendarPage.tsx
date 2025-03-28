@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { CalendarEvent, Calendar, CalendarViewType, CalendarShare } from '@/types/calendar';
 import { useCalendar } from '@/hooks/useCalendar';
@@ -210,11 +211,49 @@ export function useCalendarPage() {
           return;
         }
         
-        const { calendarColor, ...eventToUpdate } = event;
-        
-        const updatedEvent = updateEvent(eventToUpdate);
-        toast.success('Event updated successfully!');
-        console.log("Event updated:", updatedEvent);
+        // Special handling for recurring instances
+        if (event.isRecurringInstance && event.parentEventId) {
+          const confirmEditAll = window.confirm(
+            "Do you want to edit this recurring event and all of its instances?" +
+            "\n\nClick 'OK' to edit the entire series, or 'Cancel' to edit just this occurrence."
+          );
+          
+          if (confirmEditAll) {
+            // Find the parent event
+            const parentEvent = events.find(e => e.id === event.parentEventId);
+            
+            if (parentEvent) {
+              // Update the parent event with new details from this instance
+              const { calendarColor, isRecurringInstance, parentEventId, ...eventData } = event;
+              
+              // Preserve recurrence pattern from parent
+              const updatedParentEvent = {
+                ...parentEvent,
+                ...eventData,
+                id: parentEvent.id,
+                isRecurringInstance: false,
+                parentEventId: undefined
+              };
+              
+              const result = updateEvent(updatedParentEvent);
+              toast.success('Recurring event series updated successfully!');
+              console.log("Recurring series updated:", result);
+            } else {
+              toast.error("Could not find parent event to update");
+            }
+          } else {
+            // TODO: Create an exception for this occurrence
+            // For now, just notify the user that this feature is coming soon
+            toast.info('Editing single occurrences of recurring events will be available soon');
+          }
+        } else {
+          // Regular event or recurring parent
+          const { calendarColor, ...eventToUpdate } = event;
+          
+          const updatedEvent = updateEvent(eventToUpdate);
+          toast.success('Event updated successfully!');
+          console.log("Event updated:", updatedEvent);
+        }
       }
       
       setModalOpen(false);

@@ -1,4 +1,3 @@
-
 import { addHours, addDays, subDays, startOfDay } from 'date-fns';
 
 // Types
@@ -18,33 +17,23 @@ export interface Event {
   title: string;
   start: Date;
   end: Date;
-  type: 'client-meeting' | 'internal-meeting' | 'court' | 'deadline' | 'personal';
-  calendar: string;
   description?: string;
   location?: string;
-  attendees?: string[];
+  type?: string;
+  calendar: string;
+  color?: string;
+  isAllDay?: boolean;
   isRecurring?: boolean;
-  reminder?: string;
-  // Legal-specific fields
-  caseId?: string;
-  clientName?: string;
-  assignedLawyer?: string;
-  courtInfo?: {
-    courtName?: string;
-    judgeDetails?: string;
-    docketNumber?: string;
-  };
-  documents?: Array<{id: string, name: string, url: string}>;
-  // Recurrence options
+  isRecurringInstance?: boolean;
+  parentEventId?: string;
   recurrencePattern?: {
     frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
     interval: number;
     endDate?: Date;
-    weekdays?: number[]; // 0-6 for Sunday-Saturday
+    weekdays?: number[];
     monthDay?: number;
     occurrences?: number;
   };
-  isAllDay?: boolean;
 }
 
 // Helper function to validate UUID format
@@ -60,68 +49,38 @@ export const isValidUUID = (id: string): boolean => {
   return isValid;
 };
 
-// Convert database event to local Event format
+// Convert database event to app event
 export const convertDbEventToEvent = (dbEvent: any): Event => {
-  console.log('Converting DB event to app event:', dbEvent);
-  
-  if (!dbEvent || !dbEvent.calendar_id) {
-    console.error('Invalid DB event:', dbEvent);
-    throw new Error('Cannot convert invalid DB event: missing calendar_id');
-  }
-  
-  const event = {
+  return {
     id: dbEvent.id,
     title: dbEvent.title,
-    description: dbEvent.description || '',
     start: new Date(dbEvent.start_time),
     end: new Date(dbEvent.end_time),
-    type: dbEvent.type || 'client-meeting',
+    description: dbEvent.description,
+    location: dbEvent.location,
+    type: dbEvent.type,
     calendar: dbEvent.calendar_id,
-    location: dbEvent.location || '',
+    isAllDay: false, // Default
     isRecurring: dbEvent.is_recurring || false,
-    attendees: [], // Assume empty for now as they're stored in a separate table
-    isAllDay: false,
+    recurrencePattern: dbEvent.recurrence_pattern || null,
   };
-  
-  console.log('Converted event:', event);
-  console.log('Calendar ID:', event.calendar, 'Valid:', isValidUUID(event.calendar));
-  return event;
 };
 
-// Convert local Event to database format
-export const convertEventToDbEvent = (eventObj: Event | Omit<Event, 'id'>) => {
-  // Log the input for debugging
-  console.log('Converting app event to DB event, input:', eventObj);
-  
-  // Validate calendar ID
-  if (!eventObj.calendar) {
-    console.error('Missing calendar ID in event:', eventObj);
-    throw new Error('Missing calendar ID for database operation');
-  }
-  
-  if (!isValidUUID(eventObj.calendar)) {
-    console.error('Invalid calendar ID format in event:', eventObj);
-    throw new Error(`Invalid calendar ID format: ${eventObj.calendar}`);
-  }
-  
-  // Create a clean database event object with only the fields we need to store
-  const dbEvent = {
-    title: eventObj.title,
-    description: eventObj.description,
-    start_time: eventObj.start.toISOString(),
-    end_time: eventObj.end.toISOString(),
-    location: eventObj.location,
-    is_recurring: eventObj.isRecurring || false,
-    type: eventObj.type,
-    calendar_id: eventObj.calendar,
-    updated_at: new Date().toISOString(),
-    // Only include ID if it exists in the event object (for updates)
-    ...('id' in eventObj ? { id: eventObj.id } : {})
+// Convert app event to database event
+export const convertEventToDbEvent = (event: Event): any => {
+  return {
+    id: event.id,
+    title: event.title,
+    description: event.description || '',
+    start_time: event.start.toISOString(),
+    end_time: event.end.toISOString(),
+    location: event.location || '',
+    is_recurring: event.isRecurring || false,
+    type: event.type || 'client-meeting',
+    calendar_id: event.calendar,
+    recurrence_pattern: event.recurrencePattern || null,
+    updated_at: new Date().toISOString()
   };
-  
-  console.log('Converted to DB event:', dbEvent);
-  console.log('Calendar ID being used:', dbEvent.calendar_id);
-  return dbEvent;
 };
 
 // Generate demo events for testing based on the existing calendars

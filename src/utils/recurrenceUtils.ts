@@ -61,45 +61,57 @@ export const generateRecurringEvents = (
     }
     
     // Skip the first iteration as it's the parent event itself
-    if (iterations > 1) {
-      // For weekly recurrence, check if current day is in weekdays array
-      if (frequency === 'weekly' && weekdays && weekdays.length > 0) {
-        const dayOfWeek = getDay(currentDate); // 0-6, where 0 is Sunday
-        if (!weekdays.includes(dayOfWeek)) {
-          // Advance by one day and continue to next iteration
-          currentDate = addDays(currentDate, 1);
-          continue;
-        }
-      }
-      
-      // Check if current date falls within view range
-      if (isBefore(currentDate, viewStartDay) || isBefore(viewEndDay, currentDate)) {
-        // Advance date based on frequency and interval
-        currentDate = advanceDate(currentDate, frequency, interval);
+    if (iterations === 1) {
+      // Advance date based on frequency and interval
+      currentDate = advanceDate(currentDate, frequency, interval);
+      continue;
+    }
+
+    // For weekly recurrence, check if current day is in weekdays array
+    if (frequency === 'weekly' && weekdays && weekdays.length > 0) {
+      const dayOfWeek = getDay(currentDate); // 0-6, where 0 is Sunday
+      if (!weekdays.includes(dayOfWeek)) {
+        // Advance by one day and continue to next iteration
+        currentDate = addDays(currentDate, 1);
         continue;
       }
-      
-      // Generate a new recurring instance
-      const durationMs = new Date(parentEvent.end).getTime() - new Date(parentEvent.start).getTime();
-      const newEndDate = new Date(currentDate.getTime() + durationMs);
-      
-      // Create recurring event instance
-      const recurringEvent: CalendarEvent = {
-        ...parentEvent,
-        id: `${parentEvent.id}_recurrence_${iterations}`,
-        start: new Date(currentDate),
-        end: newEndDate,
-        isRecurringInstance: true,
-        parentEventId: parentEvent.id
-      };
-      
-      console.log(`Generated recurrence #${currentOccurrenceCount + 1} on ${currentDate}`);
-      recurringEvents.push(recurringEvent);
-      currentOccurrenceCount++;
     }
     
+    // Check if current date falls within view range
+    if (isBefore(currentDate, viewStartDay) || isBefore(viewEndDay, currentDate)) {
+      // Advance date based on frequency and interval
+      if (frequency === 'weekly' && weekdays && weekdays.length > 0) {
+        currentDate = addDays(currentDate, 1);
+      } else {
+        currentDate = advanceDate(currentDate, frequency, interval);
+      }
+      continue;
+    }
+    
+    // Generate a new recurring instance
+    const durationMs = new Date(parentEvent.end).getTime() - new Date(parentEvent.start).getTime();
+    const newEndDate = new Date(currentDate.getTime() + durationMs);
+    
+    // Create recurring event instance
+    const recurringEvent: CalendarEvent = {
+      ...parentEvent,
+      id: `${parentEvent.id}_recurrence_${iterations}`,
+      start: new Date(currentDate),
+      end: newEndDate,
+      isRecurringInstance: true,
+      parentEventId: parentEvent.id
+    };
+    
+    console.log(`Generated recurrence #${currentOccurrenceCount + 1} on ${currentDate}`);
+    recurringEvents.push(recurringEvent);
+    currentOccurrenceCount++;
+    
     // Advance date based on frequency and interval
-    currentDate = advanceDate(currentDate, frequency, interval);
+    if (frequency === 'weekly' && weekdays && weekdays.length > 0) {
+      currentDate = addDays(currentDate, 1);
+    } else {
+      currentDate = advanceDate(currentDate, frequency, interval);
+    }
   }
   
   if (iterations >= MAX_ITERATIONS) {

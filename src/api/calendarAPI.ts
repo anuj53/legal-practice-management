@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Calendar, Event, convertDbEventToEvent, convertEventToDbEvent, isValidUUID } from '@/utils/calendarUtils';
@@ -68,7 +69,8 @@ export const fetchEvents = async () => {
         location,
         is_recurring,
         type,
-        calendar_id
+        calendar_id,
+        recurrence_pattern
       `);
 
     if (eventsError) {
@@ -80,7 +82,31 @@ export const fetchEvents = async () => {
       console.log('Found events in DB:', eventsData.length);
       console.log('Sample event from DB:', eventsData[0]);
       
-      const convertedEvents = eventsData.map(convertDbEventToEvent);
+      const convertedEvents = eventsData.map(event => {
+        let recurrencePattern = null;
+        if (event.recurrence_pattern) {
+          try {
+            if (typeof event.recurrence_pattern === 'string') {
+              recurrencePattern = JSON.parse(event.recurrence_pattern);
+            } else {
+              recurrencePattern = event.recurrence_pattern;
+            }
+            
+            // Convert date strings to Date objects
+            if (recurrencePattern.endDate) {
+              recurrencePattern.endDate = new Date(recurrencePattern.endDate);
+            }
+          } catch (err) {
+            console.error('Error parsing recurrence pattern:', err);
+          }
+        }
+        
+        return convertDbEventToEvent({
+          ...event,
+          recurrence_pattern: recurrencePattern
+        });
+      });
+      
       console.log('Converted events:', convertedEvents.length);
       if (convertedEvents.length > 0) {
         console.log('Sample converted event:', convertedEvents[0]);
@@ -223,6 +249,19 @@ export const createEventInDb = async (event: Omit<Event, 'id'>) => {
       throw new Error(errorMsg);
     }
     
+    // Process recurrence pattern if present
+    let recurrencePatternForDb = null;
+    if (event.recurrencePattern) {
+      // Convert Date objects to ISO strings for database storage
+      const processedPattern = {
+        ...event.recurrencePattern,
+        endDate: event.recurrencePattern.endDate ? event.recurrencePattern.endDate.toISOString() : undefined
+      };
+      
+      recurrencePatternForDb = processedPattern;
+      console.log('Processed recurrence pattern for DB:', recurrencePatternForDb);
+    }
+    
     const dbEvent = {
       title: event.title,
       description: event.description || '',
@@ -232,6 +271,7 @@ export const createEventInDb = async (event: Omit<Event, 'id'>) => {
       is_recurring: event.isRecurring || false,
       type: event.type || 'client-meeting',
       calendar_id: event.calendar,
+      recurrence_pattern: recurrencePatternForDb,
       updated_at: new Date().toISOString()
     };
     
@@ -256,7 +296,31 @@ export const createEventInDb = async (event: Omit<Event, 'id'>) => {
       throw new Error('No data returned from event creation');
     }
     
-    const newEvent = convertDbEventToEvent(data[0]);
+    // Convert recurrence_pattern back from string/object to our format
+    let recurrencePattern = null;
+    if (data[0].recurrence_pattern) {
+      try {
+        if (typeof data[0].recurrence_pattern === 'string') {
+          recurrencePattern = JSON.parse(data[0].recurrence_pattern);
+        } else {
+          recurrencePattern = data[0].recurrence_pattern;
+        }
+        
+        // Convert date strings back to Date objects
+        if (recurrencePattern.endDate) {
+          recurrencePattern.endDate = new Date(recurrencePattern.endDate);
+        }
+      } catch (err) {
+        console.error('Error parsing recurrence pattern from DB:', err);
+      }
+    }
+    
+    const eventWithRecurrence = {
+      ...data[0],
+      recurrence_pattern: recurrencePattern
+    };
+    
+    const newEvent = convertDbEventToEvent(eventWithRecurrence);
     console.log('API: Converted new event:', newEvent);
     return newEvent;
   } catch (err) {
@@ -292,7 +356,31 @@ export const updateEventInDb = async (event: Event) => {
       throw new Error(`Invalid UUID format for calendar ID: ${event.calendar}`);
     }
     
-    const dbEvent = convertEventToDbEvent(event);
+    // Process recurrence pattern if present
+    let recurrencePatternForDb = null;
+    if (event.recurrencePattern) {
+      // Convert Date objects to ISO strings for database storage
+      const processedPattern = {
+        ...event.recurrencePattern,
+        endDate: event.recurrencePattern.endDate ? event.recurrencePattern.endDate.toISOString() : undefined
+      };
+      
+      recurrencePatternForDb = processedPattern;
+      console.log('Processed recurrence pattern for DB update:', recurrencePatternForDb);
+    }
+    
+    const dbEvent = {
+      title: event.title,
+      description: event.description || '',
+      start_time: event.start.toISOString(),
+      end_time: event.end.toISOString(),
+      location: event.location || '',
+      is_recurring: event.isRecurring || false,
+      type: event.type || 'client-meeting',
+      calendar_id: event.calendar,
+      recurrence_pattern: recurrencePatternForDb,
+      updated_at: new Date().toISOString()
+    };
     
     console.log('API: Formatted DB event for update:', dbEvent);
     
@@ -314,7 +402,31 @@ export const updateEventInDb = async (event: Event) => {
       return event;
     }
     
-    return convertDbEventToEvent(data[0]);
+    // Convert recurrence_pattern back from string/object to our format
+    let recurrencePattern = null;
+    if (data[0].recurrence_pattern) {
+      try {
+        if (typeof data[0].recurrence_pattern === 'string') {
+          recurrencePattern = JSON.parse(data[0].recurrence_pattern);
+        } else {
+          recurrencePattern = data[0].recurrence_pattern;
+        }
+        
+        // Convert date strings back to Date objects
+        if (recurrencePattern.endDate) {
+          recurrencePattern.endDate = new Date(recurrencePattern.endDate);
+        }
+      } catch (err) {
+        console.error('Error parsing recurrence pattern from DB:', err);
+      }
+    }
+    
+    const eventWithRecurrence = {
+      ...data[0],
+      recurrence_pattern: recurrencePattern
+    };
+    
+    return convertDbEventToEvent(eventWithRecurrence);
   } catch (err) {
     console.error('Error updating event:', err);
     throw err;

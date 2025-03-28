@@ -133,8 +133,15 @@ export const useCalendar = () => {
         throw new Error(msg);
       }
       
+      // Set isRecurring flag based on recurrencePattern
+      const isRecurring = !!event.recurrencePattern;
+      const eventWithRecurringFlag = {
+        ...event,
+        isRecurring
+      };
+      
       // First create in the database
-      const newEvent = await createEventInDb(event);
+      const newEvent = await createEventInDb(eventWithRecurringFlag);
       console.log('useCalendar: createEventInDb returned new event:', newEvent);
       
       // Update local state
@@ -172,8 +179,15 @@ export const useCalendar = () => {
         throw new Error(msg);
       }
       
+      // Set isRecurring flag based on recurrencePattern
+      const isRecurring = !!event.recurrencePattern;
+      const eventWithRecurringFlag = {
+        ...event,
+        isRecurring
+      };
+      
       // First update in the database
-      const updatedEvent = await updateEventInDb(event);
+      const updatedEvent = await updateEventInDb(eventWithRecurringFlag);
       
       // Update local state
       setEvents(prev => prev.map(e => e.id === event.id ? updatedEvent : e));
