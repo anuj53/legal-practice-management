@@ -46,6 +46,7 @@ export default function Calendar() {
         currentDate={currentDate}
         view={currentView}
         onViewChange={setCurrentView}
+        onDateChange={setCurrentDate}
         onCreateEvent={handleCreateEvent}
       />
       
