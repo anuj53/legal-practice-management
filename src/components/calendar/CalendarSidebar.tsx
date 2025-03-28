@@ -1,20 +1,8 @@
 
 import React, { useState } from 'react';
-import { Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { Calendar, CalendarShare } from '@/types/calendar';
-import { toast } from 'sonner';
 import { CalendarList } from './CalendarList';
-import { CalendarForm } from './CalendarForm';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface CalendarItem {
@@ -50,17 +38,6 @@ export function CalendarSidebar({
   return (
     <div className="w-64 border-l border-gray-200 bg-white h-full flex flex-col">
       <div className="p-4">
-        {onCreateEvent && (
-          <Button 
-            onClick={onCreateEvent}
-            variant="default" 
-            className="w-full justify-start gap-2 mb-4 bg-yorpro-600 hover:bg-yorpro-700"
-          >
-            <Plus className="h-4 w-4" />
-            Create New Event
-          </Button>
-        )}
-        
         <div className="relative mb-4">
           <Input 
             placeholder="Search calendars" 
