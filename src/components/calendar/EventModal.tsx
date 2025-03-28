@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format, addDays } from 'date-fns';
 import { X, Users, MapPin, Clock, CalendarClock, Bell, FileText, Briefcase, Scale, Plus, Trash2 } from 'lucide-react';
@@ -22,6 +21,7 @@ import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from '@/components/ui/separator';
 import { CalendarEvent, Calendar } from '@/types/calendar';
+import { toast } from 'sonner';
 
 interface EventModalProps {
   isOpen: boolean;
@@ -248,6 +248,11 @@ export function EventModal({
   };
   
   const handleSave = () => {
+    if (!formData.title.trim()) {
+      toast.error("Event title is required");
+      return;
+    }
+    
     onSave(formData);
     onClose();
   };
@@ -300,15 +305,21 @@ export function EventModal({
               <div className="flex-1 overflow-y-auto p-6">
                 <TabsContent value="general" className="space-y-4 mt-0">
                   <div>
-                    <Label htmlFor="title">Title</Label>
+                    <Label htmlFor="title" className="flex items-center">
+                      Title <span className="text-red-500 ml-1">*</span>
+                    </Label>
                     <Input
                       id="title"
                       name="title"
                       value={formData.title}
                       onChange={handleChange}
                       placeholder="Event title"
-                      className="mt-1"
+                      className={`mt-1 ${!formData.title.trim() && 'border-red-500'}`}
+                      required
                     />
+                    {!formData.title.trim() && (
+                      <p className="text-sm text-red-500 mt-1">Title is required</p>
+                    )}
                   </div>
                   
                   <div className="flex items-center gap-2">
