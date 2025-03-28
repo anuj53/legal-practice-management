@@ -24,6 +24,7 @@ export interface Event {
   location?: string;
   attendees?: string[];
   isRecurring?: boolean;
+  isRecurringInstance?: boolean; // Add this property for recurring event instances
   reminder?: string;
   // Legal-specific fields
   caseId?: string;

@@ -12,6 +12,7 @@ export interface CalendarEvent {
   description?: string;
   location?: string;
   isRecurring?: boolean;
+  isRecurringInstance?: boolean; // Add this property for recurring event instances
   attendees?: string[];
   reminder?: string;
   caseId?: string;
