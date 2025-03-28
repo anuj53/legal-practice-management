@@ -94,7 +94,7 @@ export const WeekView: React.FC<WeekViewProps> = ({
   return (
     <div className="week-view h-full flex flex-col overflow-hidden">
       {/* Headers row - always visible at the top */}
-      <div className="grid grid-cols-8 border-b border-gray-200 bg-white sticky top-0 z-10 shadow-sm">
+      <div className="grid grid-cols-8 border-b border-gray-200 bg-white sticky top-0 z-20 shadow-sm">
         {/* Corner cell - top left empty cell */}
         <div className="col-span-1 border-r border-gray-200 p-2 text-center font-medium">
           Hour
@@ -118,9 +118,9 @@ export const WeekView: React.FC<WeekViewProps> = ({
       </div>
       
       {/* Scrollable content area with fixed hour column */}
-      <div className="flex-1 relative overflow-hidden">
+      <div className="flex-1 overflow-hidden">
         <div 
-          className="h-full overflow-y-auto" 
+          className="h-full overflow-y-auto scrollbar-thin"
           ref={scrollContainerRef}
         >
           <div className="grid grid-cols-8 relative">
@@ -190,4 +190,4 @@ export const WeekView: React.FC<WeekViewProps> = ({
       </div>
     </div>
   );
-};
+}

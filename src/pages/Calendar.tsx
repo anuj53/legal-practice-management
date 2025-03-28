@@ -7,7 +7,6 @@ import { EventModal } from '@/components/calendar/EventModal';
 import { MobileActionButton } from '@/components/calendar/MobileActionButton';
 import { useCalendarPage } from '@/hooks/useCalendarPage';
 import { toast } from 'sonner';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function Calendar() {
   const {
@@ -42,7 +41,7 @@ export default function Calendar() {
   
   return (
     <div className="flex h-full flex-col">
-      {/* Calendar Header */}
+      {/* Calendar Header - Fixed at top */}
       <CalendarHeader
         currentDate={currentDate}
         view={currentView}
@@ -51,8 +50,9 @@ export default function Calendar() {
         onCreateEvent={handleCreateEvent}
       />
       
-      <div className="flex flex-1 overflow-hidden">
-        {/* Main Calendar Area - This will be scrollable */}
+      {/* Main content area with sidebar - Both at full height */}
+      <div className="flex flex-1 h-[calc(100%-64px)] overflow-hidden">
+        {/* Main Calendar Area - This will be scrollable independently */}
         <div className="flex-1 overflow-hidden">
           <CalendarMain
             view={currentView}
@@ -63,8 +63,8 @@ export default function Calendar() {
           />
         </div>
         
-        {/* Sidebar - This will not scroll with the calendar content */}
-        <div className="h-full flex-shrink-0">
+        {/* Sidebar - Fixed, not scrolling with calendar content */}
+        <div className="w-64 h-full border-l border-gray-200 flex-shrink-0 bg-white">
           <CalendarSidebar
             myCalendars={myCalendars}
             otherCalendars={otherCalendars}

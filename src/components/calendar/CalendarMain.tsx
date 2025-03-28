@@ -17,7 +17,7 @@ interface CalendarMainProps {
 
 export function CalendarMain({ view, date, events, onEventClick, onDayClick }: CalendarMainProps) {
   return (
-    <div className="flex-1 overflow-hidden flex flex-col">
+    <div className="h-full overflow-hidden">
       {view === 'day' && (
         <DayView
           currentDate={date}
