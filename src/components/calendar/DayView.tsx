@@ -120,7 +120,7 @@ export const DayView: React.FC<DayViewProps> = ({
           className="h-full overflow-y-auto scrollbar-thin"
           ref={scrollContainerRef}
         >
-          <div className="grid grid-cols-6 relative min-h-[1440px]">
+          <div className="relative min-h-[1440px]">
             {hours.map((hourLabel, hourIndex) => {
               const hour = hourIndex % 24;
               const hourEvents = getEventsForHour(hour);
@@ -128,14 +128,14 @@ export const DayView: React.FC<DayViewProps> = ({
               return (
                 <div 
                   key={hourIndex}
-                  className="grid grid-cols-6 border-b border-gray-200 h-[60px]"
+                  className="flex border-b border-gray-200 h-[60px]"
                 >
-                  <div className="col-span-1 border-r border-gray-200 p-2 text-center sticky left-0 bg-background">
+                  <div className="w-[80px] border-r border-gray-200 p-2 text-right sticky left-0 bg-background">
                     {hourLabel}
                   </div>
                   
                   <div
-                    className="col-span-5 p-1 relative cursor-pointer"
+                    className="flex-1 p-1 relative cursor-pointer"
                     onClick={() => {
                       const newDate = new Date(currentDate);
                       newDate.setHours(hour);
