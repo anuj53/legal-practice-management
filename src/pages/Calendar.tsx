@@ -13,6 +13,8 @@ import { Calendar as CalendarType, CalendarShare } from '@/types/calendar';
 
 export default function Calendar() {
   const [calendarDialogOpen, setCalendarDialogOpen] = useState(false);
+  const [calendarDialogMode, setCalendarDialogMode] = useState<'create' | 'edit'>('create');
+  const [selectedCalendar, setSelectedCalendar] = useState<CalendarType | null>(null);
   
   const {
     currentDate,
@@ -34,10 +36,21 @@ export default function Calendar() {
     handleSaveEvent,
     handleDeleteEvent,
     handleCreateCalendar,
+    handleUpdateCalendar,
+    handleDeleteCalendar,
   } = useCalendarPage();
   
-  // Wrapper function to open the calendar dialog
+  // Wrapper function to open the calendar dialog for creation
   const createCalendarWrapper = () => {
+    setCalendarDialogMode('create');
+    setSelectedCalendar(null);
+    setCalendarDialogOpen(true);
+  };
+  
+  // Wrapper function to open the calendar dialog for editing
+  const editCalendarWrapper = (calendar: CalendarType) => {
+    setCalendarDialogMode('edit');
+    setSelectedCalendar(calendar);
     setCalendarDialogOpen(true);
   };
   
@@ -53,13 +66,28 @@ export default function Calendar() {
     }
   };
   
-  // Dummy functions for update/delete since we're only focusing on create functionality
+  // Wrapper for updating calendar
   const onUpdateCalendar = (calendar: CalendarType) => {
-    toast.info("Calendar update functionality not implemented");
+    try {
+      handleUpdateCalendar(calendar);
+      setCalendarDialogOpen(false);
+      toast.success(`Calendar "${calendar.name}" updated successfully!`);
+    } catch (error) {
+      console.error("Error updating calendar:", error);
+      toast.error("Failed to update calendar");
+    }
   };
   
+  // Wrapper for deleting calendar
   const onDeleteCalendar = (id: string) => {
-    toast.info("Calendar deletion functionality not implemented");
+    try {
+      handleDeleteCalendar(id);
+      setCalendarDialogOpen(false);
+      toast.success("Calendar deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting calendar:", error);
+      toast.error("Failed to delete calendar");
+    }
   };
   
   if (loading) {
@@ -103,6 +131,7 @@ export default function Calendar() {
             myCalendars={myCalendars}
             otherCalendars={otherCalendars}
             onCalendarToggle={handleCalendarToggle}
+            onEditCalendar={editCalendarWrapper}
           />
         </div>
       </div>
@@ -120,7 +149,7 @@ export default function Calendar() {
         onDelete={handleDeleteEvent}
       />
       
-      {/* Calendar Creation Dialog */}
+      {/* Calendar Creation/Editing Dialog */}
       <Dialog open={calendarDialogOpen} onOpenChange={setCalendarDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <CalendarManagement
@@ -131,6 +160,8 @@ export default function Calendar() {
             onUpdateCalendar={onUpdateCalendar}
             onDeleteCalendar={onDeleteCalendar}
             dialogMode={true}
+            dialogEditMode={calendarDialogMode}
+            selectedCalendar={selectedCalendar}
           />
         </DialogContent>
       </Dialog>

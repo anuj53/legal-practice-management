@@ -1,68 +1,81 @@
 
-import React, { useState } from 'react';
-import { Input } from '@/components/ui/input';
-import { Calendar, CalendarShare } from '@/types/calendar';
-import { CalendarList } from './CalendarList';
-import { ScrollArea } from '@/components/ui/scroll-area';
-
-interface CalendarItem {
-  id: string;
-  name: string;
-  color: string;
-  checked: boolean;
-}
+import React from 'react';
+import { Plus, Settings, Edit2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/types/calendar';
 
 interface CalendarSidebarProps {
-  myCalendars: CalendarItem[];
-  otherCalendars: CalendarItem[];
+  myCalendars: Calendar[];
+  otherCalendars: Calendar[];
   onCalendarToggle: (id: string, category: 'my' | 'other') => void;
-  onCreateEvent?: () => void;
+  onEditCalendar?: (calendar: Calendar) => void;
 }
 
-export function CalendarSidebar({ 
-  myCalendars, 
-  otherCalendars, 
-  onCalendarToggle, 
-  onCreateEvent
+export function CalendarSidebar({
+  myCalendars,
+  otherCalendars,
+  onCalendarToggle,
+  onEditCalendar
 }: CalendarSidebarProps) {
-  const [searchQuery, setSearchQuery] = useState('');
-
-  const filteredMyCalendars = myCalendars.filter(cal => 
-    cal.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-  
-  const filteredOtherCalendars = otherCalendars.filter(cal => 
-    cal.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   return (
-    <div className="w-64 border-l border-gray-200 bg-white h-full flex flex-col">
-      <div className="p-4">
-        <div className="relative mb-4">
-          <Input 
-            placeholder="Search calendars" 
-            className="pl-3 pr-8 py-1 h-9 text-sm"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
+    <div className="h-full bg-white shadow-sm p-4 overflow-auto">
+      <h2 className="font-medium text-lg mb-2">My Calendars</h2>
+      <div className="space-y-2">
+        {myCalendars.map((calendar) => (
+          <div key={calendar.id} className="flex items-center justify-between group">
+            <div 
+              className="flex items-center cursor-pointer"
+              onClick={() => onCalendarToggle(calendar.id, 'my')}
+            >
+              <div 
+                className="w-4 h-4 rounded-full mr-2" 
+                style={{ backgroundColor: calendar.color, opacity: calendar.checked ? 1 : 0.5 }}
+              />
+              <span className={`text-sm ${calendar.checked ? 'text-gray-900' : 'text-gray-500'}`}>
+                {calendar.name}
+              </span>
+            </div>
+            
+            {onEditCalendar && (
+              <Button 
+                size="icon" 
+                variant="ghost" 
+                className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEditCalendar(calendar);
+                }}
+              >
+                <Edit2 className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
+        ))}
       </div>
-
-      <ScrollArea className="flex-1 px-4 pb-4">
-        <CalendarList 
-          title="My calendars" 
-          calendars={filteredMyCalendars} 
-          category="my" 
-          onCalendarToggle={onCalendarToggle} 
-        />
-
-        <CalendarList 
-          title="Other calendars" 
-          calendars={filteredOtherCalendars} 
-          category="other" 
-          onCalendarToggle={onCalendarToggle} 
-        />
-      </ScrollArea>
+      
+      {otherCalendars.length > 0 && (
+        <>
+          <h2 className="font-medium text-lg mt-6 mb-2">Other Calendars</h2>
+          <div className="space-y-2">
+            {otherCalendars.map((calendar) => (
+              <div key={calendar.id} className="flex items-center">
+                <div 
+                  className="flex items-center cursor-pointer"
+                  onClick={() => onCalendarToggle(calendar.id, 'other')}
+                >
+                  <div 
+                    className="w-4 h-4 rounded-full mr-2" 
+                    style={{ backgroundColor: calendar.color, opacity: calendar.checked ? 1 : 0.5 }}
+                  />
+                  <span className={`text-sm ${calendar.checked ? 'text-gray-900' : 'text-gray-500'}`}>
+                    {calendar.name}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }

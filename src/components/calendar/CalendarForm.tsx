@@ -12,6 +12,10 @@ interface CalendarFormProps {
   setCalendarColor: (value: string) => void;
   isPublic: boolean;
   setIsPublic: (value: boolean) => void;
+  isFirm?: boolean;
+  setIsFirm?: (value: boolean) => void;
+  isStatute?: boolean;
+  setIsStatute?: (value: boolean) => void;
   sharedWith: CalendarShare[];
   setSharedWith: React.Dispatch<React.SetStateAction<CalendarShare[]>>;
 }
@@ -23,6 +27,10 @@ export function CalendarForm({
   setCalendarColor,
   isPublic,
   setIsPublic,
+  isFirm = false,
+  setIsFirm = () => {},
+  isStatute = false,
+  setIsStatute = () => {},
   sharedWith,
   setSharedWith
 }: CalendarFormProps) {
@@ -78,6 +86,40 @@ export function CalendarForm({
         </div>
         <p className="text-xs text-gray-500">
           Public calendars are visible to other users of the system
+        </p>
+      </div>
+      
+      <div className="space-y-2">
+        <div className="flex items-center">
+          <Checkbox
+            id="is-firm"
+            checked={isFirm}
+            onCheckedChange={(checked) => setIsFirm(checked === true)}
+            className="mr-2"
+          />
+          <label htmlFor="is-firm" className="text-sm font-medium cursor-pointer">
+            Firm calendar
+          </label>
+        </div>
+        <p className="text-xs text-gray-500">
+          Firm calendars are used for company-wide events
+        </p>
+      </div>
+      
+      <div className="space-y-2">
+        <div className="flex items-center">
+          <Checkbox
+            id="is-statute"
+            checked={isStatute}
+            onCheckedChange={(checked) => setIsStatute(checked === true)}
+            className="mr-2"
+          />
+          <label htmlFor="is-statute" className="text-sm font-medium cursor-pointer">
+            Statute calendar
+          </label>
+        </div>
+        <p className="text-xs text-gray-500">
+          Statute calendars are used for tracking legal deadlines
         </p>
       </div>
 

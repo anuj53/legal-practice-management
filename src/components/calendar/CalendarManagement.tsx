@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
 import { Calendar, CalendarShare } from '@/types/calendar';
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,16 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { CalendarForm } from './CalendarForm';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle 
+} from '@/components/ui/alert-dialog';
 
 interface CalendarManagementProps {
   myCalendars: Calendar[];
@@ -21,7 +32,9 @@ interface CalendarManagementProps {
   onCreateCalendar: (calendar: Omit<Calendar, 'id'>) => void;
   onUpdateCalendar: (calendar: Calendar) => void;
   onDeleteCalendar: (id: string) => void;
-  dialogMode?: boolean; // Whether component is used inside a dialog
+  dialogMode?: boolean;
+  dialogEditMode?: 'create' | 'edit';
+  selectedCalendar?: Calendar | null;
 }
 
 export function CalendarManagement({
@@ -31,34 +44,52 @@ export function CalendarManagement({
   onCreateCalendar,
   onUpdateCalendar,
   onDeleteCalendar,
-  dialogMode = false
+  dialogMode = false,
+  dialogEditMode = 'create',
+  selectedCalendar = null
 }: CalendarManagementProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [editMode, setEditMode] = useState<'create' | 'edit'>('create');
-  const [selectedCalendar, setSelectedCalendar] = useState<Calendar | null>(null);
+  const [currentCalendar, setCurrentCalendar] = useState<Calendar | null>(null);
   const [calendarName, setCalendarName] = useState('');
   const [calendarColor, setCalendarColor] = useState('#4caf50');
   const [isFirm, setIsFirm] = useState(false);
   const [isStatute, setIsStatute] = useState(false);
   const [isPublic, setIsPublic] = useState(false);
   const [sharedWith, setSharedWith] = useState<CalendarShare[]>([]);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   
-  React.useEffect(() => {
+  // Effect for dialog mode
+  useEffect(() => {
     if (dialogMode) {
-      setEditMode('create');
-      setCalendarName('');
-      setCalendarColor('#4caf50');
-      setIsFirm(false);
-      setIsStatute(false);
-      setIsPublic(false);
-      setSharedWith([]);
+      setEditMode(dialogEditMode);
+      
+      // If in edit mode and we have a selected calendar
+      if (dialogEditMode === 'edit' && selectedCalendar) {
+        setCurrentCalendar(selectedCalendar);
+        setCalendarName(selectedCalendar.name);
+        setCalendarColor(selectedCalendar.color);
+        setIsFirm(selectedCalendar.is_firm || false);
+        setIsStatute(selectedCalendar.is_statute || false);
+        setIsPublic(selectedCalendar.is_public || false);
+        setSharedWith(selectedCalendar.sharedWith || []);
+      } else {
+        // Create mode
+        setCurrentCalendar(null);
+        setCalendarName('');
+        setCalendarColor('#4caf50');
+        setIsFirm(false);
+        setIsStatute(false);
+        setIsPublic(false);
+        setSharedWith([]);
+      }
     }
-  }, [dialogMode]);
+  }, [dialogMode, dialogEditMode, selectedCalendar]);
   
   const handleOpenDialog = (mode: 'create' | 'edit', calendar?: Calendar) => {
     setEditMode(mode);
     if (mode === 'edit' && calendar) {
-      setSelectedCalendar(calendar);
+      setCurrentCalendar(calendar);
       setCalendarName(calendar.name);
       setCalendarColor(calendar.color);
       setIsFirm(calendar.is_firm || false);
@@ -66,7 +97,7 @@ export function CalendarManagement({
       setIsPublic(calendar.is_public || false);
       setSharedWith(calendar.sharedWith || []);
     } else {
-      setSelectedCalendar(null);
+      setCurrentCalendar(null);
       setCalendarName('');
       setCalendarColor('#4caf50');
       setIsFirm(false);
@@ -96,9 +127,9 @@ export function CalendarManagement({
       if (!dialogMode) {
         toast.success('Calendar created successfully');
       }
-    } else if (selectedCalendar) {
+    } else if (currentCalendar) {
       onUpdateCalendar({
-        ...selectedCalendar,
+        ...currentCalendar,
         name: calendarName,
         color: calendarColor,
         is_firm: isFirm,
@@ -106,7 +137,9 @@ export function CalendarManagement({
         is_public: isPublic,
         sharedWith: sharedWith
       });
-      toast.success('Calendar updated successfully');
+      if (!dialogMode) {
+        toast.success('Calendar updated successfully');
+      }
     }
     
     if (!dialogMode) {
@@ -115,20 +148,31 @@ export function CalendarManagement({
   };
   
   const handleDelete = () => {
-    if (selectedCalendar) {
-      onDeleteCalendar(selectedCalendar.id);
-      toast.success('Calendar deleted successfully');
-      setIsOpen(false);
+    if (currentCalendar) {
+      onDeleteCalendar(currentCalendar.id);
+      setDeleteDialogOpen(false);
+      
+      if (!dialogMode) {
+        setIsOpen(false);
+      }
     }
+  };
+  
+  const confirmDelete = () => {
+    setDeleteDialogOpen(true);
   };
   
   if (dialogMode) {
     return (
       <>
         <DialogHeader>
-          <DialogTitle>Create New Calendar</DialogTitle>
+          <DialogTitle>
+            {dialogEditMode === 'create' ? 'Create New Calendar' : 'Edit Calendar'}
+          </DialogTitle>
           <DialogDescription>
-            Add a new calendar to organize your events
+            {dialogEditMode === 'create' 
+              ? 'Add a new calendar to organize your events'
+              : 'Update your calendar details'}
           </DialogDescription>
         </DialogHeader>
         
@@ -139,15 +183,45 @@ export function CalendarManagement({
           setCalendarColor={setCalendarColor}
           isPublic={isPublic}
           setIsPublic={setIsPublic}
+          isFirm={isFirm}
+          setIsFirm={setIsFirm}
+          isStatute={isStatute}
+          setIsStatute={setIsStatute}
           sharedWith={sharedWith}
           setSharedWith={setSharedWith}
         />
         
-        <DialogFooter className="flex justify-end">
+        <DialogFooter className={dialogEditMode === 'edit' ? 'justify-between' : 'justify-end'}>
+          {dialogEditMode === 'edit' && (
+            <Button 
+              variant="destructive" 
+              onClick={confirmDelete}
+            >
+              Delete Calendar
+            </Button>
+          )}
           <Button onClick={handleSubmit}>
-            Create Calendar
+            {dialogEditMode === 'create' ? 'Create Calendar' : 'Update Calendar'}
           </Button>
         </DialogFooter>
+        
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete the calendar
+                and all events associated with it.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </>
     );
   }
@@ -248,6 +322,10 @@ export function CalendarManagement({
             setCalendarColor={setCalendarColor}
             isPublic={isPublic}
             setIsPublic={setIsPublic}
+            isFirm={isFirm}
+            setIsFirm={setIsFirm}
+            isStatute={isStatute}
+            setIsStatute={setIsStatute}
             sharedWith={sharedWith}
             setSharedWith={setSharedWith}
           />
@@ -256,7 +334,7 @@ export function CalendarManagement({
             {editMode === 'edit' && (
               <Button 
                 variant="destructive" 
-                onClick={handleDelete}
+                onClick={confirmDelete}
                 className="mr-auto"
               >
                 Delete Calendar
@@ -273,6 +351,25 @@ export function CalendarManagement({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the calendar
+              and all events associated with it.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
