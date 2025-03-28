@@ -16,8 +16,17 @@ export function useCalendarPage() {
     myCalendars,
     otherCalendars,
     events: rawEvents,
-    loading: calendarLoading
+    error,
+    dataUpdated
   } = useCalendar();
+  
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    if (rawEvents.length > 0 || dataUpdated > 0) {
+      setLoading(false);
+    }
+  }, [rawEvents, dataUpdated]);
   
   const {
     selectedEvent,
@@ -47,8 +56,9 @@ export function useCalendarPage() {
     const calendar = [...myCalendars, ...otherCalendars].find(cal => cal.id === event.calendar);
     return {
       ...event,
-      calendarColor: calendar?.color || '#9CA3AF' // Default gray color if calendar not found
-    };
+      calendarColor: calendar?.color || '#9CA3AF', // Default gray color if calendar not found
+      type: event.type || 'client-meeting' // Ensure type is always set
+    } as CalendarEvent;
   });
   
   // Calculate view date range based on current view and date
@@ -131,7 +141,7 @@ export function useCalendarPage() {
     myCalendars,
     otherCalendars,
     events: displayedEvents, // Use processed events with recurring instances
-    loading: calendarLoading,
+    loading: loading,
     handleCalendarToggle,
     handleEventClick,
     handleDayClick,

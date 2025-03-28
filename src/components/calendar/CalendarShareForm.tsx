@@ -15,7 +15,7 @@ interface CalendarShareFormProps {
 
 export function CalendarShareForm({ sharedWith, setSharedWith }: CalendarShareFormProps) {
   const [shareEmail, setShareEmail] = useState('');
-  const [sharePermission, setSharePermission] = useState<'view' | 'edit' | 'admin'>('view');
+  const [sharePermission, setSharePermission] = useState<'view' | 'edit' | 'owner'>('view');
 
   const handleAddShare = () => {
     if (!shareEmail.trim()) {
@@ -55,7 +55,7 @@ export function CalendarShareForm({ sharedWith, setSharedWith }: CalendarShareFo
   const permissionLabels = {
     view: 'View only',
     edit: 'Edit events',
-    admin: 'Full control'
+    owner: 'Full control'
   };
 
   return (
@@ -73,7 +73,7 @@ export function CalendarShareForm({ sharedWith, setSharedWith }: CalendarShareFo
         <div className="flex gap-2">
           <Select
             value={sharePermission}
-            onValueChange={(value: 'view' | 'edit' | 'admin') => setSharePermission(value)}
+            onValueChange={(value: 'view' | 'edit' | 'owner') => setSharePermission(value)}
           >
             <SelectTrigger className="w-[120px]">
               <SelectValue />
@@ -81,7 +81,7 @@ export function CalendarShareForm({ sharedWith, setSharedWith }: CalendarShareFo
             <SelectContent>
               <SelectItem value="view">View only</SelectItem>
               <SelectItem value="edit">Edit events</SelectItem>
-              <SelectItem value="admin">Full control</SelectItem>
+              <SelectItem value="owner">Full control</SelectItem>
             </SelectContent>
           </Select>
           

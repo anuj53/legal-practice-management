@@ -2,7 +2,7 @@
 import { addHours, addDays, subDays, startOfDay } from 'date-fns';
 
 // Re-export types from calendarTypes
-export type { Calendar, Event } from './calendarTypes';
+export type { Calendar, Event, RecurrencePattern, CalendarShare } from './calendarTypes';
 
 // Re-export validation utilities
 export { isValidUUID } from './validationUtils';
@@ -10,7 +10,8 @@ export { isValidUUID } from './validationUtils';
 // Re-export data conversion utilities
 export { 
   convertDbEventToEvent,
-  convertEventToDbEvent 
+  convertEventToDbEvent,
+  createRecurrenceRule
 } from './dataConversionUtils';
 
 // Re-export demo data generators

@@ -60,7 +60,7 @@ export interface Calendar {
 export interface CalendarShare {
   id?: string;
   user_email: string;
-  permission: 'view' | 'edit' | 'owner';
+  permission: 'view' | 'edit' | 'owner'; // Changed from 'admin' to 'owner' to match
 }
 
 export type CalendarViewType = 'day' | 'week' | 'month' | 'agenda';

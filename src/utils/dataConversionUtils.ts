@@ -10,7 +10,7 @@ export const convertDbEventToEvent = (dbEvent: any): Event => {
     end: new Date(dbEvent.end_time),
     description: dbEvent.description,
     location: dbEvent.location,
-    type: dbEvent.type,
+    type: dbEvent.type || 'client-meeting',
     calendar: dbEvent.calendar_id,
     isAllDay: dbEvent.is_all_day || false,
     isRecurring: dbEvent.is_recurring || false,

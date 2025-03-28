@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Event, RecurrencePattern } from '@/utils/calendarTypes';
 import { toast } from 'sonner';
-import { createRecurrenceRule } from '@/utils/dataConversionUtils';
 
 export function useRecurringEvents() {
   const [loading, setLoading] = useState(false);
@@ -13,16 +12,29 @@ export function useRecurringEvents() {
     try {
       setLoading(true);
       
+      // First check if the recurrence_rules table exists
+      const { error: checkError } = await supabase
+        .from('recurrence_rules')
+        .select('id')
+        .limit(1);
+        
+      if (checkError) {
+        console.error('recurrence_rules table may not exist:', checkError);
+        toast.error('Could not create recurrence pattern: The necessary database structure is not available');
+        return null;
+      }
+      
+      // Insert the new recurrence rule
       const { data, error } = await supabase
         .from('recurrence_rules')
-        .insert([{
+        .insert({
           frequency: pattern.frequency,
           interval: pattern.interval || 1,
           week_days: pattern.weekDays || null,
           month_days: pattern.monthDays || null,
           ends_on: pattern.endsOn ? pattern.endsOn.toISOString() : null,
           ends_after: pattern.endsAfter || null
-        }])
+        })
         .select();
         
       if (error) {
@@ -45,6 +57,18 @@ export function useRecurringEvents() {
   const updateRecurrenceRule = async (id: string, pattern: RecurrencePattern): Promise<boolean> => {
     try {
       setLoading(true);
+      
+      // Check if the recurrence_rules table exists
+      const { error: checkError } = await supabase
+        .from('recurrence_rules')
+        .select('id')
+        .limit(1);
+        
+      if (checkError) {
+        console.error('recurrence_rules table may not exist:', checkError);
+        toast.error('Could not update recurrence pattern: The necessary database structure is not available');
+        return false;
+      }
       
       const { error } = await supabase
         .from('recurrence_rules')
@@ -78,6 +102,18 @@ export function useRecurringEvents() {
   const deleteRecurrenceRule = async (id: string): Promise<boolean> => {
     try {
       setLoading(true);
+      
+      // Check if the recurrence_rules table exists
+      const { error: checkError } = await supabase
+        .from('recurrence_rules')
+        .select('id')
+        .limit(1);
+        
+      if (checkError) {
+        console.error('recurrence_rules table may not exist:', checkError);
+        toast.error('Could not delete recurrence pattern: The necessary database structure is not available');
+        return false;
+      }
       
       const { error } = await supabase
         .from('recurrence_rules')
@@ -127,6 +163,7 @@ export function useRecurringEvents() {
         return null;
       }
       
+      // Return the updated event
       return {
         ...event,
         isRecurring: true,
@@ -165,6 +202,7 @@ export function useRecurringEvents() {
         return null;
       }
       
+      // Return the updated event
       return {
         ...event,
         isRecurring: false,
