@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Calendar, Event, convertDbEventToEvent, convertEventToDbEvent, isValidUUID } from '@/utils/calendarUtils';
@@ -6,7 +5,6 @@ import { Calendar, Event, convertDbEventToEvent, convertEventToDbEvent, isValidU
 // Fetch calendars from Supabase
 export const fetchCalendars = async () => {
   try {
-    // Fetch calendars from database
     const { data: calendarsData, error: calendarsError } = await supabase
       .from('calendars')
       .select('*');
@@ -16,14 +14,12 @@ export const fetchCalendars = async () => {
       throw calendarsError;
     }
 
-    // Get current user
     const { data: { user } } = await supabase.auth.getUser();
     const currentUserId = user?.id;
     
     if (calendarsData && calendarsData.length > 0) {
       console.log('Found calendars in DB:', calendarsData.length);
       
-      // Transform to expected format and separate into my/other calendars
       const myCalendars = calendarsData
         .filter(cal => cal.user_id === null || cal.user_id === currentUserId)
         .map(cal => ({
@@ -61,7 +57,6 @@ export const fetchCalendars = async () => {
 export const fetchEvents = async () => {
   try {
     console.log('Fetching events from database...');
-    // Fetch events from database
     const { data: eventsData, error: eventsError } = await supabase
       .from('events')
       .select(`
@@ -149,13 +144,49 @@ export const createCalendarInDb = async (calendar: Omit<Calendar, 'id'>) => {
       throw error;
     }
     
-    // Return new calendar with generated ID
     return {
       ...calendar,
       id: data[0].id,
     } as Calendar;
   } catch (err) {
     console.error('Error creating calendar:', err);
+    throw err;
+  }
+};
+
+// Delete calendar from Supabase
+export const deleteCalendarFromDb = async (id: string) => {
+  try {
+    console.log('API: Deleting calendar from DB:', id);
+    
+    if (!isValidUUID(id)) {
+      throw new Error(`Invalid UUID format for calendar ID: ${id}`);
+    }
+    
+    const { error: eventsError } = await supabase
+      .from('events')
+      .delete()
+      .eq('calendar_id', id);
+      
+    if (eventsError) {
+      console.error('Error deleting events for calendar from DB:', eventsError);
+      throw eventsError;
+    }
+    
+    const { error } = await supabase
+      .from('calendars')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting calendar from DB:', error);
+      throw error;
+    }
+    
+    console.log('API: Calendar and associated events deleted from DB');
+    return true;
+  } catch (err) {
+    console.error('Error deleting calendar:', err);
     throw err;
   }
 };
@@ -168,7 +199,6 @@ export const createEventInDb = async (event: Omit<Event, 'id'>) => {
     console.log('API: Calendar ID type:', typeof event.calendar);
     console.log('API: Calendar ID is valid UUID:', isValidUUID(event.calendar));
     
-    // Comprehensive validation for create
     if (!event.calendar) {
       const errorMsg = 'Calendar ID is missing or empty';
       console.error(errorMsg);
@@ -193,7 +223,6 @@ export const createEventInDb = async (event: Omit<Event, 'id'>) => {
       throw new Error(errorMsg);
     }
     
-    // Create the DB event object with required fields for insert
     const dbEvent = {
       title: event.title,
       description: event.description || '',
@@ -227,7 +256,6 @@ export const createEventInDb = async (event: Omit<Event, 'id'>) => {
       throw new Error('No data returned from event creation');
     }
     
-    // Return new event with generated ID
     const newEvent = convertDbEventToEvent(data[0]);
     console.log('API: Converted new event:', newEvent);
     return newEvent;
@@ -244,7 +272,6 @@ export const updateEventInDb = async (event: Event) => {
     console.log('API: Event ID:', event.id);
     console.log('API: Calendar ID:', event.calendar);
     
-    // Thorough UUID validation for update
     if (!event.id) {
       throw new Error('Event ID cannot be empty for update operation');
     }
@@ -257,7 +284,6 @@ export const updateEventInDb = async (event: Event) => {
       throw new Error(`Invalid UUID format for event ID: ${event.id}`);
     }
     
-    // Calendar ID validation
     if (!event.calendar) {
       throw new Error('Calendar ID cannot be empty');
     }
@@ -266,7 +292,6 @@ export const updateEventInDb = async (event: Event) => {
       throw new Error(`Invalid UUID format for calendar ID: ${event.calendar}`);
     }
     
-    // Convert to database format
     const dbEvent = convertEventToDbEvent(event);
     
     console.log('API: Formatted DB event for update:', dbEvent);
@@ -289,7 +314,6 @@ export const updateEventInDb = async (event: Event) => {
       return event;
     }
     
-    // Return the updated event from the database
     return convertDbEventToEvent(data[0]);
   } catch (err) {
     console.error('Error updating event:', err);
@@ -302,7 +326,6 @@ export const deleteEventFromDb = async (id: string) => {
   try {
     console.log('API: Deleting event from DB:', id);
     
-    // Validate UUID before attempting to delete
     if (!isValidUUID(id)) {
       throw new Error(`Invalid UUID format for event ID: ${id}`);
     }

@@ -13,7 +13,8 @@ import {
   createCalendarInDb,
   createEventInDb,
   updateEventInDb,
-  deleteEventFromDb
+  deleteEventFromDb,
+  deleteCalendarFromDb
 } from '@/api/calendarAPI';
 
 export type { Calendar, Event } from '@/utils/calendarUtils';
@@ -49,10 +50,44 @@ export const useCalendar = () => {
       setDataUpdated(prev => prev + 1);
       
       toast.success(`Updated calendar: ${calendar.name}`);
+      return calendar;
     } catch (err) {
       console.error('Error updating calendar:', err);
       setError('Failed to update calendar');
       toast.error('Failed to update calendar');
+      throw err;
+    }
+  };
+
+  // Delete calendar
+  const deleteCalendar = async (id: string) => {
+    try {
+      // Validate UUID
+      if (!isValidUUID(id)) {
+        const msg = `Invalid calendar ID format: ${id}`;
+        console.error(msg);
+        throw new Error(msg);
+      }
+      
+      // First delete from the database
+      await deleteCalendarFromDb(id);
+      
+      // Then update local state
+      setMyCalendars(prev => prev.filter(cal => cal.id !== id));
+      setOtherCalendars(prev => prev.filter(cal => cal.id !== id));
+      
+      // Also remove events associated with this calendar
+      setEvents(prev => prev.filter(event => event.calendar !== id));
+      
+      // Trigger a data refresh
+      setDataUpdated(prev => prev + 1);
+      
+      toast.success('Calendar deleted successfully!');
+    } catch (err) {
+      console.error('Error deleting calendar:', err);
+      setError('Failed to delete calendar');
+      toast.error(`Failed to delete calendar: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      throw err;
     }
   };
 
@@ -203,5 +238,6 @@ export const useCalendar = () => {
     createEvent,
     updateEvent,
     deleteEvent,
+    deleteCalendar,
   };
 };

@@ -12,18 +12,20 @@ export function useCalendarPage() {
   const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('view');
 
   const {
-    calendars,
+    myCalendars: calendars,
+    otherCalendars,
     events,
     createEvent,
     updateEvent,
     deleteEvent,
     toggleCalendar,
     createCalendar,
+    updateCalendar,
+    deleteCalendar, 
   } = useCalendar();
   
   // Split calendars into my calendars and other calendars
   const myCalendars = calendars.filter(cal => cal.isUserCalendar);
-  const otherCalendars = calendars.filter(cal => !cal.isUserCalendar);
   
   // Get only events from selected calendars
   const filteredEvents = events.filter(event => {
@@ -89,6 +91,38 @@ export function useCalendarPage() {
     } catch (error) {
       console.error('Error creating calendar:', error);
       toast.error(`Failed to create calendar: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw error;
+    }
+  };
+
+  // Add the missing functions for updating and deleting calendars
+  const handleUpdateCalendar = (calendar: Calendar) => {
+    console.log("Update calendar:", calendar);
+    try {
+      // Handle sharing permissions
+      if (calendar.sharedWith && calendar.sharedWith.length > 0) {
+        console.log("Calendar shared with:", calendar.sharedWith);
+      }
+      
+      updateCalendar(calendar);
+      toast.success(`Calendar "${calendar.name}" updated successfully!`);
+      return calendar;
+    } catch (error) {
+      console.error('Error updating calendar:', error);
+      toast.error(`Failed to update calendar: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw error;
+    }
+  };
+  
+  const handleDeleteCalendar = (id: string) => {
+    console.log("Delete calendar:", id);
+    try {
+      deleteCalendar(id);
+      toast.success("Calendar deleted successfully!");
+    } catch (error) {
+      console.error('Error deleting calendar:', error);
+      toast.error(`Failed to delete calendar: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw error;
     }
   };
   
@@ -183,5 +217,7 @@ export function useCalendarPage() {
     handleSaveEvent,
     handleDeleteEvent,
     handleCreateCalendar,
+    handleUpdateCalendar,
+    handleDeleteCalendar,
   };
 }
