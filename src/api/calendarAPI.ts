@@ -330,6 +330,19 @@ export const deleteEventFromDb = async (id: string) => {
       throw new Error(`Invalid UUID format for event ID: ${id}`);
     }
     
+    // Check if this is a recurring parent event by looking for records with recurrencePattern
+    const { data: event, error: eventError } = await supabase
+      .from('events')
+      .select('*')
+      .eq('id', id)
+      .single();
+      
+    if (eventError) {
+      console.error('Error fetching event before deletion:', eventError);
+      throw eventError;
+    }
+    
+    // Execute the deletion
     const { error } = await supabase
       .from('events')
       .delete()

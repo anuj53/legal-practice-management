@@ -228,8 +228,28 @@ export function useCalendarPage() {
     console.log("Deleting event:", id);
     
     try {
-      deleteEvent(id);
-      toast.success('Event deleted successfully!');
+      // If this is a recurring instance (id contains '_recurrence_')
+      if (id.includes('_recurrence_') && selectedEvent?.parentEventId) {
+        console.log("This is a recurring instance with parent ID:", selectedEvent.parentEventId);
+        
+        // Show confirmation asking if user wants to delete just this instance or the entire series
+        const confirmDelete = window.confirm("Do you want to delete this recurring event and all of its instances?");
+        
+        if (confirmDelete) {
+          // Delete the parent event which will cascade to all instances
+          await deleteEvent(selectedEvent.parentEventId);
+          toast.success('Recurring event series deleted successfully!');
+        } else {
+          toast.info('Deletion cancelled');
+          setModalOpen(false);
+          return;
+        }
+      } else {
+        // Regular event or recurring parent
+        await deleteEvent(id);
+        toast.success('Event deleted successfully!');
+      }
+      
       setModalOpen(false);
     } catch (error) {
       console.error('Error deleting event:', error);

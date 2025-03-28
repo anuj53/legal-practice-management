@@ -1,15 +1,15 @@
 
 import { addDays, addMonths, addYears, isSameDay, startOfDay, isBefore, endOfDay, getDay } from 'date-fns';
-import { Event } from './calendarTypes';
+import { CalendarEvent } from '@/types/calendar';
 
 /**
  * Generates recurring event instances based on a parent event with recurrence pattern
  */
 export const generateRecurringEvents = (
-  parentEvent: Event,
+  parentEvent: CalendarEvent,
   viewStart: Date,
   viewEnd: Date
-): Event[] => {
+): CalendarEvent[] => {
   if (!parentEvent.recurrencePattern) {
     console.log('No recurrence pattern found for event', parentEvent.id);
     return [];
@@ -17,7 +17,7 @@ export const generateRecurringEvents = (
 
   const { frequency, interval, endDate, occurrences, weekdays } = parentEvent.recurrencePattern;
   const startDate = new Date(parentEvent.start);
-  const recurringEvents: Event[] = [];
+  const recurringEvents: CalendarEvent[] = [];
   
   // For debugging
   console.log('Generating recurring events with pattern:', {
@@ -84,7 +84,7 @@ export const generateRecurringEvents = (
       const newEndDate = new Date(currentDate.getTime() + durationMs);
       
       // Create recurring event instance
-      const recurringEvent: Event = {
+      const recurringEvent: CalendarEvent = {
         ...parentEvent,
         id: `${parentEvent.id}_recurrence_${iterations}`,
         start: new Date(currentDate),
@@ -99,24 +99,7 @@ export const generateRecurringEvents = (
     }
     
     // Advance date based on frequency and interval
-    if (frequency === 'daily') {
-      currentDate = addDays(currentDate, interval);
-    } else if (frequency === 'weekly') {
-      // For weekly pattern with specific weekdays
-      if (weekdays && weekdays.length > 0) {
-        currentDate = addDays(currentDate, 1);
-      } else {
-        // Without weekdays, just advance by the weekly interval
-        currentDate = addDays(currentDate, interval * 7);
-      }
-    } else if (frequency === 'monthly') {
-      currentDate = addMonths(currentDate, interval);
-    } else if (frequency === 'yearly') {
-      currentDate = addYears(currentDate, interval);
-    } else {
-      console.error('Unsupported recurrence frequency:', frequency);
-      break;
-    }
+    currentDate = advanceDate(currentDate, frequency, interval);
   }
   
   if (iterations >= MAX_ITERATIONS) {
