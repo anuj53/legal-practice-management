@@ -7,6 +7,7 @@ export interface CalendarEvent {
   type: 'client-meeting' | 'internal-meeting' | 'court' | 'deadline' | 'personal';
   calendar: string; // This is the property name we're standardizing on
   color?: string;
+  calendarColor?: string; // Add this property for event display color from associated calendar
   isAllDay?: boolean;
   description?: string;
   location?: string;
