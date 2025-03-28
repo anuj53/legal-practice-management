@@ -6,7 +6,7 @@ import { MonthView } from '@/components/calendar/MonthView';
 import { AgendaView } from '@/components/calendar/AgendaView';
 import { CalendarViewType } from '@/types/calendar';
 import { CalendarEvent } from '@/types/calendar';
-import { startOfWeek, endOfWeek, addDays } from 'date-fns';
+import { startOfWeek, endOfWeek, addDays, startOfMonth, endOfMonth } from 'date-fns';
 import { generateRecurringEventInstances } from '@/utils/calendarUtils';
 
 interface CalendarMainProps {
@@ -20,6 +20,8 @@ interface CalendarMainProps {
 export function CalendarMain({ view, date, events, onEventClick, onDayClick }: CalendarMainProps) {
   // Process recurring events for the current view
   const processedEvents = useMemo(() => {
+    console.log(`Processing events for ${view} view with ${events.length} events`);
+    
     // Create a copy of regular events
     let allEvents = [...events];
     
@@ -27,6 +29,8 @@ export function CalendarMain({ view, date, events, onEventClick, onDayClick }: C
     const recurringEvents = events.filter(event => event.isRecurring && event.recurrencePattern);
     
     if (recurringEvents.length > 0) {
+      console.log(`Found ${recurringEvents.length} recurring events to process`);
+      
       // For each view, determine the appropriate date range for recurring events
       let rangeStart: Date, rangeEnd: Date;
       
@@ -42,8 +46,9 @@ export function CalendarMain({ view, date, events, onEventClick, onDayClick }: C
           rangeEnd.setHours(23, 59, 59, 999);
           break;
         case 'month':
-          // For month view, we already handle this elsewhere
-          return allEvents;
+          rangeStart = startOfMonth(date);
+          rangeEnd = endOfMonth(date);
+          break;
         case 'agenda':
           // For agenda view, use a wider range
           rangeStart = new Date(date);
@@ -55,10 +60,14 @@ export function CalendarMain({ view, date, events, onEventClick, onDayClick }: C
           return allEvents;
       }
       
+      console.log(`Date range for recurring events: ${rangeStart.toISOString()} to ${rangeEnd.toISOString()}`);
+      
       // Generate instances for each recurring event
       recurringEvents.forEach(event => {
         if (event.recurrencePattern) {
+          console.log(`Generating instances for event: ${event.title} with pattern:`, event.recurrencePattern);
           const instances = generateRecurringEventInstances(event, rangeStart, rangeEnd);
+          console.log(`Generated ${instances.length} instances`);
           allEvents = [...allEvents, ...instances];
         }
       });

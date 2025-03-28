@@ -1,3 +1,4 @@
+
 import { addHours, addDays, subDays, startOfDay, addWeeks, addMonths, addYears, isBefore, isSameDay, getDay } from 'date-fns';
 
 // Types
@@ -94,6 +95,7 @@ export function generateRecurringEventInstances(
     ) {
       instances.push({
         ...event,
+        id: `${event.id}-instance-${instanceCount}`, // Ensure unique ID for each instance
         start: newStart,
         end: newEnd,
         isRecurringInstance: true // Mark as an instance of a recurring event
@@ -125,15 +127,49 @@ export function generateRecurringEventInstances(
       case 'weekly':
         if (weekdays && weekdays.length > 0) {
           // For weekly recurrence with specific weekdays
-          currentDate = addDays(currentDate, 1);
+          let foundNextDay = false;
+          const currentDayOfWeek = getDay(currentDate); // 0-6 for Sunday-Saturday
           
-          // Find the next matching weekday
-          while (!weekdays.includes(getDay(currentDate))) {
-            currentDate = addDays(currentDate, 1);
+          // First, try to find the next weekday in the current week
+          for (let i = 1; i <= 7; i++) {
+            const nextDay = addDays(currentDate, i);
+            const nextDayOfWeek = getDay(nextDay);
+            
+            if (weekdays.includes(nextDayOfWeek) && nextDay > currentDate) {
+              currentDate = nextDay;
+              foundNextDay = true;
+              break;
+            }
+          }
+          
+          // If no next day found in current week, jump to the first specified weekday in the next week
+          if (!foundNextDay) {
+            // Add days to get to the next week (plus the interval-1 additional weeks)
+            currentDate = addWeeks(currentDate, interval);
+            
+            // Find the first matching weekday in the next week period
+            let daysToAdd = 0;
+            let found = false;
+            
+            for (let i = 0; i < 7; i++) {
+              const dayToCheck = addDays(currentDate, i - getDay(currentDate));
+              if (weekdays.includes(getDay(dayToCheck))) {
+                daysToAdd = i - getDay(currentDate);
+                found = true;
+                break;
+              }
+            }
+            
+            if (found) {
+              currentDate = addDays(currentDate, daysToAdd);
+            } else {
+              // Fallback: just add 7 days if no matching weekday found
+              currentDate = addDays(currentDate, 7);
+            }
           }
         } else {
-          // Simple weekly recurrence
-          currentDate = addDays(currentDate, 7 * interval);
+          // Simple weekly recurrence (same day of week)
+          currentDate = addWeeks(currentDate, interval);
         }
         break;
         
