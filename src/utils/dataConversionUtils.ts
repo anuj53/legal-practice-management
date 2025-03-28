@@ -1,5 +1,5 @@
 
-import { Event } from './calendarTypes';
+import { Event } from '@/types/calendar';
 import { RecurrencePattern } from '@/types/calendar';
 
 // Convert database event to app event
@@ -9,8 +9,8 @@ export const convertDbEventToEvent = (dbEvent: any): Event => {
     title: dbEvent.title,
     start: new Date(dbEvent.start_time),
     end: new Date(dbEvent.end_time),
-    description: dbEvent.description,
-    location: dbEvent.location,
+    description: dbEvent.description || '',
+    location: dbEvent.location || '',
     type: dbEvent.type || 'client-meeting',
     calendar: dbEvent.calendar_id,
     isAllDay: dbEvent.is_all_day || false,
@@ -43,6 +43,8 @@ export const convertDbEventToEvent = (dbEvent: any): Event => {
 
 // Convert app event to database event
 export const convertEventToDbEvent = (event: Event): any => {
+  console.log('Converting event to DB event:', event);
+  
   const dbEvent: any = {
     id: event.id,
     title: event.title,

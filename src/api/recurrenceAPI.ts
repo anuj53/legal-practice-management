@@ -6,36 +6,24 @@ import { toast } from 'sonner';
 // Create a new recurrence rule in the database
 export const createRecurrenceRule = async (pattern: RecurrencePattern): Promise<string | null> => {
   try {
-    // Check if recurrence_rules table exists by trying to select from it
-    const { error: checkError } = await supabase
-      .from('recurrence_rules')
-      .select('id')
-      .limit(1);
-      
-    if (checkError) {
-      console.error('recurrence_rules table may not exist:', checkError);
-      return null;
-    }
-    
-    // Insert the new recurrence rule
+    // Since the table may not exist in the database yet, we'll use a more direct approach
     const { data, error } = await supabase
-      .from('recurrence_rules')
-      .insert({
+      .rpc('create_recurrence_rule', {
         frequency: pattern.frequency,
-        interval: pattern.interval || 1,
-        week_days: pattern.weekDays || null,
-        month_days: pattern.monthDays || null,
-        ends_on: pattern.endsOn ? pattern.endsOn.toISOString() : null,
-        ends_after: pattern.endsAfter || null
-      })
-      .select();
+        interval_val: pattern.interval || 1,
+        week_days_val: pattern.weekDays || null,
+        month_days_val: pattern.monthDays || null,
+        ends_on_val: pattern.endsOn ? pattern.endsOn.toISOString() : null,
+        ends_after_val: pattern.endsAfter || null
+      });
       
     if (error) {
       console.error('Error creating recurrence rule:', error);
+      // Fall back to updating the event directly with the pattern JSON
       return null;
     }
     
-    return data?.[0]?.id || null;
+    return data || null;
   } catch (err) {
     console.error('Error in createRecurrenceRule:', err);
     return null;
@@ -45,28 +33,17 @@ export const createRecurrenceRule = async (pattern: RecurrencePattern): Promise<
 // Update a recurrence rule in the database
 export const updateRecurrenceRule = async (id: string, pattern: RecurrencePattern): Promise<boolean> => {
   try {
-    // Check if recurrence_rules table exists
-    const { error: checkError } = await supabase
-      .from('recurrence_rules')
-      .select('id')
-      .limit(1);
-      
-    if (checkError) {
-      console.error('recurrence_rules table may not exist:', checkError);
-      return false;
-    }
-    
+    // Since the table may not exist in the database yet, we'll use a more direct approach
     const { error } = await supabase
-      .from('recurrence_rules')
-      .update({
+      .rpc('update_recurrence_rule', {
+        rule_id: id,
         frequency: pattern.frequency,
-        interval: pattern.interval || 1,
-        week_days: pattern.weekDays || null,
-        month_days: pattern.monthDays || null,
-        ends_on: pattern.endsOn ? pattern.endsOn.toISOString() : null,
-        ends_after: pattern.endsAfter || null
-      })
-      .eq('id', id);
+        interval_val: pattern.interval || 1,
+        week_days_val: pattern.weekDays || null,
+        month_days_val: pattern.monthDays || null,
+        ends_on_val: pattern.endsOn ? pattern.endsOn.toISOString() : null,
+        ends_after_val: pattern.endsAfter || null
+      });
       
     if (error) {
       console.error('Error updating recurrence rule:', error);
@@ -83,21 +60,11 @@ export const updateRecurrenceRule = async (id: string, pattern: RecurrencePatter
 // Delete a recurrence rule from the database
 export const deleteRecurrenceRule = async (id: string): Promise<boolean> => {
   try {
-    // Check if recurrence_rules table exists
-    const { error: checkError } = await supabase
-      .from('recurrence_rules')
-      .select('id')
-      .limit(1);
-      
-    if (checkError) {
-      console.error('recurrence_rules table may not exist:', checkError);
-      return false;
-    }
-    
+    // Since the table may not exist in the database yet, we'll use a more direct approach
     const { error } = await supabase
-      .from('recurrence_rules')
-      .delete()
-      .eq('id', id);
+      .rpc('delete_recurrence_rule', {
+        rule_id: id
+      });
       
     if (error) {
       console.error('Error deleting recurrence rule:', error);
@@ -114,20 +81,15 @@ export const deleteRecurrenceRule = async (id: string): Promise<boolean> => {
 // Update event with recurring options - returns updated event if successful
 export const makeEventRecurring = async (event: any, pattern: RecurrencePattern): Promise<any | null> => {
   try {
-    // First create the recurrence rule
-    const recurrenceId = await createRecurrenceRule(pattern);
+    // Instead of creating a separate recurrence rule, we'll just update the event directly
+    // with the recurrence pattern as JSON
     
-    if (!recurrenceId) {
-      throw new Error('Failed to create recurrence rule');
-    }
-    
-    // Update the event with the recurrence ID and pattern
+    // Update the event with the recurrence pattern
     const { data, error } = await supabase
       .from('events')
       .update({
         is_recurring: true,
-        recurrence_id: recurrenceId,
-        recurrence_pattern: pattern
+        recurrence_pattern: pattern as any
       })
       .eq('id', event.id)
       .select();
@@ -141,7 +103,6 @@ export const makeEventRecurring = async (event: any, pattern: RecurrencePattern)
     return {
       ...event,
       isRecurring: true,
-      recurrenceId,
       recurrencePattern: pattern
     };
   } catch (err) {
@@ -153,17 +114,11 @@ export const makeEventRecurring = async (event: any, pattern: RecurrencePattern)
 // Remove recurring properties from an event
 export const makeEventNonRecurring = async (event: any): Promise<any | null> => {
   try {
-    // Delete the recurrence rule if it exists
-    if (event.recurrenceId) {
-      await deleteRecurrenceRule(event.recurrenceId);
-    }
-    
     // Update the event to remove recurrence
     const { data, error } = await supabase
       .from('events')
       .update({
         is_recurring: false,
-        recurrence_id: null,
         recurrence_pattern: null
       })
       .eq('id', event.id)
@@ -178,7 +133,6 @@ export const makeEventNonRecurring = async (event: any): Promise<any | null> => 
     return {
       ...event,
       isRecurring: false,
-      recurrenceId: undefined,
       recurrencePattern: undefined
     };
   } catch (err) {

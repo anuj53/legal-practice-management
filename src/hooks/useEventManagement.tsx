@@ -105,14 +105,16 @@ export function useEventManagement() {
         
         const { id, calendarColor, ...eventWithoutId } = event;
         
-        let newEvent = await createEvent(eventWithoutId);
+        let newEvent = await createEvent(eventWithoutId as any);
+        console.log("New event created:", newEvent);
         
         if (recurrencePattern && newEvent) {
+          console.log("Making event recurring with pattern:", recurrencePattern);
           newEvent = await makeEventRecurring(newEvent, recurrencePattern);
+          console.log("Event is now recurring:", newEvent);
         }
         
         toast.success('Event created successfully!');
-        console.log("New event created:", newEvent);
       } 
       else if (event.isRecurring && recurrenceEditMode !== 'single') {
         console.log(`Updating ${recurrenceEditMode === 'all' ? 'all occurrences' : 'future occurrences'} of recurring event`);
@@ -121,6 +123,7 @@ export function useEventManagement() {
         
         const { calendarColor, ...eventToUpdate } = event;
         const updatedEvent = await updateEvent(eventToUpdate as any);
+        console.log("Updated recurring event:", updatedEvent);
         
         toast.success('Recurring event updated successfully!');
       }
@@ -143,17 +146,21 @@ export function useEventManagement() {
         const { calendarColor, ...eventToUpdate } = event;
         
         if (recurrencePattern && !event.isRecurring) {
+          console.log("Adding recurrence to non-recurring event");
           const updatedEvent = await makeEventRecurring(eventToUpdate as any, recurrencePattern);
+          console.log("Event now has recurrence:", updatedEvent);
           toast.success('Event updated with recurring settings!');
         } else if (event.isRecurring && !recurrencePattern) {
+          console.log("Removing recurrence from recurring event");
           const updatedEvent = await makeEventNonRecurring(eventToUpdate as any);
+          console.log("Event no longer recurring:", updatedEvent);
           toast.success('Recurring settings removed from event!');
         } else {
+          console.log("Regular update to event");
           const updatedEvent = await updateEvent(eventToUpdate as any);
+          console.log("Updated event:", updatedEvent);
           toast.success('Event updated successfully!');
         }
-        
-        console.log("Event updated");
       }
       
       setModalOpen(false);

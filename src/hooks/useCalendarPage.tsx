@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { CalendarEvent, CalendarViewType, RecurrencePattern } from '@/types/calendar';
 import { useCalendar } from '@/hooks/useCalendar';
@@ -10,7 +11,7 @@ export function useCalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [currentView, setCurrentView] = useState<CalendarViewType>('week');
   const [displayedEvents, setDisplayedEvents] = useState<CalendarEvent[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   const {
     myCalendars,
@@ -20,7 +21,7 @@ export function useCalendarPage() {
   
   useEffect(() => {
     if (rawEvents.length > 0) {
-      setLoading(false);
+      setIsLoading(false);
     }
   }, [rawEvents]);
   
@@ -55,6 +56,9 @@ export function useCalendarPage() {
       type: event.type || 'client-meeting'
     } as CalendarEvent;
   });
+
+  console.log("Raw events in useCalendarPage:", rawEvents);
+  console.log("Processed events with calendar colors:", events);
   
   useEffect(() => {
     let viewStart: Date;
@@ -93,7 +97,7 @@ export function useCalendarPage() {
     events.forEach(event => {
       if (event.isRecurring && event.recurrencePattern) {
         const instances = generateRecurringInstances(
-          event as any,
+          event,
           event.recurrencePattern,
           viewStart,
           viewEnd
@@ -107,6 +111,7 @@ export function useCalendarPage() {
       }
     });
     
+    console.log("Displayed events being set:", processedEvents);
     setDisplayedEvents(processedEvents);
   }, [events, currentDate, currentView]);
   
@@ -136,7 +141,7 @@ export function useCalendarPage() {
     myCalendars,
     otherCalendars,
     events: displayedEvents,
-    loading: loading,
+    loading: isLoading,
     handleCalendarToggle,
     handleEventClick,
     handleDayClick,

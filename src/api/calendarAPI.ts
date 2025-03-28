@@ -70,6 +70,9 @@ export const fetchEvents = async () => {
         type,
         calendar_id,
         user_id,
+        is_recurring,
+        recurrence_pattern,
+        recurrence_id,
         created_at,
         updated_at
       `);
