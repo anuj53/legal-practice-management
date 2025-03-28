@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -28,57 +29,15 @@ interface CalendarSidebarProps {
   otherCalendars: CalendarItem[];
   onCalendarToggle: (id: string, category: 'my' | 'other') => void;
   onCreateEvent?: () => void;
-  onCreateCalendar?: (calendar: Omit<Calendar, 'id'>) => void;
 }
 
 export function CalendarSidebar({ 
   myCalendars, 
   otherCalendars, 
   onCalendarToggle, 
-  onCreateEvent,
-  onCreateCalendar 
+  onCreateEvent
 }: CalendarSidebarProps) {
-  const [isCalendarFormOpen, setIsCalendarFormOpen] = useState(false);
-  const [calendarName, setCalendarName] = useState('');
-  const [calendarColor, setCalendarColor] = useState('#4caf50');
-  const [isPublic, setIsPublic] = useState(false);
-  const [sharedWith, setSharedWith] = useState<CalendarShare[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-
-  const handleCreateCalendar = () => {
-    setIsCalendarFormOpen(true);
-    setCalendarName('');
-    setCalendarColor('#4caf50');
-    setIsPublic(false);
-    setSharedWith([]);
-  };
-
-  const handleSaveCalendar = () => {
-    if (!calendarName.trim()) {
-      toast.error('Calendar name is required');
-      return;
-    }
-
-    if (onCreateCalendar) {
-      onCreateCalendar({
-        name: calendarName.trim(),
-        color: calendarColor,
-        checked: true,
-        isSelected: true,
-        isUserCalendar: true,
-        is_public: isPublic,
-        sharedWith: sharedWith
-      });
-      
-      setCalendarName('');
-      setCalendarColor('#4caf50');
-      setIsPublic(false);
-      setSharedWith([]);
-      setIsCalendarFormOpen(false);
-      
-      toast.success('Calendar created successfully');
-    }
-  };
 
   const filteredMyCalendars = myCalendars.filter(cal => 
     cal.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -101,15 +60,6 @@ export function CalendarSidebar({
             Create New Event
           </Button>
         )}
-        
-        <Button 
-          onClick={handleCreateCalendar}
-          variant="outline" 
-          className="w-full justify-start gap-2 mb-4 border-dashed"
-        >
-          <Plus className="h-4 w-4" />
-          Add New Calendar
-        </Button>
         
         <div className="relative mb-4">
           <Input 
@@ -136,37 +86,6 @@ export function CalendarSidebar({
           onCalendarToggle={onCalendarToggle} 
         />
       </ScrollArea>
-
-      <Dialog open={isCalendarFormOpen} onOpenChange={setIsCalendarFormOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Create New Calendar</DialogTitle>
-            <DialogDescription>
-              Add a new calendar to organize your events
-            </DialogDescription>
-          </DialogHeader>
-          
-          <CalendarForm 
-            calendarName={calendarName}
-            setCalendarName={setCalendarName}
-            calendarColor={calendarColor}
-            setCalendarColor={setCalendarColor}
-            isPublic={isPublic}
-            setIsPublic={setIsPublic}
-            sharedWith={sharedWith}
-            setSharedWith={setSharedWith}
-          />
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCalendarFormOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSaveCalendar}>
-              Create Calendar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

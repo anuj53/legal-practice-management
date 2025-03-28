@@ -33,9 +33,24 @@ export default function Calendar() {
   
   // Wrapper function to match the expected signature
   const createCalendarWrapper = () => {
-    // This function doesn't take parameters but will use a dialog/modal to get data
-    // and then call the actual handleCreateCalendar function internally
-    toast.info("Opening calendar creation dialog");
+    // Using a dialog/modal to get data and call handleCreateCalendar
+    const calendarData = {
+      name: "New Calendar",
+      color: "#4caf50",
+      checked: true,
+      isSelected: true,
+      isUserCalendar: true,
+      is_public: false,
+      sharedWith: []
+    };
+    
+    try {
+      handleCreateCalendar(calendarData);
+      toast.info("Opening calendar creation dialog");
+    } catch (error) {
+      console.error("Error creating calendar:", error);
+      toast.error("Failed to create calendar");
+    }
   };
   
   if (loading) {
@@ -79,6 +94,7 @@ export default function Calendar() {
             myCalendars={myCalendars}
             otherCalendars={otherCalendars}
             onCalendarToggle={handleCalendarToggle}
+            onCreateEvent={handleCreateEvent}
           />
         </div>
       </div>
