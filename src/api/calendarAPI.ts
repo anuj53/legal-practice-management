@@ -1,6 +1,8 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { convertDbEventToEvent, convertEventToDbEvent, isValidUUID } from '@/utils/calendarUtils';
+import { Calendar, Event } from '@/types/calendar';
 
 // Fetch calendars from Supabase
 export const fetchCalendars = async () => {
