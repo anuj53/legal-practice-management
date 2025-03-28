@@ -54,6 +54,7 @@ export const DayView: React.FC<DayViewProps> = ({
     return () => clearInterval(timer);
   }, [currentDate]);
   
+  // Event filtering and display logic
   const getEventsForHour = (hour: number) => {
     return events.filter((event) => {
       const eventDate = new Date(event.start);
@@ -69,6 +70,29 @@ export const DayView: React.FC<DayViewProps> = ({
       
       return isSameDay && isSameHour;
     });
+  };
+
+  // Calculate event position and height based on its start time and duration
+  const getEventStyle = (event: CalendarEvent) => {
+    const start = new Date(event.start);
+    const end = new Date(event.end);
+    
+    const startMinutes = start.getMinutes();
+    const durationMs = end.getTime() - start.getTime();
+    const durationMinutes = Math.ceil(durationMs / (1000 * 60));
+    
+    const topPosition = (startMinutes / 60) * 100; // Convert minutes to percentage of hour height
+    const height = (durationMinutes / 60) * 100; // Convert duration to percentage of hour height
+    
+    return {
+      top: `${topPosition}%`,
+      height: `${height}%`,
+      position: 'absolute' as const,
+      left: '0',
+      right: '0',
+      margin: '0 1px', // Small margin for visual separation
+      zIndex: 10, // Add z-index to ensure event is above the cell
+    };
   };
 
   const eventColors = {
@@ -91,66 +115,72 @@ export const DayView: React.FC<DayViewProps> = ({
         <h2 className="text-xl font-bold">{format(currentDate, 'EEEE, MMMM d, yyyy')}</h2>
       </div>
       
-      <ScrollArea className="flex-1">
+      <div className="flex-1 overflow-hidden">
         <div 
+          className="h-full overflow-y-auto scrollbar-thin"
           ref={scrollContainerRef}
-          className="grid grid-cols-1 relative min-h-[1440px]"
         >
-          {hours.map((hourLabel, hourIndex) => {
-            const hour = hourIndex % 24;
-            const hourEvents = getEventsForHour(hour);
-            
-            return (
-              <div 
-                key={hourIndex}
-                className="grid grid-cols-6 border-b border-gray-200 h-[60px]"
-              >
-                <div className="col-span-1 border-r border-gray-200 p-2 text-center sticky left-0 bg-background">
-                  {hourLabel}
-                </div>
-                
-                <div
-                  className="col-span-5 p-1 relative"
-                  onClick={() => {
-                    const newDate = new Date(currentDate);
-                    newDate.setHours(hour);
-                    onTimeSlotClick(newDate);
-                  }}
+          <div className="grid grid-cols-6 relative min-h-[1440px]">
+            {hours.map((hourLabel, hourIndex) => {
+              const hour = hourIndex % 24;
+              const hourEvents = getEventsForHour(hour);
+              
+              return (
+                <div 
+                  key={hourIndex}
+                  className="grid grid-cols-6 border-b border-gray-200 h-[60px]"
                 >
-                  {hourEvents.map((event) => (
-                    <div
-                      key={event.id}
-                      className={cn(
-                        "p-2 rounded my-1 cursor-pointer",
-                        eventColors[event.type] || "bg-gray-500 text-white"
-                      )}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEventClick(event);
-                      }}
-                    >
-                      {format(event.start, 'h:mm a')} - {event.title}
-                    </div>
-                  ))}
+                  <div className="col-span-1 border-r border-gray-200 p-2 text-center sticky left-0 bg-background">
+                    {hourLabel}
+                  </div>
+                  
+                  <div
+                    className="col-span-5 p-1 relative cursor-pointer"
+                    onClick={() => {
+                      const newDate = new Date(currentDate);
+                      newDate.setHours(hour);
+                      onTimeSlotClick(newDate);
+                    }}
+                  >
+                    {hourEvents.map((event) => (
+                      <div
+                        key={event.id}
+                        className={cn(
+                          "p-2 rounded cursor-pointer",
+                          eventColors[event.type] || "bg-gray-500 text-white"
+                        )}
+                        style={getEventStyle(event)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEventClick(event);
+                        }}
+                      >
+                        <div className="h-full w-full flex flex-col">
+                          <div className="truncate font-medium">{format(new Date(event.start), 'h:mm')} {event.title}</div>
+                          {event.description && <div className="truncate text-xs opacity-90">{event.description}</div>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
+              );
+            })}
+            
+            {/* Current time indicator */}
+            {isToday && (
+              <div 
+                className="absolute left-0 right-0 border-t-2 border-red-500 z-20 flex items-center"
+                style={{ top: `${currentTimePosition}px` }}
+              >
+                <div className="h-3 w-3 rounded-full bg-red-500 -ml-1.5 -mt-1.5"></div>
+                <span className="text-xs text-red-500 font-medium ml-1">
+                  {format(new Date(), 'h:mm a')}
+                </span>
               </div>
-            );
-          })}
-          
-          {/* Current time indicator */}
-          {isToday && (
-            <div 
-              className="absolute left-0 right-0 border-t-2 border-red-500 z-20 flex items-center"
-              style={{ top: `${currentTimePosition}px` }}
-            >
-              <div className="h-3 w-3 rounded-full bg-red-500 -ml-1.5 -mt-1.5"></div>
-              <span className="text-xs text-red-500 font-medium ml-1">
-                {format(new Date(), 'h:mm a')}
-              </span>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 };
