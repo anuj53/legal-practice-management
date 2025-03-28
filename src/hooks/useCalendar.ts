@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { CalendarEvent, Calendar, CalendarViewType, CalendarShare } from '@/types/calendar';
 import { toast } from 'sonner';
@@ -62,7 +61,7 @@ export function useCalendar() {
       start: new Date(new Date().setHours(10, 0, 0, 0)),
       end: new Date(new Date().setHours(11, 30, 0, 0)),
       calendar: '2', // Work calendar
-      type: 'meeting',
+      type: 'internal-meeting', // Changed from 'meeting' to 'internal-meeting'
       location: 'Conference Room A',
       description: 'Weekly team sync-up',
     },
@@ -72,7 +71,7 @@ export function useCalendar() {
       start: new Date(new Date().setHours(14, 0, 0, 0)),
       end: new Date(new Date().setHours(15, 0, 0, 0)),
       calendar: '1', // Personal calendar
-      type: 'appointment',
+      type: 'personal', // Changed from 'appointment' to 'personal'
       location: 'Medical Center',
       description: 'Annual check-up',
     },
