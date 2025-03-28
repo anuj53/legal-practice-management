@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { format, startOfMonth, getMonth, getYear, isSameDay } from 'date-fns';
 import { CalendarEvent } from '@/types/calendar';
@@ -25,9 +24,6 @@ export const MonthView: React.FC<MonthViewProps> = ({
   const daysGrid = getMonthDaysGrid(year, month);
   
   const eventColors = {
-    'event': 'bg-orange-500 text-white',
-    'client': 'bg-green-500 text-white',
-    'plan': 'bg-orange-500 text-white',
     'client-meeting': 'bg-green-500 text-white',
     'internal-meeting': 'bg-blue-500 text-white',
     'court': 'bg-purple-500 text-white',

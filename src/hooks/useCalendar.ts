@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { addDays, addMonths, subMonths, startOfMonth, isSameMonth } from 'date-fns';
 import { CalendarEvent, Calendar, CalendarViewType } from '@/types/calendar';
@@ -17,7 +16,7 @@ const generateSampleEvents = (calendars: Calendar[]): CalendarEvent[] => {
     title: 'Event',
     start: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0),
     end: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 13, 0),
-    type: 'event',
+    type: 'client-meeting',
     calendar: calendarIds[0]
   });
   
@@ -27,7 +26,7 @@ const generateSampleEvents = (calendars: Calendar[]): CalendarEvent[] => {
     title: 'Client',
     start: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0),
     end: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 13, 0),
-    type: 'client',
+    type: 'client-meeting',
     calendar: calendarIds[1]
   });
   
@@ -38,7 +37,7 @@ const generateSampleEvents = (calendars: Calendar[]): CalendarEvent[] => {
     title: 'Plan',
     start: new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 12, 0),
     end: new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 13, 0),
-    type: 'plan',
+    type: 'internal-meeting',
     calendar: calendarIds[0]
   });
   
