@@ -15,6 +15,7 @@ import { Calendar, CalendarShare } from '@/types/calendar';
 import { toast } from 'sonner';
 import { CalendarList } from './CalendarList';
 import { CalendarForm } from './CalendarForm';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface CalendarItem {
   id: string;
@@ -94,8 +95,8 @@ export function CalendarSidebar({
   );
 
   return (
-    <div className="w-64 border-l border-gray-200 bg-white p-4 overflow-y-auto custom-scrollbar">
-      <div className="mb-6">
+    <div className="w-64 border-l border-gray-200 bg-white h-full flex flex-col">
+      <div className="p-4">
         <Button 
           onClick={onCreateEvent}
           variant="default" 
@@ -124,19 +125,21 @@ export function CalendarSidebar({
         </div>
       </div>
 
-      <CalendarList 
-        title="My calendars" 
-        calendars={filteredMyCalendars} 
-        category="my" 
-        onCalendarToggle={onCalendarToggle} 
-      />
+      <ScrollArea className="flex-1 px-4 pb-4">
+        <CalendarList 
+          title="My calendars" 
+          calendars={filteredMyCalendars} 
+          category="my" 
+          onCalendarToggle={onCalendarToggle} 
+        />
 
-      <CalendarList 
-        title="Other calendars" 
-        calendars={filteredOtherCalendars} 
-        category="other" 
-        onCalendarToggle={onCalendarToggle} 
-      />
+        <CalendarList 
+          title="Other calendars" 
+          calendars={filteredOtherCalendars} 
+          category="other" 
+          onCalendarToggle={onCalendarToggle} 
+        />
+      </ScrollArea>
 
       {/* Calendar Creation Dialog */}
       <Dialog open={isCalendarFormOpen} onOpenChange={setIsCalendarFormOpen}>

@@ -92,7 +92,7 @@ export const WeekView: React.FC<WeekViewProps> = ({
   });
 
   return (
-    <div className="week-view h-full flex flex-col">
+    <div className="week-view h-full flex flex-col overflow-hidden">
       {/* Headers row - always visible at the top */}
       <div className="grid grid-cols-8 border-b border-gray-200 bg-white sticky top-0 z-10 shadow-sm">
         {/* Corner cell - top left empty cell */}

@@ -7,6 +7,7 @@ import { EventModal } from '@/components/calendar/EventModal';
 import { MobileActionButton } from '@/components/calendar/MobileActionButton';
 import { useCalendarPage } from '@/hooks/useCalendarPage';
 import { toast } from 'sonner';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function Calendar() {
   const {
@@ -51,23 +52,27 @@ export default function Calendar() {
       />
       
       <div className="flex flex-1 overflow-hidden">
-        {/* Main Calendar Area */}
-        <CalendarMain
-          view={currentView}
-          date={currentDate}
-          events={events}
-          onEventClick={handleEventClick}
-          onDayClick={handleDayClick}
-        />
+        {/* Main Calendar Area - This will be scrollable */}
+        <div className="flex-1 overflow-hidden">
+          <CalendarMain
+            view={currentView}
+            date={currentDate}
+            events={events}
+            onEventClick={handleEventClick}
+            onDayClick={handleDayClick}
+          />
+        </div>
         
-        {/* Sidebar */}
-        <CalendarSidebar
-          myCalendars={myCalendars}
-          otherCalendars={otherCalendars}
-          onCalendarToggle={handleCalendarToggle}
-          onCreateEvent={handleCreateEvent}
-          onCreateCalendar={handleCreateCalendar}
-        />
+        {/* Sidebar - This will not scroll with the calendar content */}
+        <div className="h-full flex-shrink-0">
+          <CalendarSidebar
+            myCalendars={myCalendars}
+            otherCalendars={otherCalendars}
+            onCalendarToggle={handleCalendarToggle}
+            onCreateEvent={handleCreateEvent}
+            onCreateCalendar={handleCreateCalendar}
+          />
+        </div>
       </div>
       
       {/* Floating new event button - visible in mobile when sidebar is hidden */}
