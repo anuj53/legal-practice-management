@@ -78,9 +78,10 @@ export const convertEventToDbEvent = (event: Event): any => {
     updated_at: new Date().toISOString()
   };
   
-  // Add recurrence pattern
+  // Add recurrence pattern as JSON
   if (event.recurrencePattern) {
-    dbEvent.recurrence_pattern = event.recurrencePattern;
+    // Convert RecurrencePattern to a plain object if it's not already
+    dbEvent.recurrence_pattern = JSON.parse(JSON.stringify(event.recurrencePattern));
   }
   
   console.log('Converted DB event:', dbEvent);
@@ -89,12 +90,13 @@ export const convertEventToDbEvent = (event: Event): any => {
 
 // Convert event to a recurrence rule db object
 export const createRecurrenceRule = (pattern: RecurrencePattern): any => {
-  return {
+  // Ensure we're returning a plain JSON object
+  return JSON.parse(JSON.stringify({
     frequency: pattern.frequency,
     interval: pattern.interval || 1,
     week_days: pattern.weekDays || [],
     month_days: pattern.monthDays || [],
     ends_on: pattern.endsOn ? pattern.endsOn.toISOString() : null,
     ends_after: pattern.endsAfter || null
-  };
+  }));
 };

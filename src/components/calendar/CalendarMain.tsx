@@ -13,10 +13,10 @@ interface CalendarMainProps {
   date: Date;
   events: CalendarEvent[];
   onEventClick: (event: CalendarEvent) => void;
-  onDayClick: (date: Date) => void;
+  onTimeSlotClick: (date: Date) => void;
 }
 
-export function CalendarMain({ view, date, events, onEventClick, onDayClick }: CalendarMainProps) {
+export function CalendarMain({ view, date, events, onEventClick, onTimeSlotClick }: CalendarMainProps) {
   // Calculate view start and end dates based on current view
   const viewDates = useMemo(() => {
     let viewStart: Date;
@@ -55,7 +55,7 @@ export function CalendarMain({ view, date, events, onEventClick, onDayClick }: C
           currentDate={date}
           events={events}
           onEventClick={onEventClick}
-          onTimeSlotClick={onDayClick}
+          onTimeSlotClick={onTimeSlotClick}
         />
       )}
       {view === 'week' && (
@@ -63,14 +63,14 @@ export function CalendarMain({ view, date, events, onEventClick, onDayClick }: C
           currentDate={date}
           events={events}
           onEventClick={onEventClick}
-          onTimeSlotClick={onDayClick}
+          onTimeSlotClick={onTimeSlotClick}
         />
       )}
       {view === 'month' && (
         <MonthView
           currentDate={date}
           events={events}
-          onSelectDate={onDayClick}
+          onSelectDate={onTimeSlotClick}
           onEventClick={onEventClick}
         />
       )}
