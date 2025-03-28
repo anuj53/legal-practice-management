@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { format } from 'date-fns';
+import { format, addDays, subDays } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { 
   Select,
@@ -12,25 +12,20 @@ import {
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { CalendarViewType } from '@/types/calendar';
 
-// Export CalendarViewType as alias for use in other files
-export type CalendarView = CalendarViewType;
-
-interface CalendarHeaderProps {
+export interface CalendarHeaderProps {
   currentDate: Date;
   view: CalendarViewType;
   onViewChange: (view: CalendarViewType) => void;
-  onPrevious: () => void;
-  onNext: () => void;
-  onToday: () => void;
+  onDateChange: (date: Date) => void;
+  onCreateEvent: () => void;
 }
 
 export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
   currentDate,
   view,
   onViewChange,
-  onPrevious,
-  onNext,
-  onToday
+  onDateChange,
+  onCreateEvent
 }) => {
   const formatDateRange = () => {
     if (view === 'month') {
@@ -49,19 +44,49 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
     }
   };
 
+  const handlePrevious = () => {
+    if (view === 'day') {
+      onDateChange(subDays(currentDate, 1));
+    } else if (view === 'week') {
+      onDateChange(subDays(currentDate, 7));
+    } else {
+      // Month or agenda
+      const newDate = new Date(currentDate);
+      newDate.setMonth(currentDate.getMonth() - 1);
+      onDateChange(newDate);
+    }
+  };
+
+  const handleNext = () => {
+    if (view === 'day') {
+      onDateChange(addDays(currentDate, 1));
+    } else if (view === 'week') {
+      onDateChange(addDays(currentDate, 7));
+    } else {
+      // Month or agenda
+      const newDate = new Date(currentDate);
+      newDate.setMonth(currentDate.getMonth() + 1);
+      onDateChange(newDate);
+    }
+  };
+
+  const handleToday = () => {
+    onDateChange(new Date());
+  };
+
   return (
     <div className="flex justify-between items-center mb-4">
       <div className="flex items-center space-x-2">
-        <Button variant="outline" size="sm" onClick={onToday}>
+        <Button variant="outline" size="sm" onClick={handleToday}>
           Today
         </Button>
-        <Button variant="ghost" size="icon" onClick={onPrevious}>
+        <Button variant="ghost" size="icon" onClick={handlePrevious}>
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <span className="text-lg font-medium px-2 min-w-[180px] text-center">
           {formatDateRange()}
         </span>
-        <Button variant="ghost" size="icon" onClick={onNext}>
+        <Button variant="ghost" size="icon" onClick={handleNext}>
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
@@ -81,6 +106,9 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
             <SelectItem value="agenda">Agenda</SelectItem>
           </SelectContent>
         </Select>
+        <Button variant="default" onClick={onCreateEvent}>
+          Add Event
+        </Button>
       </div>
     </div>
   );

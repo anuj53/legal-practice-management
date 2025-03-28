@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { addDays, addMonths, subMonths, startOfMonth, isSameMonth } from 'date-fns';
-import { CalendarEvent, Calendar, CalendarViewType } from '../types/calendar';
+import { CalendarEvent, Calendar, CalendarViewType } from '@/types/calendar';
 
 // Sample data - in a real app, this would come from an API or database
 const generateSampleEvents = (calendars: Calendar[]): CalendarEvent[] => {
@@ -18,7 +18,7 @@ const generateSampleEvents = (calendars: Calendar[]): CalendarEvent[] => {
     start: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0),
     end: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 13, 0),
     type: 'event',
-    calendarId: calendarIds[0]
+    calendar: calendarIds[0]
   });
   
   // Event 2: Today at 12pm on a different calendar
@@ -28,7 +28,7 @@ const generateSampleEvents = (calendars: Calendar[]): CalendarEvent[] => {
     start: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0),
     end: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 13, 0),
     type: 'client',
-    calendarId: calendarIds[1]
+    calendar: calendarIds[1]
   });
   
   // Event 3: Tomorrow at 12pm
@@ -39,7 +39,7 @@ const generateSampleEvents = (calendars: Calendar[]): CalendarEvent[] => {
     start: new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 12, 0),
     end: new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 13, 0),
     type: 'plan',
-    calendarId: calendarIds[0]
+    calendar: calendarIds[0]
   });
   
   return events;
@@ -51,6 +51,7 @@ const generateSampleCalendars = (): Calendar[] => {
       id: '1',
       name: 'My Calendar',
       color: '#ff9800',
+      checked: true,
       isSelected: true,
       isUserCalendar: true
     },
@@ -58,6 +59,7 @@ const generateSampleCalendars = (): Calendar[] => {
       id: '2',
       name: 'Work Calendar',
       color: '#4caf50',
+      checked: true,
       isSelected: true,
       isUserCalendar: true
     },
@@ -65,6 +67,7 @@ const generateSampleCalendars = (): Calendar[] => {
       id: '3',
       name: 'Other Calendar',
       color: '#2196f3',
+      checked: true,
       isSelected: false,
       isUserCalendar: false
     }
@@ -85,8 +88,8 @@ export const useCalendar = () => {
   }, [calendars]);
   
   const visibleEvents = events.filter(event => {
-    const calendar = calendars.find(cal => cal.id === event.calendarId);
-    return calendar && calendar.isSelected;
+    const calendar = calendars.find(cal => cal.id === event.calendar);
+    return calendar && calendar.checked;
   });
   
   const goToToday = () => {
@@ -121,7 +124,7 @@ export const useCalendar = () => {
   const toggleCalendar = (calendarId: string) => {
     setCalendars(calendars.map(calendar => 
       calendar.id === calendarId 
-        ? { ...calendar, isSelected: !calendar.isSelected } 
+        ? { ...calendar, checked: !calendar.checked } 
         : calendar
     ));
   };

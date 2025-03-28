@@ -1,98 +1,31 @@
 
-import { useState, useEffect } from 'react';
-import { CalendarEvent } from '@/types/calendar';
-import { useCalendarData } from '@/hooks/useCalendarData';
+import { useState } from 'react';
+import { CalendarEvent, Calendar, CalendarViewType } from '@/types/calendar';
+import { useCalendar } from '@/hooks/useCalendar';
 import { toast } from 'sonner';
-import { CalendarView } from '@/components/calendar/CalendarHeader';
-import { isValidUUID } from '@/utils/calendarUtils';
 
 export function useCalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [currentView, setCurrentView] = useState<CalendarView>('week');
+  const [currentView, setCurrentView] = useState<CalendarViewType>('week');
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('view');
 
   const {
-    myCalendars,
-    otherCalendars,
+    calendars,
     events,
-    loading,
-    updateCalendar,
-    createCalendar,
     createEvent,
     updateEvent,
-    deleteEvent
-  } = useCalendarData();
+    deleteEvent,
+    toggleCalendar,
+  } = useCalendar();
   
-  useEffect(() => {
-    console.log("useCalendarPage - events received:", events.length);
-    console.log("useCalendarPage - myCalendars:", myCalendars.length);
-    console.log("useCalendarPage - otherCalendars:", otherCalendars.length);
-    
-    if (myCalendars.length > 0) {
-      console.log("First calendar:", myCalendars[0].id, myCalendars[0].name);
-    }
-    
-    if (events.length > 0) {
-      console.log("Sample event calendar ID:", events[0].calendar);
-    }
-  }, [events, myCalendars, otherCalendars]);
-  
-  const calendarNameToIdMap = () => {
-    const map: Record<string, string> = {};
-    
-    [...myCalendars, ...otherCalendars].forEach(cal => {
-      map[cal.id] = cal.id; // Map each ID to itself for direct lookup
-      
-      // Also add special mappings for certain calendar types
-      if (cal.is_firm) map['firm'] = cal.id;
-      else if (cal.is_statute) map['statute'] = cal.id;
-      else if (!cal.is_firm && !cal.is_statute) map['personal'] = cal.id;
-    });
-    
-    console.log("Calendar mapping:", map);
-    return map;
-  };
-  
-  const filteredEvents = events.filter(event => {
-    const mapping = calendarNameToIdMap();
-    let actualCalendarId = event.calendar;
-    
-    // Try to resolve special names to IDs if necessary
-    if (mapping[event.calendar] && !isValidUUID(event.calendar)) {
-      actualCalendarId = mapping[event.calendar];
-      console.log(`Mapped special calendar name "${event.calendar}" to ID "${actualCalendarId}"`);
-    }
-    
-    const allCalendars = [...myCalendars, ...otherCalendars];
-    const calendar = allCalendars.find(cal => cal.id === actualCalendarId);
-    
-    if (!calendar) {
-      console.log("Calendar not found for event:", event.title, "Calendar ID:", actualCalendarId);
-      return false;
-    }
-    
-    return calendar.checked;
-  });
-  
-  useEffect(() => {
-    console.log("Filtered events:", filteredEvents.length);
-    if (filteredEvents.length > 0) {
-      console.log("Sample filtered event:", filteredEvents[0].title);
-    }
-  }, [filteredEvents]);
+  // Split calendars into my calendars and other calendars
+  const myCalendars = calendars.filter(cal => cal.isUserCalendar);
+  const otherCalendars = calendars.filter(cal => !cal.isUserCalendar);
   
   const handleCalendarToggle = (id: string, category: 'my' | 'other') => {
-    const calendars = category === 'my' ? myCalendars : otherCalendars;
-    const calendar = calendars.find(cal => cal.id === id);
-    
-    if (calendar) {
-      updateCalendar({
-        ...calendar,
-        checked: !calendar.checked
-      });
-    }
+    toggleCalendar(id);
   };
   
   const handleEventClick = (event: CalendarEvent) => {
@@ -110,22 +43,13 @@ export function useCalendarPage() {
   const handleCreateEvent = () => {
     console.log("Create event clicked");
     
-    // Get valid calendars (with valid UUID format)
-    const validCalendars = myCalendars.filter(cal => isValidUUID(cal.id));
+    // Use the first calendar ID
+    const defaultCalendarId = calendars.length > 0 ? calendars[0].id : '';
     
-    console.log("Valid calendars found:", validCalendars.map(c => `${c.id} (${c.name})`));
-    
-    if (validCalendars.length === 0) {
-      console.error("No valid calendars found for creating a new event");
-      toast.error("Cannot create event: No valid calendars available");
+    if (!defaultCalendarId) {
+      toast.error("Cannot create event: No calendars available");
       return;
     }
-    
-    // Use the first valid calendar ID
-    const defaultCalendarId = validCalendars[0].id;
-    
-    console.log("Using default calendar ID for new event:", defaultCalendarId);
-    console.log("Calendar validation check:", isValidUUID(defaultCalendarId));
     
     const now = new Date();
     const defaultEvent: Omit<CalendarEvent, 'id'> = {
@@ -139,7 +63,6 @@ export function useCalendarPage() {
       location: '',
     };
     
-    console.log("Created default event with calendar ID:", defaultEvent.calendar);
     setSelectedEvent(defaultEvent as CalendarEvent);
     setModalMode('create');
     setModalOpen(true);
@@ -161,17 +84,11 @@ export function useCalendarPage() {
           return;
         }
         
-        if (!isValidUUID(event.calendar)) {
-          console.error("Invalid calendar ID format for new event:", event.calendar);
-          toast.error("Cannot save: Invalid calendar ID format");
-          return;
-        }
-        
-        // Fixed: Create a properly typed object without 'id' property
+        // Create a properly typed object without 'id' property
         const { id, ...eventWithoutId } = event;
         
         // Use the correctly typed object for createEvent
-        const newEvent = await createEvent(eventWithoutId as Omit<CalendarEvent, 'id'>);
+        const newEvent = createEvent(eventWithoutId);
         
         toast.success('Event created successfully!');
         console.log("New event created:", newEvent);
@@ -187,26 +104,14 @@ export function useCalendarPage() {
           return;
         }
         
-        if (!isValidUUID(event.id)) {
-          console.error("Invalid event ID format for update:", event.id);
-          toast.error("Cannot update event: Invalid ID format");
-          return;
-        }
-        
         if (!event.calendar) {
           console.error("Missing calendar ID for event update");
           toast.error("Cannot update event: Missing calendar ID");
           return;
         }
         
-        if (!isValidUUID(event.calendar)) {
-          console.error("Invalid calendar ID format for update:", event.calendar);
-          toast.error("Cannot save: Invalid calendar ID format");
-          return;
-        }
-        
-        // Update with valid IDs
-        const updatedEvent = await updateEvent(event);
+        // Update event
+        const updatedEvent = updateEvent(event);
         toast.success('Event updated successfully!');
         console.log("Event updated:", updatedEvent);
       }
@@ -221,15 +126,8 @@ export function useCalendarPage() {
   const handleDeleteEvent = async (id: string) => {
     console.log("Deleting event:", id);
     
-    // Validate UUID before attempting to delete
-    if (!isValidUUID(id)) {
-      console.error("Invalid event ID for deletion:", id);
-      toast.error('Cannot delete: Invalid event ID format');
-      return;
-    }
-    
     try {
-      await deleteEvent(id);
+      deleteEvent(id);
       toast.success('Event deleted successfully!');
       setModalOpen(false);
     } catch (error) {
@@ -251,14 +149,13 @@ export function useCalendarPage() {
     setModalMode,
     myCalendars,
     otherCalendars,
-    events: filteredEvents,
-    loading,
+    events,
+    loading: false,
     handleCalendarToggle,
     handleEventClick,
     handleDayClick,
     handleCreateEvent,
     handleSaveEvent,
     handleDeleteEvent,
-    isValidUUID
   };
 }

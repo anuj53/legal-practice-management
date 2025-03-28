@@ -1,12 +1,11 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { CalendarHeader } from '@/components/calendar/CalendarHeader';
 import { CalendarSidebar } from '@/components/calendar/CalendarSidebar';
 import { CalendarMain } from '@/components/calendar/CalendarMain';
 import { EventModal } from '@/components/calendar/EventModal';
 import { MobileActionButton } from '@/components/calendar/MobileActionButton';
 import { useCalendarPage } from '@/hooks/useCalendarPage';
-import { toast } from 'sonner';
 
 export default function Calendar() {
   const {
@@ -18,7 +17,6 @@ export default function Calendar() {
     modalOpen,
     setModalOpen,
     modalMode,
-    setModalMode,
     myCalendars,
     otherCalendars,
     events,
@@ -30,20 +28,6 @@ export default function Calendar() {
     handleSaveEvent,
     handleDeleteEvent,
   } = useCalendarPage();
-  
-  // Debug log to confirm data is loaded properly
-  useEffect(() => {
-    console.log("Calendar component rendered with events:", events.length);
-    console.log("Available calendars:", 
-      [...myCalendars, ...otherCalendars].map(cal => `${cal.id} (${cal.name})`).join(', ')
-    );
-    
-    if (events.length > 0) {
-      console.log("First event:", events[0]);
-    } else {
-      console.log("No events to display");
-    }
-  }, [events, myCalendars, otherCalendars]);
   
   if (loading) {
     return (
