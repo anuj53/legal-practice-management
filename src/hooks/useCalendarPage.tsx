@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { CalendarEvent, Calendar, CalendarViewType, CalendarShare } from '@/types/calendar';
 import { useCalendar } from '@/hooks/useCalendar';
@@ -62,13 +61,17 @@ export function useCalendarPage() {
   
   const handleDayClick = (date: Date) => {
     setCurrentDate(date);
-    setCurrentView('day');
+    
+    if (currentView === 'month') {
+      setCurrentView('day');
+    } else {
+      handleCreateEventAtTime(date);
+    }
   };
   
-  const handleCreateEvent = () => {
-    console.log("Create event clicked");
+  const handleCreateEventAtTime = (startTime: Date) => {
+    console.log("Create event at time:", startTime);
     
-    // Use the first calendar ID
     const defaultCalendarId = myCalendars.length > 0 ? myCalendars[0].id : '';
     
     if (!defaultCalendarId) {
@@ -76,10 +79,37 @@ export function useCalendarPage() {
       return;
     }
     
-    // Use our new helper function to round to the next half hour
+    const endTime = new Date(startTime.getTime() + 60 * 60 * 1000);
+    
+    const defaultEvent: Omit<CalendarEvent, 'id'> = {
+      title: '',
+      start: startTime,
+      end: endTime,
+      type: 'client-meeting',
+      calendar: defaultCalendarId,
+      isAllDay: false,
+      description: '',
+      location: '',
+    };
+    
+    setSelectedEvent(defaultEvent as CalendarEvent);
+    setModalMode('create');
+    setModalOpen(true);
+  };
+  
+  const handleCreateEvent = () => {
+    console.log("Create event clicked");
+    
+    const defaultCalendarId = myCalendars.length > 0 ? myCalendars[0].id : '';
+    
+    if (!defaultCalendarId) {
+      toast.error("Cannot create event: No calendars available");
+      return;
+    }
+    
     const now = new Date();
     const roundedStartTime = roundToNextHalfHour(now);
-    const endTime = new Date(roundedStartTime.getTime() + 60 * 60 * 1000); // Add 1 hour to rounded start time
+    const endTime = new Date(roundedStartTime.getTime() + 60 * 60 * 1000);
     
     const defaultEvent: Omit<CalendarEvent, 'id'> = {
       title: '',
@@ -100,7 +130,6 @@ export function useCalendarPage() {
   const handleCreateCalendar = (calendar: Omit<Calendar, 'id'>) => {
     console.log("Create calendar:", calendar);
     try {
-      // Handle sharing permissions
       if (calendar.sharedWith && calendar.sharedWith.length > 0) {
         console.log("Calendar shared with:", calendar.sharedWith);
       }
@@ -118,7 +147,6 @@ export function useCalendarPage() {
   const handleUpdateCalendar = (calendar: Calendar) => {
     console.log("Update calendar:", calendar);
     try {
-      // Handle sharing permissions
       if (calendar.sharedWith && calendar.sharedWith.length > 0) {
         console.log("Calendar shared with:", calendar.sharedWith);
       }
@@ -150,32 +178,26 @@ export function useCalendarPage() {
     console.log("Current modal mode:", modalMode);
     
     try {
-      // For new events in create mode
       if (modalMode === 'create') {
         console.log("Creating new event");
         
-        // Validate calendar ID
         if (!event.calendar) {
           console.error("Missing calendar ID for new event");
           toast.error("Cannot save: Missing calendar ID");
           return;
         }
         
-        // Create a properly typed object without 'id' property
         const { id, calendarColor, ...eventWithoutId } = event;
         
-        // Use the correctly typed object for createEvent
         const newEvent = createEvent(eventWithoutId);
         
         toast.success('Event created successfully!');
         console.log("New event created:", newEvent);
       } 
-      // For existing events in edit mode
       else {
         console.log("Updating existing event with ID:", event.id);
         console.log("Event calendar ID:", event.calendar);
         
-        // Validate both event ID and calendar ID
         if (!event.id) {
           console.error("Missing event ID for update");
           toast.error("Cannot update event: Missing ID");
@@ -188,10 +210,8 @@ export function useCalendarPage() {
           return;
         }
         
-        // Remove calendarColor before updating since it's not part of the event model
         const { calendarColor, ...eventToUpdate } = event;
         
-        // Update event
         const updatedEvent = updateEvent(eventToUpdate);
         toast.success('Event updated successfully!');
         console.log("Event updated:", updatedEvent);

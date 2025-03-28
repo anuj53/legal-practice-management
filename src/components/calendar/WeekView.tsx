@@ -110,6 +110,17 @@ export const WeekView: React.FC<WeekViewProps> = ({
     e.stopPropagation();
     onEventClick(event);
   };
+  
+  // Function to handle time slot click
+  const handleTimeSlotClick = (day: Date, hour: number) => {
+    if (onTimeSlotClick) {
+      const newDate = new Date(day);
+      newDate.setHours(hour);
+      newDate.setMinutes(0);
+      newDate.setSeconds(0);
+      onTimeSlotClick(newDate);
+    }
+  };
 
   return (
     <div className="week-view h-full flex flex-col overflow-hidden">
@@ -160,16 +171,10 @@ export const WeekView: React.FC<WeekViewProps> = ({
                     <div 
                       key={`${hourIndex}-${dayIndex}`} 
                       className={cn(
-                        "col-span-1 border-r border-b border-gray-200 p-1 h-[60px] relative",
+                        "col-span-1 border-r border-b border-gray-200 p-1 h-[60px] relative cursor-pointer",
                         new Date(day).setHours(0,0,0,0) === new Date().setHours(0,0,0,0) && "bg-blue-50/30"
                       )}
-                      onClick={() => {
-                        if (onTimeSlotClick) {
-                          const newDate = new Date(day);
-                          newDate.setHours(hour);
-                          onTimeSlotClick(newDate);
-                        }
-                      }}
+                      onClick={() => handleTimeSlotClick(day, hour)}
                     >
                       {dayEvents.map((event) => (
                         <div
