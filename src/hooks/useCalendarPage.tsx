@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { CalendarEvent, Calendar, CalendarViewType } from '@/types/calendar';
+import { CalendarEvent, Calendar, CalendarViewType, CalendarShare } from '@/types/calendar';
 import { useCalendar } from '@/hooks/useCalendar';
 import { toast } from 'sonner';
 
@@ -72,6 +72,11 @@ export function useCalendarPage() {
   const handleCreateCalendar = (calendar: Omit<Calendar, 'id'>) => {
     console.log("Create calendar:", calendar);
     try {
+      // Handle sharing permissions
+      if (calendar.sharedWith && calendar.sharedWith.length > 0) {
+        console.log("Calendar shared with:", calendar.sharedWith);
+      }
+      
       const newCalendar = createCalendar(calendar);
       toast.success(`Calendar "${calendar.name}" created successfully!`);
       return newCalendar;
@@ -109,6 +114,7 @@ export function useCalendarPage() {
       // For existing events in edit mode
       else {
         console.log("Updating existing event with ID:", event.id);
+        console.log("Event calendar ID:", event.calendar);
         
         // Validate both event ID and calendar ID
         if (!event.id) {

@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { addDays, addMonths, subMonths, startOfMonth, isSameDay } from 'date-fns';
-import { CalendarEvent, Calendar, CalendarViewType } from '@/types/calendar';
+import { CalendarEvent, Calendar, CalendarViewType, CalendarShare } from '@/types/calendar';
 
 // Sample data - in a real app, this would come from an API or database
 const generateSampleEvents = (calendars: Calendar[]): CalendarEvent[] => {
@@ -14,7 +14,7 @@ const generateSampleEvents = (calendars: Calendar[]): CalendarEvent[] => {
   // Event 1: Today at 12pm
   events.push({
     id: '1',
-    title: 'Event',
+    title: 'Meeting',
     start: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0),
     end: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 13, 0),
     type: 'client-meeting',
@@ -24,7 +24,7 @@ const generateSampleEvents = (calendars: Calendar[]): CalendarEvent[] => {
   // Event 2: Today at 12pm on a different calendar
   events.push({
     id: '2',
-    title: 'Client',
+    title: 'Client Call',
     start: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0),
     end: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 13, 0),
     type: 'client-meeting',
@@ -35,7 +35,7 @@ const generateSampleEvents = (calendars: Calendar[]): CalendarEvent[] => {
   const tomorrow = addDays(now, 1);
   events.push({
     id: '3',
-    title: 'Plan',
+    title: 'Planning Session',
     start: new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 12, 0),
     end: new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 13, 0),
     type: 'internal-meeting',
@@ -69,7 +69,10 @@ const generateSampleCalendars = (): Calendar[] => {
       color: '#2196f3',
       checked: true,
       isSelected: false,
-      isUserCalendar: false
+      isUserCalendar: false,
+      sharedWith: [
+        { user_email: 'colleague@example.com', permission: 'view' }
+      ]
     }
   ];
 };
@@ -156,6 +159,8 @@ export const useCalendar = () => {
       ...calendar,
       id: Math.random().toString(36).substring(2, 11)
     };
+    
+    console.log('Creating new calendar with sharing permissions:', calendar.sharedWith);
     
     setCalendars([...calendars, newCalendar]);
     return newCalendar;

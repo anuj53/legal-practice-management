@@ -43,6 +43,13 @@ export interface Calendar {
   isSelected?: boolean;
   isUserCalendar?: boolean;
   user_id?: string;
+  sharedWith?: CalendarShare[];
+}
+
+export interface CalendarShare {
+  id?: string;
+  user_email: string;
+  permission: 'view' | 'edit' | 'admin';
 }
 
 export type CalendarViewType = 'day' | 'week' | 'month' | 'agenda';
