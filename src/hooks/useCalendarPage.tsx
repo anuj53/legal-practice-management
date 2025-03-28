@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { CalendarEvent, Calendar, CalendarViewType, CalendarShare } from '@/types/calendar';
 import { useCalendar } from '@/hooks/useCalendar';
@@ -14,7 +13,7 @@ export function useCalendarPage() {
   const {
     myCalendars,
     otherCalendars,
-    events,
+    events: rawEvents,
     createEvent,
     updateEvent,
     deleteEvent,
@@ -24,8 +23,14 @@ export function useCalendarPage() {
     deleteCalendar, 
   } = useCalendar();
   
-  // Get only events from selected calendars - we don't need to manually split calendars now
-  const filteredEvents = events;
+  // Enhanced events with calendar color information
+  const events = rawEvents.map(event => {
+    const calendar = [...myCalendars, ...otherCalendars].find(cal => cal.id === event.calendar);
+    return {
+      ...event,
+      calendarColor: calendar?.color || '#9CA3AF' // Default gray color if calendar not found
+    };
+  });
   
   const handleCalendarToggle = (id: string, category: 'my' | 'other') => {
     toggleCalendar(id);
@@ -89,7 +94,6 @@ export function useCalendarPage() {
     }
   };
 
-  // Add the functions for updating and deleting calendars
   const handleUpdateCalendar = (calendar: Calendar) => {
     console.log("Update calendar:", calendar);
     try {
@@ -137,7 +141,7 @@ export function useCalendarPage() {
         }
         
         // Create a properly typed object without 'id' property
-        const { id, ...eventWithoutId } = event;
+        const { id, calendarColor, ...eventWithoutId } = event;
         
         // Use the correctly typed object for createEvent
         const newEvent = createEvent(eventWithoutId);
@@ -163,8 +167,11 @@ export function useCalendarPage() {
           return;
         }
         
+        // Remove calendarColor before updating since it's not part of the event model
+        const { calendarColor, ...eventToUpdate } = event;
+        
         // Update event
-        const updatedEvent = updateEvent(event);
+        const updatedEvent = updateEvent(eventToUpdate);
         toast.success('Event updated successfully!');
         console.log("Event updated:", updatedEvent);
       }
@@ -202,7 +209,7 @@ export function useCalendarPage() {
     setModalMode,
     myCalendars,
     otherCalendars,
-    events: filteredEvents,
+    events,
     loading: false,
     handleCalendarToggle,
     handleEventClick,

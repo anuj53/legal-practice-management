@@ -71,17 +71,6 @@ export const WeekView: React.FC<WeekViewProps> = ({
     });
   };
 
-  const eventColors = {
-    'event': 'bg-orange-500 text-white',
-    'client': 'bg-green-500 text-white',
-    'plan': 'bg-orange-500 text-white',
-    'client-meeting': 'bg-green-500 text-white',
-    'internal-meeting': 'bg-blue-500 text-white',
-    'court': 'bg-purple-500 text-white',
-    'deadline': 'bg-red-500 text-white',
-    'personal': 'bg-yellow-500 text-black',
-  };
-
   // Check if today falls within this week
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -154,10 +143,8 @@ export const WeekView: React.FC<WeekViewProps> = ({
                       {dayEvents.map((event) => (
                         <div
                           key={event.id}
-                          className={cn(
-                            "p-1 rounded text-xs cursor-pointer truncate",
-                            eventColors[event.type] || "bg-gray-500 text-white"
-                          )}
+                          className="p-1 rounded text-xs cursor-pointer truncate text-white"
+                          style={{ backgroundColor: event.calendarColor || '#9CA3AF' }} // Use calendar color
                           onClick={(e) => {
                             e.stopPropagation();
                             onEventClick(event);
