@@ -35,9 +35,14 @@ export const WeekView: React.FC<WeekViewProps> = ({
       const position = (hours * 60) + minutes;
       setCurrentTimePosition(position);
       
-      // Scroll to current time - 100px
+      // Scroll to current time with offset (100px up from the current time)
       if (scrollContainerRef.current) {
-        scrollContainerRef.current.scrollTop = position - 100;
+        // Delay the scroll slightly to ensure the container is fully rendered
+        setTimeout(() => {
+          if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollTop = position - 120;
+          }
+        }, 100);
       }
     };
     
@@ -89,12 +94,16 @@ export const WeekView: React.FC<WeekViewProps> = ({
 
   return (
     <div className="week-view h-full flex flex-col">
+      {/* Headers row - stays fixed */}
       <div className="grid grid-cols-8 border-b border-gray-200 sticky top-0 bg-background z-10">
         <div className="col-span-1 border-r border-gray-200 p-2 text-center font-medium">
           Hour
         </div>
         {days.map((day, index) => (
-          <div key={index} className="col-span-1 p-2 text-center border-r border-gray-200">
+          <div key={index} className={cn(
+            "col-span-1 p-2 text-center border-r border-gray-200",
+            new Date(day).setHours(0,0,0,0) === new Date().setHours(0,0,0,0) && "bg-blue-50"
+          )}>
             <div className="text-sm text-gray-500">{format(day, 'EEE')}</div>
             <div className={cn(
               "text-lg font-medium",
@@ -106,72 +115,72 @@ export const WeekView: React.FC<WeekViewProps> = ({
         ))}
       </div>
       
-      <ScrollArea className="flex-1">
-        <div 
-          ref={scrollContainerRef} 
-          className="grid grid-cols-8 relative min-h-[1440px]"
-        >
-          {hours.map((hourLabel, hourIndex) => (
-            <React.Fragment key={hourIndex}>
-              <div className="col-span-1 border-r border-b border-gray-200 p-2 text-center sticky left-0 bg-background h-[60px]">
-                {hourLabel}
-              </div>
-              
-              {days.map((day, dayIndex) => {
-                const hour = hourIndex % 24;
-                const dayEvents = getEventsForDayAndHour(day, hour);
+      {/* Main scrollable area */}
+      <div className="flex-1 overflow-hidden">
+        <div className="h-full" ref={scrollContainerRef} style={{ overflowY: 'auto' }}>
+          <div className="grid grid-cols-8 relative">
+            {hours.map((hourLabel, hourIndex) => (
+              <React.Fragment key={hourIndex}>
+                <div className="col-span-1 border-r border-b border-gray-200 p-2 text-center sticky left-0 bg-background h-[60px]">
+                  {hourLabel}
+                </div>
                 
-                return (
-                  <div 
-                    key={`${hourIndex}-${dayIndex}`} 
-                    className={cn(
-                      "col-span-1 border-r border-b border-gray-200 p-1 h-[60px] relative",
-                      new Date(day).setHours(0,0,0,0) === new Date().setHours(0,0,0,0) && "bg-blue-50/30"
-                    )}
-                    onClick={() => {
-                      if (onTimeSlotClick) {
-                        const newDate = new Date(day);
-                        newDate.setHours(hour);
-                        onTimeSlotClick(newDate);
-                      }
-                    }}
-                  >
-                    {dayEvents.map((event) => (
-                      <div
-                        key={event.id}
-                        className={cn(
-                          "p-1 rounded text-xs cursor-pointer truncate",
-                          eventColors[event.type] || "bg-gray-500 text-white"
-                        )}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onEventClick(event);
-                        }}
-                      >
-                        {format(event.start, 'h:mm')} {event.title}
-                      </div>
-                    ))}
-                  </div>
-                );
-              })}
-            </React.Fragment>
-          ))}
-          
-          {/* Current time indicator - only show if today is in this week */}
-          {todayIndex !== -1 && (
-            <div 
-              className="absolute border-t-2 border-red-500 z-20 flex items-center"
-              style={{ 
-                top: `${currentTimePosition}px`, 
-                left: `${(100 / 8) * (todayIndex + 1)}%`,
-                right: '0'
-              }}
-            >
-              <div className="h-3 w-3 rounded-full bg-red-500 -ml-1.5 -mt-1.5"></div>
-            </div>
-          )}
+                {days.map((day, dayIndex) => {
+                  const hour = hourIndex % 24;
+                  const dayEvents = getEventsForDayAndHour(day, hour);
+                  
+                  return (
+                    <div 
+                      key={`${hourIndex}-${dayIndex}`} 
+                      className={cn(
+                        "col-span-1 border-r border-b border-gray-200 p-1 h-[60px] relative",
+                        new Date(day).setHours(0,0,0,0) === new Date().setHours(0,0,0,0) && "bg-blue-50/30"
+                      )}
+                      onClick={() => {
+                        if (onTimeSlotClick) {
+                          const newDate = new Date(day);
+                          newDate.setHours(hour);
+                          onTimeSlotClick(newDate);
+                        }
+                      }}
+                    >
+                      {dayEvents.map((event) => (
+                        <div
+                          key={event.id}
+                          className={cn(
+                            "p-1 rounded text-xs cursor-pointer truncate",
+                            eventColors[event.type] || "bg-gray-500 text-white"
+                          )}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEventClick(event);
+                          }}
+                        >
+                          {format(event.start, 'h:mm')} {event.title}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+              </React.Fragment>
+            ))}
+            
+            {/* Current time indicator - only show if today is in this week */}
+            {todayIndex !== -1 && (
+              <div 
+                className="absolute border-t-2 border-red-500 z-20 flex items-center"
+                style={{ 
+                  top: `${currentTimePosition}px`, 
+                  left: `${(100 / 8) * (todayIndex + 1)}%`,
+                  right: '0'
+                }}
+              >
+                <div className="h-3 w-3 rounded-full bg-red-500 -ml-1.5 -mt-1.5"></div>
+              </div>
+            )}
+          </div>
         </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 };
