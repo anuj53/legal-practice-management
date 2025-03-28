@@ -11,9 +11,6 @@ export interface CalendarEvent {
   isAllDay?: boolean;
   description?: string;
   location?: string;
-  isRecurring?: boolean;
-  isRecurringInstance?: boolean; // Flag to mark generated recurring instances
-  parentEventId?: string; // Reference to parent event for recurring instances
   attendees?: string[];
   reminder?: string;
   caseId?: string;
@@ -25,14 +22,6 @@ export interface CalendarEvent {
     docketNumber?: string;
   };
   documents?: Array<{id: string, name: string, url: string}>;
-  recurrencePattern?: {
-    frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
-    interval: number;
-    endDate?: Date;
-    weekdays?: number[];
-    monthDay?: number;
-    occurrences?: number;
-  };
 }
 
 export interface Calendar {

@@ -1,4 +1,3 @@
-
 import { addDays, addMonths, addYears, isSameDay, startOfDay, isBefore, endOfDay, getDay } from 'date-fns';
 import { CalendarEvent } from '@/types/calendar';
 

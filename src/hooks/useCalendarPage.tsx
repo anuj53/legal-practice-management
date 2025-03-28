@@ -1,5 +1,6 @@
+
 import { useState } from 'react';
-import { CalendarEvent, Calendar, CalendarViewType, CalendarShare } from '@/types/calendar';
+import { CalendarEvent, Calendar, CalendarViewType } from '@/types/calendar';
 import { useCalendar } from '@/hooks/useCalendar';
 import { toast } from 'sonner';
 
@@ -210,49 +211,12 @@ export function useCalendarPage() {
           return;
         }
         
-        // Special handling for recurring instances
-        if (event.isRecurringInstance && event.parentEventId) {
-          const confirmEditAll = window.confirm(
-            "Do you want to edit this recurring event and all of its instances?" +
-            "\n\nClick 'OK' to edit the entire series, or 'Cancel' to edit just this occurrence."
-          );
-          
-          if (confirmEditAll) {
-            // Find the parent event
-            const parentEvent = events.find(e => e.id === event.parentEventId);
-            
-            if (parentEvent) {
-              // Update the parent event with new details from this instance
-              const { calendarColor, isRecurringInstance, parentEventId, ...eventData } = event;
-              
-              // Preserve recurrence pattern from parent
-              const updatedParentEvent = {
-                ...parentEvent,
-                ...eventData,
-                id: parentEvent.id,
-                isRecurringInstance: false,
-                parentEventId: undefined
-              };
-              
-              const result = updateEvent(updatedParentEvent);
-              toast.success('Recurring event series updated successfully!');
-              console.log("Recurring series updated:", result);
-            } else {
-              toast.error("Could not find parent event to update");
-            }
-          } else {
-            // TODO: Create an exception for this occurrence
-            // For now, just notify the user that this feature is coming soon
-            toast.info('Editing single occurrences of recurring events will be available soon');
-          }
-        } else {
-          // Regular event or recurring parent
-          const { calendarColor, ...eventToUpdate } = event;
-          
-          const updatedEvent = updateEvent(eventToUpdate);
-          toast.success('Event updated successfully!');
-          console.log("Event updated:", updatedEvent);
-        }
+        // Regular event update
+        const { calendarColor, ...eventToUpdate } = event;
+        
+        const updatedEvent = updateEvent(eventToUpdate);
+        toast.success('Event updated successfully!');
+        console.log("Event updated:", updatedEvent);
       }
       
       setModalOpen(false);
@@ -266,28 +230,8 @@ export function useCalendarPage() {
     console.log("Deleting event:", id);
     
     try {
-      // If this is a recurring instance (id contains '_recurrence_')
-      if (id.includes('_recurrence_') && selectedEvent?.parentEventId) {
-        console.log("This is a recurring instance with parent ID:", selectedEvent.parentEventId);
-        
-        // Show confirmation asking if user wants to delete just this instance or the entire series
-        const confirmDelete = window.confirm("Do you want to delete this recurring event and all of its instances?");
-        
-        if (confirmDelete) {
-          // Delete the parent event which will cascade to all instances
-          await deleteEvent(selectedEvent.parentEventId);
-          toast.success('Recurring event series deleted successfully!');
-        } else {
-          toast.info('Deletion cancelled');
-          setModalOpen(false);
-          return;
-        }
-      } else {
-        // Regular event or recurring parent
-        await deleteEvent(id);
-        toast.success('Event deleted successfully!');
-      }
-      
+      await deleteEvent(id);
+      toast.success('Event deleted successfully!');
       setModalOpen(false);
     } catch (error) {
       console.error('Error deleting event:', error);

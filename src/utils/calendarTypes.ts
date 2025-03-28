@@ -21,9 +21,6 @@ export interface Event {
   description?: string;
   location?: string;
   attendees?: string[];
-  isRecurring?: boolean;
-  isRecurringInstance?: boolean; // Flag to mark generated recurring instances
-  parentEventId?: string; // Reference to parent event for recurring instances
   reminder?: string;
   // Legal-specific fields
   caseId?: string;
@@ -35,14 +32,5 @@ export interface Event {
     docketNumber?: string;
   };
   documents?: Array<{id: string, name: string, url: string}>;
-  // Recurrence options
-  recurrencePattern?: {
-    frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
-    interval: number;
-    endDate?: Date;
-    weekdays?: number[]; // 0-6 for Sunday-Saturday
-    monthDay?: number;
-    occurrences?: number;
-  };
   isAllDay?: boolean;
 }

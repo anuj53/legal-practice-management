@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { 
@@ -132,18 +133,10 @@ export const useCalendar = () => {
         throw new Error(msg);
       }
       
-      // Set isRecurring flag based on recurrencePattern
-      const isRecurring = !!event.recurrencePattern;
-      const eventWithRecurringFlag = {
-        ...event,
-        isRecurring
-      };
-      
-      console.log('useCalendar: Creating event with recurrence pattern:', 
-        event.recurrencePattern ? JSON.stringify(event.recurrencePattern) : 'none');
+      console.log('useCalendar: Creating event:', event);
       
       // First create in the database
-      const newEvent = await createEventInDb(eventWithRecurringFlag);
+      const newEvent = await createEventInDb(event);
       console.log('useCalendar: createEventInDb returned new event:', newEvent);
       
       // Update local state
@@ -181,15 +174,8 @@ export const useCalendar = () => {
         throw new Error(msg);
       }
       
-      // Set isRecurring flag based on recurrencePattern
-      const isRecurring = !!event.recurrencePattern;
-      const eventWithRecurringFlag = {
-        ...event,
-        isRecurring
-      };
-      
       // First update in the database
-      const updatedEvent = await updateEventInDb(eventWithRecurringFlag);
+      const updatedEvent = await updateEventInDb(event);
       
       // Update local state
       setEvents(prev => prev.map(e => e.id === event.id ? updatedEvent : e));
@@ -221,52 +207,21 @@ export const useCalendar = () => {
       
       // Validate UUID before attempting to delete
       if (!isValidUUID(id)) {
-        // Special handling for recurring instances
-        if (id.includes('_recurrence_') && eventToDelete.parentEventId) {
-          console.log('Attempted to delete recurring instance, will delete parent event instead');
-          
-          // Get the parent event ID from the recurring instance
-          const parentId = eventToDelete.parentEventId;
-          
-          // Find the parent event
-          const parentEvent = events.find(e => e.id === parentId);
-          
-          if (parentEvent && isValidUUID(parentId)) {
-            // Delete the parent event which will cascade to all instances
-            console.log(`Deleting parent event with ID: ${parentId}`);
-            await deleteEventFromDb(parentId);
-            
-            // Remove parent and all instances from local state
-            setEvents(prev => prev.filter(e => e.id !== parentId && e.parentEventId !== parentId));
-            
-            toast.success('Recurring event deleted successfully!');
-            return;
-          } else {
-            throw new Error(`Parent event with ID ${parentId} not found or has invalid ID`);
-          }
-        } else {
-          const msg = `Invalid event ID format: ${id}`;
-          console.error(msg);
-          throw new Error(msg);
-        }
+        const msg = `Invalid UUID format for event ID: ${id}`;
+        console.error(msg);
+        throw new Error(msg);
       }
       
       // First delete from the database
       await deleteEventFromDb(id);
       
-      // If this is a recurring parent event, remove all instances too
-      if (eventToDelete.isRecurring && eventToDelete.recurrencePattern) {
-        // Remove parent and all instances
-        setEvents(prev => prev.filter(e => e.id !== id && e.parentEventId !== id));
-        toast.success('Recurring event and all instances deleted successfully!');
-      } else {
-        // Just remove the single event
-        setEvents(prev => prev.filter(e => e.id !== id));
-        toast.success('Event deleted successfully!');
-      }
+      // Remove the event from local state
+      setEvents(prev => prev.filter(e => e.id !== id));
       
       // Trigger a data refresh
       setDataUpdated(prev => prev + 1);
+      
+      toast.success('Event deleted successfully!');
     } catch (err) {
       console.error('Error deleting event:', err);
       setError('Failed to delete event');
