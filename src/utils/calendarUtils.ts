@@ -1,4 +1,3 @@
-
 import { addHours, addDays, subDays, startOfDay, addWeeks, addMonths, addYears, isBefore, isSameDay, getDay } from 'date-fns';
 
 // Types
@@ -112,6 +111,11 @@ export function generateRecurringEventInstances(
 
   // Generate additional instances
   while (true) {
+    // Stop if we've reached the specified number of occurrences
+    if (occurrences && instanceCount >= occurrences) {
+      break;
+    }
+    
     // Apply the recurrence pattern to get the next occurrence
     switch (frequency) {
       case 'daily':
@@ -158,23 +162,15 @@ export function generateRecurringEventInstances(
       break;
     }
     
-    // Stop if we've reached the specified number of occurrences
-    if (occurrences && ++instanceCount >= occurrences) {
-      // Add the final occurrence if within range
-      if (currentDate >= rangeStart && currentDate < rangeEnd) {
-        addInstance(currentDate);
-      }
-      break;
-    }
-    
     // Stop if we're beyond our display range
     if (currentDate > rangeEnd) {
       break;
     }
     
-    // Add this instance if it's within our range
+    // Add this instance if it's within our range and increment the counter
     if (currentDate >= rangeStart) {
       addInstance(currentDate);
+      instanceCount++; // Increment counter after successfully adding an instance
     }
   }
   
