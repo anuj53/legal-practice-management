@@ -1,7 +1,6 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Calendar, Event, convertDbEventToEvent, convertEventToDbEvent, isValidUUID } from '@/utils/calendarUtils';
+import { convertDbEventToEvent, convertEventToDbEvent, isValidUUID } from '@/utils/calendarUtils';
 
 // Fetch calendars from Supabase
 export const fetchCalendars = async () => {
@@ -106,7 +105,7 @@ export const fetchEvents = async () => {
 };
 
 // Update calendar in Supabase
-export const updateCalendarInDb = async (calendar: Calendar) => {
+export const updateCalendarInDb = async (calendar) => {
   try {
     const { data, error } = await supabase
       .from('calendars')
@@ -135,7 +134,7 @@ export const updateCalendarInDb = async (calendar: Calendar) => {
 };
 
 // Create calendar in Supabase
-export const createCalendarInDb = async (calendar: Omit<Calendar, 'id'>) => {
+export const createCalendarInDb = async (calendar) => {
   try {
     const { data, error } = await supabase
       .from('calendars')
@@ -164,7 +163,7 @@ export const createCalendarInDb = async (calendar: Omit<Calendar, 'id'>) => {
 };
 
 // Delete calendar from Supabase
-export const deleteCalendarFromDb = async (id: string) => {
+export const deleteCalendarFromDb = async (id) => {
   try {
     console.log('API: Deleting calendar from DB:', id);
     
@@ -201,7 +200,7 @@ export const deleteCalendarFromDb = async (id: string) => {
 };
 
 // Create event in Supabase
-export const createEventInDb = async (event: Omit<Event, 'id'>) => {
+export const createEventInDb = async (event) => {
   try {
     console.log('API: Creating event in DB:', event);
     console.log('API: Calendar ID:', event.calendar);
@@ -241,7 +240,7 @@ export const createEventInDb = async (event: Omit<Event, 'id'>) => {
       type: event.type || 'client-meeting',
       calendar_id: event.calendar,
       is_recurring: event.isRecurring || false,
-      recurrence_pattern: event.recurrencePattern || null,
+      recurrence_pattern: event.recurrencePattern ? JSON.parse(JSON.stringify(event.recurrencePattern)) : null,
       recurrence_id: event.recurrenceId || null,
       updated_at: new Date().toISOString()
     };
@@ -276,7 +275,7 @@ export const createEventInDb = async (event: Omit<Event, 'id'>) => {
 };
 
 // Update event in Supabase
-export const updateEventInDb = async (event: Event) => {
+export const updateEventInDb = async (event) => {
   try {
     console.log('API: Updating event in DB:', event);
     console.log('API: Event ID:', event.id);
@@ -311,7 +310,7 @@ export const updateEventInDb = async (event: Event) => {
       type: event.type || 'client-meeting',
       calendar_id: event.calendar,
       is_recurring: event.isRecurring || false,
-      recurrence_pattern: event.recurrencePattern || null,
+      recurrence_pattern: event.recurrencePattern ? JSON.parse(JSON.stringify(event.recurrencePattern)) : null,
       recurrence_id: event.recurrenceId || null,
       updated_at: new Date().toISOString()
     };
@@ -344,7 +343,7 @@ export const updateEventInDb = async (event: Event) => {
 };
 
 // Delete event from Supabase
-export const deleteEventFromDb = async (id: string) => {
+export const deleteEventFromDb = async (id) => {
   try {
     console.log('API: Deleting event from DB:', id);
     
@@ -352,7 +351,6 @@ export const deleteEventFromDb = async (id: string) => {
       throw new Error(`Invalid UUID format for event ID: ${id}`);
     }
     
-    // Check if this is a recurring parent event by looking for records with recurrence_id
     const { data: event, error: eventError } = await supabase
       .from('events')
       .select('*')
@@ -364,7 +362,6 @@ export const deleteEventFromDb = async (id: string) => {
       throw eventError;
     }
     
-    // Execute the deletion
     const { error } = await supabase
       .from('events')
       .delete()
