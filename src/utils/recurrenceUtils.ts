@@ -1,5 +1,5 @@
 
-import { addDays, addMonths, addWeeks, addYears, getDay } from 'date-fns';
+import { addDays, addMonths, addYears, getDay } from 'date-fns';
 import { Event } from './calendarTypes';
 
 // Generate recurring event instances in a given date range
@@ -45,16 +45,20 @@ export function generateRecurringEventInstances(
     return newStart;
   };
   
+  // Count the original event as the first occurrence
+  instanceCount++;
+  
   // For the first instance, include it if it falls within our range
   if (currentDate >= rangeStart && currentDate < rangeEnd) {
     addInstance(currentDate);
-    instanceCount++;
   }
 
   // Generate additional instances
   while (true) {
     // Stop if we've reached the specified number of occurrences
+    // This check needs to happen before we generate the next occurrence
     if (occurrences && instanceCount >= occurrences) {
+      console.log(`Stopping at ${instanceCount} occurrences as requested (limit: ${occurrences})`);
       break;
     }
     
@@ -109,10 +113,19 @@ export function generateRecurringEventInstances(
       break;
     }
     
-    // Add this instance if it's within our range and increment the counter
+    // Increment the counter BEFORE adding this instance
+    instanceCount++;
+    
+    // Stop if we've reached the specified number of occurrences
+    // This additional check ensures we don't add more instances than requested
+    if (occurrences && instanceCount > occurrences) {
+      console.log(`Stopping after ${occurrences} occurrences as requested`);
+      break;
+    }
+    
+    // Add this instance if it's within our range
     if (currentDate >= rangeStart) {
       addInstance(currentDate);
-      instanceCount++; // Increment counter after successfully adding an instance
     }
   }
   

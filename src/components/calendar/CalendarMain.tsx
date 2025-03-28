@@ -20,8 +20,8 @@ interface CalendarMainProps {
 export function CalendarMain({ view, date, events, onEventClick, onDayClick }: CalendarMainProps) {
   // Process recurring events for the current view
   const processedEvents = useMemo(() => {
-    // Create a copy of regular events
-    let allEvents = [...events];
+    // Create a copy of regular events (exclude recurring parent events since we'll generate instances)
+    let allEvents = events.filter(event => !event.isRecurring);
     
     // Find recurring events
     const recurringEvents = events.filter(event => event.isRecurring && event.recurrencePattern);
@@ -42,8 +42,12 @@ export function CalendarMain({ view, date, events, onEventClick, onDayClick }: C
           rangeEnd.setHours(23, 59, 59, 999);
           break;
         case 'month':
-          // For month view, we already handle this elsewhere
-          return allEvents;
+          // For month view, we need a wider range
+          const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+          const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+          rangeStart = firstDay;
+          rangeEnd = lastDay;
+          break;
         case 'agenda':
           // For agenda view, use a wider range
           rangeStart = new Date(date);
