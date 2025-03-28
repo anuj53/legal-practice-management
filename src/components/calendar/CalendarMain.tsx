@@ -7,7 +7,7 @@ import { AgendaView } from '@/components/calendar/AgendaView';
 import { CalendarViewType } from '@/types/calendar';
 import { CalendarEvent } from '@/types/calendar';
 import { startOfWeek, endOfWeek, addDays } from 'date-fns';
-import { generateRecurringEventInstances } from '@/utils/calendarUtils';
+import { generateRecurringEventInstances } from '@/utils/recurrenceUtils';
 
 interface CalendarMainProps {
   view: CalendarViewType;
