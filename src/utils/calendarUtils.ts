@@ -72,6 +72,9 @@ export function generateRecurringEventInstances(
   }
 
   console.log(`Generating instances for recurring event: ${event.title}`);
+  console.log(`Event recurrence pattern:`, event.recurrencePattern);
+  console.log(`Date range: ${rangeStart.toISOString()} to ${rangeEnd.toISOString()}`);
+  
   const instances: Event[] = [];
   const { frequency, interval, endDate, weekdays, monthDay, occurrences } = event.recurrencePattern;
   
@@ -126,49 +129,48 @@ export function generateRecurringEventInstances(
         
       case 'weekly':
         if (weekdays && weekdays.length > 0) {
-          // For weekly recurrence with specific weekdays
-          let foundNextDay = false;
-          const currentDayOfWeek = getDay(currentDate); // 0-6 for Sunday-Saturday
+          // Enhanced weekly recurrence algorithm with specific weekdays
+          console.log("Processing weekly recurrence with specific weekdays:", weekdays);
           
-          // First, try to find the next weekday in the current week
-          for (let i = 1; i <= 7; i++) {
-            const nextDay = addDays(currentDate, i);
-            const nextDayOfWeek = getDay(nextDay);
-            
-            if (weekdays.includes(nextDayOfWeek) && nextDay > currentDate) {
-              currentDate = nextDay;
-              foundNextDay = true;
+          const currentDayOfWeek = getDay(currentDate); // 0-6 for Sunday-Saturday
+          console.log(`Current date: ${currentDate.toISOString()}, day of week: ${currentDayOfWeek}`);
+          
+          // Sort weekdays to ensure correct order
+          const sortedWeekdays = [...weekdays].sort((a, b) => a - b);
+          
+          // Find the next day in the current week
+          let nextDay = null;
+          for (const weekday of sortedWeekdays) {
+            // Only consider days that come later in the week
+            if (weekday > currentDayOfWeek) {
+              nextDay = weekday;
               break;
             }
           }
           
-          // If no next day found in current week, jump to the first specified weekday in the next week
-          if (!foundNextDay) {
-            // Add days to get to the next week (plus the interval-1 additional weeks)
-            currentDate = addWeeks(currentDate, interval);
+          if (nextDay !== null) {
+            // We found a day later this week
+            const daysToAdd = nextDay - currentDayOfWeek;
+            console.log(`Found next day this week: ${nextDay}, adding ${daysToAdd} days`);
+            currentDate = addDays(currentDate, daysToAdd);
+          } else {
+            // Jump to the first selected day in the next week
+            // First jump to the beginning of next week + interval
+            const daysUntilNextWeek = 7 - currentDayOfWeek;
+            let weeksToAdd = interval - 1; // Subtract 1 because we're already adding the days to get to the next week
             
-            // Find the first matching weekday in the next week period
-            let daysToAdd = 0;
-            let found = false;
-            
-            for (let i = 0; i < 7; i++) {
-              const dayToCheck = addDays(currentDate, i - getDay(currentDate));
-              if (weekdays.includes(getDay(dayToCheck))) {
-                daysToAdd = i - getDay(currentDate);
-                found = true;
-                break;
-              }
+            // For special case where interval is 1
+            if (interval === 1) {
+              weeksToAdd = 0;
             }
             
-            if (found) {
-              currentDate = addDays(currentDate, daysToAdd);
-            } else {
-              // Fallback: just add 7 days if no matching weekday found
-              currentDate = addDays(currentDate, 7);
-            }
+            const daysToAdd = daysUntilNextWeek + (weeksToAdd * 7) + sortedWeekdays[0];
+            console.log(`No more days this week, jumping to next week. daysUntilNextWeek=${daysUntilNextWeek}, weeksToAdd=${weeksToAdd}, firstDay=${sortedWeekdays[0]}, totalDaysToAdd=${daysToAdd}`);
+            currentDate = addDays(currentDate, daysToAdd);
           }
         } else {
-          // Simple weekly recurrence (same day of week)
+          // Simple weekly recurrence (same day each week)
+          console.log(`Simple weekly recurrence, adding ${interval} weeks`);
           currentDate = addWeeks(currentDate, interval);
         }
         break;

@@ -22,58 +22,65 @@ export function CalendarMain({ view, date, events, onEventClick, onDayClick }: C
   const processedEvents = useMemo(() => {
     console.log(`Processing events for ${view} view with ${events.length} events`);
     
-    // Create a copy of regular events
-    let allEvents = [...events];
-    
-    // Find recurring events
+    // Separate recurring and non-recurring events
     const recurringEvents = events.filter(event => event.isRecurring && event.recurrencePattern);
+    const regularEvents = events.filter(event => !event.isRecurring || !event.recurrencePattern);
     
-    if (recurringEvents.length > 0) {
-      console.log(`Found ${recurringEvents.length} recurring events to process`);
-      
-      // For each view, determine the appropriate date range for recurring events
-      let rangeStart: Date, rangeEnd: Date;
-      
-      switch (view) {
-        case 'week':
-          rangeStart = startOfWeek(date, { weekStartsOn: 0 });
-          rangeEnd = endOfWeek(date, { weekStartsOn: 0 });
-          break;
-        case 'day':
-          rangeStart = new Date(date);
-          rangeStart.setHours(0, 0, 0, 0);
-          rangeEnd = new Date(date);
-          rangeEnd.setHours(23, 59, 59, 999);
-          break;
-        case 'month':
-          rangeStart = startOfMonth(date);
-          rangeEnd = endOfMonth(date);
-          break;
-        case 'agenda':
-          // For agenda view, use a wider range
-          rangeStart = new Date(date);
-          rangeStart.setDate(rangeStart.getDate() - 14); // Two weeks back
-          rangeEnd = new Date(date);
-          rangeEnd.setDate(rangeEnd.getDate() + 30); // One month forward
-          break;
-        default:
-          return allEvents;
-      }
-      
-      console.log(`Date range for recurring events: ${rangeStart.toISOString()} to ${rangeEnd.toISOString()}`);
-      
-      // Generate instances for each recurring event
-      recurringEvents.forEach(event => {
-        if (event.recurrencePattern) {
-          console.log(`Generating instances for event: ${event.title} with pattern:`, event.recurrencePattern);
-          const instances = generateRecurringEventInstances(event, rangeStart, rangeEnd);
-          console.log(`Generated ${instances.length} instances`);
-          allEvents = [...allEvents, ...instances];
-        }
-      });
+    // Exclude existing recurring instances to avoid duplicates
+    const filteredRegularEvents = regularEvents.filter(event => !event.isRecurringInstance);
+    
+    console.log(`Found ${recurringEvents.length} recurring events to process`);
+    console.log(`Found ${filteredRegularEvents.length} regular events to display`);
+    
+    if (recurringEvents.length === 0) {
+      return filteredRegularEvents;
     }
     
-    return allEvents;
+    // Determine the appropriate date range for recurring events based on view
+    let rangeStart: Date, rangeEnd: Date;
+    
+    switch (view) {
+      case 'week':
+        rangeStart = startOfWeek(date, { weekStartsOn: 0 });
+        rangeEnd = endOfWeek(date, { weekStartsOn: 0 });
+        break;
+      case 'day':
+        rangeStart = new Date(date);
+        rangeStart.setHours(0, 0, 0, 0);
+        rangeEnd = new Date(date);
+        rangeEnd.setHours(23, 59, 59, 999);
+        break;
+      case 'month':
+        rangeStart = startOfMonth(date);
+        rangeEnd = endOfMonth(date);
+        break;
+      case 'agenda':
+        // For agenda view, use a wider range
+        rangeStart = new Date(date);
+        rangeStart.setDate(rangeStart.getDate() - 14); // Two weeks back
+        rangeEnd = new Date(date);
+        rangeEnd.setDate(rangeEnd.getDate() + 30); // One month forward
+        break;
+      default:
+        return filteredRegularEvents;
+    }
+    
+    console.log(`Date range for recurring events: ${rangeStart.toISOString()} to ${rangeEnd.toISOString()}`);
+    
+    // Generate instances for each recurring event
+    let recurringInstances: CalendarEvent[] = [];
+    
+    recurringEvents.forEach(event => {
+      if (event.recurrencePattern) {
+        console.log(`Generating instances for event: ${event.title} with pattern:`, event.recurrencePattern);
+        const instances = generateRecurringEventInstances(event, rangeStart, rangeEnd);
+        console.log(`Generated ${instances.length} instances`);
+        recurringInstances = [...recurringInstances, ...instances];
+      }
+    });
+    
+    // Combine regular events with recurring instances
+    return [...filteredRegularEvents, ...recurringInstances];
   }, [events, date, view]);
 
   return (
