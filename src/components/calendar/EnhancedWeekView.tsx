@@ -14,21 +14,8 @@ import {
 } from 'date-fns';
 import { ChevronLeft, ChevronRight, Plus, Calendar, MoreVertical, Repeat } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Event } from '@/utils/calendarUtils';
+import { Event } from '@/utils/calendar';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 
 interface EnhancedWeekViewProps {
   date: Date;

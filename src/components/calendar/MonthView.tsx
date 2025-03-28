@@ -1,10 +1,9 @@
-
 import React, { useMemo } from 'react';
 import { format, isSameMonth, isSameDay, getMonth, getYear } from 'date-fns';
 import { CalendarEvent } from '@/types/calendar';
 import { getMonthDaysGrid } from '@/utils/dateUtils';
 import { cn } from '@/lib/utils';
-import { generateRecurringEventInstances } from '@/utils/calendarUtils';
+import { generateRecurringEventInstances } from '@/utils/calendar';
 
 interface MonthViewProps {
   currentDate: Date;
@@ -23,16 +22,12 @@ export const MonthView: React.FC<MonthViewProps> = ({
   const year = getYear(currentDate);
   const daysGrid = getMonthDaysGrid(year, month);
   
-  // Process events to include recurring event instances
   const processedEvents = useMemo(() => {
-    // First month and last month dates from the grid
     const firstDay = daysGrid[0][0];
     const lastDay = daysGrid[daysGrid.length - 1][6];
     
-    // Start with all non-recurring events
     const allEvents = [...events.filter(event => !event.isRecurring)];
     
-    // Then add instances of recurring events for the visible date range
     events.filter(event => event.isRecurring && event.recurrencePattern).forEach(recurringEvent => {
       const instances = generateRecurringEventInstances(recurringEvent, firstDay, lastDay);
       allEvents.push(...instances);
@@ -54,10 +49,10 @@ export const MonthView: React.FC<MonthViewProps> = ({
       key={`${event.id}-${event.start.getTime()}`}
       className={cn(
         "px-2 py-1 mb-1 text-xs rounded truncate cursor-pointer",
-        "text-white", // Default text color
-        event.isRecurring && "border-l-2 border-white" // Visual indicator for recurring events
+        "text-white",
+        event.isRecurring && "border-l-2 border-white"
       )}
-      style={{ backgroundColor: event.calendarColor || '#9CA3AF' }} // Use calendar color or fallback to gray
+      style={{ backgroundColor: event.calendarColor || '#9CA3AF' }}
       onClick={(e) => {
         e.stopPropagation();
         onEventClick(event);
