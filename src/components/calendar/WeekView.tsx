@@ -4,7 +4,6 @@ import { format, addDays, startOfWeek } from 'date-fns';
 import { CalendarEvent } from '@/types/calendar';
 import { cn } from '@/lib/utils';
 import { getHours } from '@/utils/dateUtils';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface WeekViewProps {
   currentDate: Date;
@@ -94,8 +93,8 @@ export const WeekView: React.FC<WeekViewProps> = ({
 
   return (
     <div className="week-view h-full flex flex-col">
-      {/* Headers row - stays fixed */}
-      <div className="grid grid-cols-8 border-b border-gray-200 sticky top-0 bg-background z-10">
+      {/* Headers row - stays fixed at the top with sticky positioning */}
+      <div className="grid grid-cols-8 border-b border-gray-200 bg-background sticky top-0 z-10">
         <div className="col-span-1 border-r border-gray-200 p-2 text-center font-medium">
           Hour
         </div>
@@ -115,16 +114,21 @@ export const WeekView: React.FC<WeekViewProps> = ({
         ))}
       </div>
       
-      {/* Main scrollable area */}
+      {/* Scrollable content area */}
       <div className="flex-1 overflow-hidden">
-        <div className="h-full" ref={scrollContainerRef} style={{ overflowY: 'auto' }}>
+        <div 
+          className="h-full overflow-y-auto" 
+          ref={scrollContainerRef}
+        >
           <div className="grid grid-cols-8 relative">
             {hours.map((hourLabel, hourIndex) => (
               <React.Fragment key={hourIndex}>
+                {/* Hour label - left side */}
                 <div className="col-span-1 border-r border-b border-gray-200 p-2 text-center sticky left-0 bg-background h-[60px]">
                   {hourLabel}
                 </div>
                 
+                {/* Days columns */}
                 {days.map((day, dayIndex) => {
                   const hour = hourIndex % 24;
                   const dayEvents = getEventsForDayAndHour(day, hour);
