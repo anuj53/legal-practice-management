@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import { CalendarEvent, CalendarViewType, RecurrencePattern } from '@/types/calendar';
-import { useCalendar } from '@/hooks/useCalendar';
+import { useCalendar } from '@/hooks/useCalendar.tsx';
 import { useEventManagement } from '@/hooks/useEventManagement';
 import { useCalendarManagement } from '@/hooks/useCalendarManagement';
 import { generateRecurringInstances } from '@/utils/recurrenceUtils';
@@ -17,14 +16,15 @@ export function useCalendarPage() {
     myCalendars,
     otherCalendars,
     events: rawEvents,
-    dataUpdated // Changed from loading to dataUpdated
+    loading: apiLoading,
+    dataUpdated = 0
   } = useCalendar();
   
   useEffect(() => {
-    if (rawEvents.length > 0) {
+    if (!apiLoading && rawEvents.length > 0) {
       setIsLoading(false);
     }
-  }, [rawEvents, dataUpdated]);
+  }, [rawEvents, apiLoading, dataUpdated]);
   
   const {
     selectedEvent,
@@ -141,7 +141,7 @@ export function useCalendarPage() {
     myCalendars,
     otherCalendars,
     events: displayedEvents,
-    loading: isLoading, // Return isLoading instead
+    loading: isLoading,
     handleCalendarToggle,
     handleEventClick,
     handleDayClick,

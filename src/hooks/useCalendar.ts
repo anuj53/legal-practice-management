@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { addDays, addMonths, subMonths, startOfMonth, isSameDay } from 'date-fns';
 import { CalendarEvent, Calendar, CalendarViewType, CalendarShare } from '@/types/calendar';
@@ -82,6 +83,8 @@ export const useCalendar = () => {
   const [view, setView] = useState<CalendarViewType>('week');
   const [calendars, setCalendars] = useState<Calendar[]>(generateSampleCalendars());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [dataUpdated, setDataUpdated] = useState(0); // Add dataUpdated state
   
   const [myCalendars, setMyCalendars] = useState<Calendar[]>([]);
   const [otherCalendars, setOtherCalendars] = useState<Calendar[]>([]);
@@ -94,6 +97,10 @@ export const useCalendar = () => {
     // Update myCalendars and otherCalendars
     setMyCalendars(calendars.filter(cal => cal.isUserCalendar));
     setOtherCalendars(calendars.filter(cal => !cal.isUserCalendar));
+    setLoading(false); // Set loading to false after data is loaded
+    
+    // Increment dataUpdated when data is refreshed
+    setDataUpdated(prev => prev + 1);
   }, [calendars]);
   
   // Get only events from visible calendars
@@ -194,6 +201,8 @@ export const useCalendar = () => {
     events: visibleEvents,
     myCalendars,
     otherCalendars,
+    loading, // Add loading state to the return
+    dataUpdated, // Add dataUpdated to the return
     setCurrentDate,
     setSelectedDate,
     setView,
