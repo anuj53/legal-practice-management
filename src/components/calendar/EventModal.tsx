@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { format, addDays } from 'date-fns';
+import { format } from 'date-fns';
 import { X, Users, MapPin, Clock, CalendarClock, Bell, FileText, Briefcase, Scale, Plus, Trash2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -18,7 +19,6 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from '@/components/ui/separator';
 import { CalendarEvent, Calendar } from '@/types/calendar';
 import { toast } from 'sonner';
@@ -71,7 +71,6 @@ export function EventModal({
     description: '',
     location: '',
     attendees: [],
-    isRecurring: false,
     reminder: '15min',
     isAllDay: false,
     caseId: '',
@@ -91,7 +90,6 @@ export function EventModal({
   const [documentName, setDocumentName] = useState('');
   const [documentUrl, setDocumentUrl] = useState('');
   const [editMode, setEditMode] = useState(mode !== 'view');
-  const [recurrenceOption, setRecurrenceOption] = useState('none');
   
   useEffect(() => {
     if (event) {
@@ -190,76 +188,6 @@ export function EventModal({
     }));
   };
   
-  const handleRecurrenceChange = (option: string) => {
-    setRecurrenceOption(option);
-    
-    if (option === 'none') {
-      setFormData(prev => ({
-        ...prev,
-        isRecurring: false,
-        recurrencePattern: undefined
-      }));
-    } else {
-      setFormData(prev => {
-        let pattern = prev.recurrencePattern || {
-          frequency: 'daily',
-          interval: 1
-        };
-        
-        if (option === 'daily') {
-          pattern = { ...pattern, frequency: 'daily' };
-        } else if (option === 'weekly') {
-          pattern = { ...pattern, frequency: 'weekly' };
-        } else if (option === 'monthly') {
-          pattern = { ...pattern, frequency: 'monthly' };
-        } else if (option === 'yearly') {
-          pattern = { ...pattern, frequency: 'yearly' };
-        }
-        
-        return {
-          ...prev,
-          isRecurring: true,
-          recurrencePattern: pattern
-        };
-      });
-    }
-  };
-  
-  const handleRecurrenceIntervalChange = (value: string) => {
-    const interval = parseInt(value);
-    if (!isNaN(interval) && interval > 0) {
-      setFormData(prev => ({
-        ...prev,
-        recurrencePattern: {
-          ...(prev.recurrencePattern || { frequency: 'daily', interval: 1 }),
-          interval: interval
-        }
-      }));
-    }
-  };
-  
-  const handleRecurrenceEndChange = (type: string, value?: string) => {
-    setFormData(prev => {
-      let pattern = { ...(prev.recurrencePattern || { frequency: 'daily', interval: 1 }) };
-      
-      if (type === 'never') {
-        delete pattern.endDate;
-        delete pattern.occurrences;
-      } else if (type === 'on_date' && value) {
-        pattern.endDate = new Date(value);
-        delete pattern.occurrences;
-      } else if (type === 'after_occurrences' && value) {
-        pattern.occurrences = parseInt(value);
-        delete pattern.endDate;
-      }
-      
-      return {
-        ...prev,
-        recurrencePattern: pattern
-      };
-    });
-  };
-  
   const handleSwitchToEdit = () => {
     setEditMode(true);
   };
@@ -311,10 +239,9 @@ export function EventModal({
           {!isViewOnly ? (
             <Tabs defaultValue="general" value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
               <div className="px-6 pt-4 border-b">
-                <TabsList className="grid grid-cols-4">
+                <TabsList className="grid grid-cols-3">
                   <TabsTrigger value="general">General</TabsTrigger>
                   <TabsTrigger value="legal">Legal Details</TabsTrigger>
-                  <TabsTrigger value="recurrence">Recurrence</TabsTrigger>
                   <TabsTrigger value="documents">Documents</TabsTrigger>
                 </TabsList>
               </div>
@@ -589,123 +516,6 @@ export function EventModal({
                   </div>
                 </TabsContent>
                 
-                <TabsContent value="recurrence" className="space-y-4 mt-0">
-                  <div className="border p-4 rounded-md">
-                    <h3 className="font-medium mb-3">Recurrence Pattern</h3>
-                    
-                    <RadioGroup 
-                      value={recurrenceOption} 
-                      onValueChange={handleRecurrenceChange}
-                      className="space-y-2"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="none" id="r-none" />
-                        <Label htmlFor="r-none">Does not repeat</Label>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="daily" id="r-daily" />
-                        <Label htmlFor="r-daily">Daily</Label>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="weekly" id="r-weekly" />
-                        <Label htmlFor="r-weekly">Weekly</Label>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="monthly" id="r-monthly" />
-                        <Label htmlFor="r-monthly">Monthly</Label>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="yearly" id="r-yearly" />
-                        <Label htmlFor="r-yearly">Yearly</Label>
-                      </div>
-                    </RadioGroup>
-                    
-                    {recurrenceOption !== 'none' && (
-                      <div className="mt-4 space-y-4">
-                        <div>
-                          <Label htmlFor="interval">Repeat every</Label>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Input
-                              id="interval"
-                              type="number"
-                              min="1"
-                              value={formData.recurrencePattern?.interval || 1}
-                              onChange={(e) => handleRecurrenceIntervalChange(e.target.value)}
-                              className="w-20"
-                            />
-                            <span>{recurrenceOption === 'daily' ? 'day(s)' : 
-                                    recurrenceOption === 'weekly' ? 'week(s)' :
-                                    recurrenceOption === 'monthly' ? 'month(s)' : 'year(s)'}</span>
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <Label>End recurrence</Label>
-                          <div className="space-y-2 mt-1">
-                            <div className="flex items-center gap-2">
-                              <input 
-                                type="radio" 
-                                id="end-never" 
-                                name="end-recurrence"
-                                checked={!formData.recurrencePattern?.endDate && !formData.recurrencePattern?.occurrences}
-                                onChange={() => handleRecurrenceEndChange('never')}
-                              />
-                              <Label htmlFor="end-never" className="cursor-pointer">Never</Label>
-                            </div>
-                            
-                            <div className="flex items-center gap-2">
-                              <input 
-                                type="radio" 
-                                id="end-date" 
-                                name="end-recurrence"
-                                checked={!!formData.recurrencePattern?.endDate}
-                                onChange={() => {
-                                  const defaultEndDate = addDays(new Date(), 30);
-                                  handleRecurrenceEndChange('on_date', format(defaultEndDate, 'yyyy-MM-dd'));
-                                }}
-                              />
-                              <Label htmlFor="end-date" className="cursor-pointer">On date</Label>
-                              {formData.recurrencePattern?.endDate && (
-                                <Input
-                                  type="date"
-                                  value={format(formData.recurrencePattern.endDate, 'yyyy-MM-dd')}
-                                  onChange={(e) => handleRecurrenceEndChange('on_date', e.target.value)}
-                                  className="w-auto"
-                                />
-                              )}
-                            </div>
-                            
-                            <div className="flex items-center gap-2">
-                              <input 
-                                type="radio" 
-                                id="end-occurrences" 
-                                name="end-recurrence"
-                                checked={!!formData.recurrencePattern?.occurrences}
-                                onChange={() => handleRecurrenceEndChange('after_occurrences', '10')}
-                              />
-                              <Label htmlFor="end-occurrences" className="cursor-pointer">After</Label>
-                              {formData.recurrencePattern?.occurrences && (
-                                <Input
-                                  type="number"
-                                  min="1"
-                                  value={formData.recurrencePattern.occurrences}
-                                  onChange={(e) => handleRecurrenceEndChange('after_occurrences', e.target.value)}
-                                  className="w-20"
-                                />
-                              )}
-                              <span>occurrences</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </TabsContent>
-                
                 <TabsContent value="documents" className="space-y-4 mt-0">
                   <div>
                     <h3 className="font-medium mb-3">Linked Documents</h3>
@@ -879,26 +689,6 @@ export function EventModal({
                            formData.reminder === '30min' ? '30 minutes before' :
                            formData.reminder === '1hour' ? '1 hour before' :
                            '1 day before'}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {formData.isRecurring && formData.recurrencePattern && (
-                    <div className="flex items-start gap-4">
-                      <CalendarClock className="h-5 w-5 text-gray-500 mt-0.5" />
-                      <div>
-                        <div className="font-medium">Recurring Event</div>
-                        <div className="text-gray-700">
-                          Repeats every {formData.recurrencePattern.interval} {
-                            formData.recurrencePattern.frequency === 'daily' ? 'day(s)' : 
-                            formData.recurrencePattern.frequency === 'weekly' ? 'week(s)' :
-                            formData.recurrencePattern.frequency === 'monthly' ? 'month(s)' : 'year(s)'
-                          }
-                          {formData.recurrencePattern.endDate && 
-                            ` until ${format(formData.recurrencePattern.endDate, 'MMMM d, yyyy')}`}
-                          {formData.recurrencePattern.occurrences &&
-                            ` for ${formData.recurrencePattern.occurrences} occurrences`}
                         </div>
                       </div>
                     </div>

@@ -1,3 +1,4 @@
+
 import { addHours, addDays, subDays, startOfDay } from 'date-fns';
 
 // Types
@@ -23,17 +24,6 @@ export interface Event {
   calendar: string;
   color?: string;
   isAllDay?: boolean;
-  isRecurring?: boolean;
-  isRecurringInstance?: boolean;
-  parentEventId?: string;
-  recurrencePattern?: {
-    frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
-    interval: number;
-    endDate?: Date;
-    weekdays?: number[];
-    monthDay?: number;
-    occurrences?: number;
-  };
 }
 
 // Helper function to validate UUID format
@@ -61,8 +51,6 @@ export const convertDbEventToEvent = (dbEvent: any): Event => {
     type: dbEvent.type,
     calendar: dbEvent.calendar_id,
     isAllDay: false, // Default
-    isRecurring: dbEvent.is_recurring || false,
-    recurrencePattern: dbEvent.recurrence_pattern || null,
   };
 };
 
@@ -75,10 +63,8 @@ export const convertEventToDbEvent = (event: Event): any => {
     start_time: event.start.toISOString(),
     end_time: event.end.toISOString(),
     location: event.location || '',
-    is_recurring: event.isRecurring || false,
     type: event.type || 'client-meeting',
     calendar_id: event.calendar,
-    recurrence_pattern: event.recurrencePattern || null,
     updated_at: new Date().toISOString()
   };
 };
