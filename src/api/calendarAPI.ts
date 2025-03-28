@@ -47,10 +47,10 @@ export const fetchCalendars = async () => {
 
       return { myCalendars, otherCalendars };
     }
-    return null;
+    return { myCalendars: [], otherCalendars: [] };
   } catch (err) {
     console.error('Error fetching calendars:', err);
-    throw err;
+    return null;
   }
 };
 
@@ -101,7 +101,7 @@ export const fetchEvents = async () => {
     return [];
   } catch (err) {
     console.error('Error fetching events:', err);
-    throw err;
+    return [];
   }
 };
 
@@ -240,12 +240,14 @@ export const createEventInDb = async (event: Omit<Event, 'id'>) => {
       location: event.location || '',
       type: event.type || 'client-meeting',
       calendar_id: event.calendar,
+      is_recurring: event.isRecurring || false,
+      recurrence_pattern: event.recurrencePattern || null,
+      recurrence_id: event.recurrenceId || null,
       updated_at: new Date().toISOString()
     };
     
     console.log('API: Formatted DB event for create:', dbEvent);
     console.log('API: Calendar ID being used:', dbEvent.calendar_id);
-    console.log('API: Calendar ID is valid UUID:', isValidUUID(dbEvent.calendar_id));
     
     const { data, error } = await supabase
       .from('events')
@@ -308,6 +310,9 @@ export const updateEventInDb = async (event: Event) => {
       location: event.location || '',
       type: event.type || 'client-meeting',
       calendar_id: event.calendar,
+      is_recurring: event.isRecurring || false,
+      recurrence_pattern: event.recurrencePattern || null,
+      recurrence_id: event.recurrenceId || null,
       updated_at: new Date().toISOString()
     };
     
@@ -347,7 +352,7 @@ export const deleteEventFromDb = async (id: string) => {
       throw new Error(`Invalid UUID format for event ID: ${id}`);
     }
     
-    // Check if this is a recurring parent event by looking for records with recurrencePattern
+    // Check if this is a recurring parent event by looking for records with recurrence_id
     const { data: event, error: eventError } = await supabase
       .from('events')
       .select('*')

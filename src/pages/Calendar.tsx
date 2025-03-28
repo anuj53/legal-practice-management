@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { CalendarHeader } from '@/components/calendar/CalendarHeader';
 import { CalendarSidebar } from '@/components/calendar/CalendarSidebar';
@@ -9,6 +10,7 @@ import { toast } from 'sonner';
 import { CalendarManagement } from '@/components/calendar/CalendarManagement';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Calendar as CalendarType } from '@/types/calendar';
+import { Loader2 } from 'lucide-react';
 
 export default function Calendar() {
   const [calendarDialogOpen, setCalendarDialogOpen] = useState(false);
@@ -87,7 +89,29 @@ export default function Calendar() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <p>Loading calendar data...</p>
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-2" />
+          <p>Loading calendar data...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  if (myCalendars.length === 0 && !loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full">
+        <div className="text-center max-w-md p-4">
+          <h2 className="text-xl font-medium mb-2">No calendars found</h2>
+          <p className="text-gray-500 mb-4">
+            You don't have any calendars yet. Create your first calendar to get started.
+          </p>
+          <button 
+            onClick={createCalendarWrapper}
+            className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90"
+          >
+            Create Calendar
+          </button>
+        </div>
       </div>
     );
   }
@@ -112,7 +136,7 @@ export default function Calendar() {
             date={currentDate}
             events={events}
             onEventClick={handleEventClick}
-            onDayClick={handleDayClick}
+            onTimeSlotClick={handleDayClick}
           />
         </div>
         

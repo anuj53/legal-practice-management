@@ -24,11 +24,11 @@ export const convertDbEventToEvent = (dbEvent: any): Event => {
     assignedLawyer: dbEvent.assigned_lawyer,
     
     // Court information
-    courtInfo: {
-      courtName: dbEvent.court_name,
-      judgeDetails: dbEvent.judge_details,
-      docketNumber: dbEvent.docket_number
-    },
+    courtInfo: dbEvent.court_info ? {
+      courtName: dbEvent.court_info.court_name,
+      judgeDetails: dbEvent.court_info.judge_details,
+      docketNumber: dbEvent.court_info.docket_number
+    } : undefined,
     
     // Reminder
     reminder: dbEvent.reminder || 'none',
@@ -58,7 +58,7 @@ export const convertEventToDbEvent = (event: Event): any => {
     calendar_id: event.calendar,
     is_all_day: event.isAllDay || false,
     is_recurring: event.isRecurring || false,
-    recurrence_id: event.recurrenceId,
+    recurrence_id: event.recurrenceId || null,
     
     // Legal case fields
     case_id: event.caseId,
@@ -66,9 +66,11 @@ export const convertEventToDbEvent = (event: Event): any => {
     assigned_lawyer: event.assignedLawyer,
     
     // Court information
-    court_name: event.courtInfo?.courtName,
-    judge_details: event.courtInfo?.judgeDetails,
-    docket_number: event.courtInfo?.docketNumber,
+    court_info: event.courtInfo ? {
+      court_name: event.courtInfo.courtName,
+      judge_details: event.courtInfo.judgeDetails,
+      docket_number: event.courtInfo.docketNumber
+    } : null,
     
     // Reminder
     reminder: event.reminder || 'none',
