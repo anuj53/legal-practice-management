@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { Plus, Edit2, Trash2, X } from 'lucide-react';
-import { Calendar } from '@/types/calendar';
+import { Plus, Edit2, Trash2 } from 'lucide-react';
+import { Calendar, CalendarShare } from '@/types/calendar';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Dialog,
   DialogContent,
@@ -13,6 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
+import { CalendarForm } from './CalendarForm';
 
 interface CalendarManagementProps {
   myCalendars: Calendar[];
@@ -37,19 +37,21 @@ export function CalendarManagement({
   const [editMode, setEditMode] = useState<'create' | 'edit'>('create');
   const [selectedCalendar, setSelectedCalendar] = useState<Calendar | null>(null);
   const [calendarName, setCalendarName] = useState('');
-  const [calendarColor, setCalendarColor] = useState('#5cb85c');
+  const [calendarColor, setCalendarColor] = useState('#4caf50');
   const [isFirm, setIsFirm] = useState(false);
   const [isStatute, setIsStatute] = useState(false);
   const [isPublic, setIsPublic] = useState(false);
+  const [sharedWith, setSharedWith] = useState<CalendarShare[]>([]);
   
   React.useEffect(() => {
     if (dialogMode) {
       setEditMode('create');
       setCalendarName('');
-      setCalendarColor('#5cb85c');
+      setCalendarColor('#4caf50');
       setIsFirm(false);
       setIsStatute(false);
       setIsPublic(false);
+      setSharedWith([]);
     }
   }, [dialogMode]);
   
@@ -62,13 +64,15 @@ export function CalendarManagement({
       setIsFirm(calendar.is_firm || false);
       setIsStatute(calendar.is_statute || false);
       setIsPublic(calendar.is_public || false);
+      setSharedWith(calendar.sharedWith || []);
     } else {
       setSelectedCalendar(null);
       setCalendarName('');
-      setCalendarColor('#5cb85c');
+      setCalendarColor('#4caf50');
       setIsFirm(false);
       setIsStatute(false);
       setIsPublic(false);
+      setSharedWith([]);
     }
     setIsOpen(true);
   };
@@ -87,7 +91,7 @@ export function CalendarManagement({
         is_firm: isFirm,
         is_statute: isStatute,
         is_public: isPublic,
-        sharedWith: []
+        sharedWith: sharedWith
       });
       if (!dialogMode) {
         toast.success('Calendar created successfully');
@@ -99,7 +103,8 @@ export function CalendarManagement({
         color: calendarColor,
         is_firm: isFirm,
         is_statute: isStatute,
-        is_public: isPublic
+        is_public: isPublic,
+        sharedWith: sharedWith
       });
       toast.success('Calendar updated successfully');
     }
@@ -117,17 +122,6 @@ export function CalendarManagement({
     }
   };
   
-  const availableColors = [
-    '#5cb85c', // Green
-    '#0e91e3', // Blue
-    '#d9534f', // Red
-    '#f0ad4e', // Orange
-    '#905ac7', // Purple
-    '#17a2b8', // Teal
-    '#fd7e14', // Deep Orange
-    '#343a40', // Dark Gray
-  ];
-  
   if (dialogMode) {
     return (
       <>
@@ -138,57 +132,16 @@ export function CalendarManagement({
           </DialogDescription>
         </DialogHeader>
         
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Calendar Name</label>
-            <Input 
-              value={calendarName}
-              onChange={(e) => setCalendarName(e.target.value)}
-              placeholder="Enter calendar name"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Calendar Color</label>
-            <div className="flex gap-2">
-              {availableColors.map(color => (
-                <div 
-                  key={color} 
-                  onClick={() => setCalendarColor(color)}
-                  className={cn(
-                    "w-6 h-6 rounded-full cursor-pointer",
-                    calendarColor === color && "ring-2 ring-offset-2 ring-gray-400"
-                  )}
-                  style={{ backgroundColor: color }}
-                />
-              ))}
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium">Firm Calendar</label>
-              <Switch checked={isFirm} onCheckedChange={setIsFirm} />
-            </div>
-            <p className="text-xs text-gray-500">Official firm calendars are visible to all team members.</p>
-          </div>
-          
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium">Statute Calendar</label>
-              <Switch checked={isStatute} onCheckedChange={setIsStatute} />
-            </div>
-            <p className="text-xs text-gray-500">Use for statute of limitations and important deadlines.</p>
-          </div>
-          
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium">Public Calendar</label>
-              <Switch checked={isPublic} onCheckedChange={setIsPublic} />
-            </div>
-            <p className="text-xs text-gray-500">Make this calendar visible to other team members.</p>
-          </div>
-        </div>
+        <CalendarForm
+          calendarName={calendarName}
+          setCalendarName={setCalendarName}
+          calendarColor={calendarColor}
+          setCalendarColor={setCalendarColor}
+          isPublic={isPublic}
+          setIsPublic={setIsPublic}
+          sharedWith={sharedWith}
+          setSharedWith={setSharedWith}
+        />
         
         <DialogFooter className="flex justify-end">
           <Button onClick={handleSubmit}>
@@ -288,57 +241,16 @@ export function CalendarManagement({
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Calendar Name</label>
-              <Input 
-                value={calendarName}
-                onChange={(e) => setCalendarName(e.target.value)}
-                placeholder="Enter calendar name"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Calendar Color</label>
-              <div className="flex gap-2">
-                {availableColors.map(color => (
-                  <div 
-                    key={color} 
-                    onClick={() => setCalendarColor(color)}
-                    className={cn(
-                      "w-6 h-6 rounded-full cursor-pointer",
-                      calendarColor === color && "ring-2 ring-offset-2 ring-gray-400"
-                    )}
-                    style={{ backgroundColor: color }}
-                  />
-                ))}
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium">Firm Calendar</label>
-                <Switch checked={isFirm} onCheckedChange={setIsFirm} />
-              </div>
-              <p className="text-xs text-gray-500">Official firm calendars are visible to all team members.</p>
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium">Statute Calendar</label>
-                <Switch checked={isStatute} onCheckedChange={setIsStatute} />
-              </div>
-              <p className="text-xs text-gray-500">Use for statute of limitations and important deadlines.</p>
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium">Public Calendar</label>
-                <Switch checked={isPublic} onCheckedChange={setIsPublic} />
-              </div>
-              <p className="text-xs text-gray-500">Make this calendar visible to other team members.</p>
-            </div>
-          </div>
+          <CalendarForm
+            calendarName={calendarName}
+            setCalendarName={setCalendarName}
+            calendarColor={calendarColor}
+            setCalendarColor={setCalendarColor}
+            isPublic={isPublic}
+            setIsPublic={setIsPublic}
+            sharedWith={sharedWith}
+            setSharedWith={setSharedWith}
+          />
           
           <DialogFooter className="flex justify-between">
             {editMode === 'edit' && (
