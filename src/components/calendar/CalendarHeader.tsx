@@ -1,26 +1,17 @@
-
 import React from 'react';
 import { format, addDays, subDays } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChevronLeft, ChevronRight, Plus, Calendar } from 'lucide-react';
 import { CalendarViewType } from '@/types/calendar';
-
 export interface CalendarHeaderProps {
   currentDate: Date;
   view: CalendarViewType;
   onViewChange: (view: CalendarViewType) => void;
   onDateChange: (date: Date) => void;
   onCreateEvent: () => void;
-  onCreateCalendar?: () => void;
+  onCreateCalendar?: () => void; // Changed to match expected function signature
 }
-
 export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
   currentDate,
   view,
@@ -37,7 +28,6 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
       weekStart.setDate(currentDate.getDate() - currentDate.getDay());
       const weekEnd = new Date(weekStart);
       weekEnd.setDate(weekStart.getDate() + 6);
-      
       return `${format(weekStart, 'MMM d')} – ${format(weekEnd, 'MMM d, yyyy')}`;
     } else if (view === 'day') {
       return format(currentDate, 'MMMM d, yyyy');
@@ -45,7 +35,6 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
       return format(currentDate, 'MMMM yyyy');
     }
   };
-
   const handlePrevious = () => {
     if (view === 'day') {
       onDateChange(subDays(currentDate, 1));
@@ -58,7 +47,6 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
       onDateChange(newDate);
     }
   };
-
   const handleNext = () => {
     if (view === 'day') {
       onDateChange(addDays(currentDate, 1));
@@ -71,34 +59,28 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
       onDateChange(newDate);
     }
   };
-
   const handleToday = () => {
     onDateChange(new Date());
   };
-
-  return (
-    <div className="flex justify-between items-center mb-4">
+  return <div className="flex justify-between items-center mb-4">
       <div className="flex items-center space-x-2">
-        <Button variant="outline" size="sm" onClick={handleToday} className="bg-gray-50">
+        <Button variant="outline" size="sm" onClick={handleToday}>
           Today
         </Button>
-        <Button variant="ghost" size="icon" onClick={handlePrevious} className="bg-gray-50/50">
+        <Button variant="ghost" size="icon" onClick={handlePrevious}>
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <span className="text-lg font-medium px-2 min-w-[180px] text-center">
           {formatDateRange()}
         </span>
-        <Button variant="ghost" size="icon" onClick={handleNext} className="bg-gray-50/50">
+        <Button variant="ghost" size="icon" onClick={handleNext}>
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
       
       <div className="flex items-center space-x-2">
-        <Select
-          value={view}
-          onValueChange={(value) => onViewChange(value as CalendarViewType)}
-        >
-          <SelectTrigger className="w-[120px] bg-gray-50/70">
+        <Select value={view} onValueChange={value => onViewChange(value as CalendarViewType)}>
+          <SelectTrigger className="w-[120px]">
             <SelectValue placeholder="View" />
           </SelectTrigger>
           <SelectContent>
@@ -109,28 +91,15 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
           </SelectContent>
         </Select>
 
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="gap-1 bg-gray-50" 
-          onClick={onCreateEvent}
-        >
+        <Button variant="outline" size="sm" onClick={onCreateEvent} className="gap-1 bg-blue-600 hover:bg-blue-500">
           <Plus className="h-4 w-4" />
           New Event
         </Button>
 
-        {onCreateCalendar && (
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="gap-1 bg-gray-50" 
-            onClick={onCreateCalendar}
-          >
+        {onCreateCalendar && <Button variant="outline" size="sm" className="gap-1" onClick={onCreateCalendar}>
             <Calendar className="h-4 w-4" />
             New Calendar
-          </Button>
-        )}
+          </Button>}
       </div>
-    </div>
-  );
+    </div>;
 };
