@@ -1,10 +1,11 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { format, addDays, getDate, isSameDay } from 'date-fns';
 import { CalendarEvent } from '@/types/calendar';
 import { cn } from '@/lib/utils';
 import { getHours } from '@/utils/dateUtils';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { generateRecurringEventInstances } from '@/utils/calendar';
+import { generateRecurringEventInstances } from '@/utils/calendarUtils';
 
 interface DayViewProps {
   currentDate: Date;
@@ -23,14 +24,17 @@ export const DayView: React.FC<DayViewProps> = ({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [currentTimePosition, setCurrentTimePosition] = useState<number>(0);
   
+  // Process events to include recurring event instances
   const processedEvents = React.useMemo(() => {
+    // First add all non-recurring events
     const allEvents = [...events.filter(event => !event.isRecurring)];
     
+    // Then add instances of recurring events for the current day
     events.filter(event => event.isRecurring && event.recurrencePattern).forEach(recurringEvent => {
       const instances = generateRecurringEventInstances(
         recurringEvent, 
         currentDate, 
-        new Date(currentDate.getTime() + 24 * 60 * 60 * 1000)
+        new Date(currentDate.getTime() + 24 * 60 * 60 * 1000) // next day
       );
       allEvents.push(...instances);
     });
@@ -38,16 +42,20 @@ export const DayView: React.FC<DayViewProps> = ({
     return allEvents;
   }, [events, currentDate]);
   
+  // Calculate current time indicator position and set up auto-scroll
   useEffect(() => {
     const updateCurrentTimePosition = () => {
       const now = new Date();
       const hours = now.getHours();
       const minutes = now.getMinutes();
+      // Calculate position (each hour is 60px height)
       const position = (hours * 60) + minutes;
       setCurrentTimePosition(position);
       
+      // If it's today, scroll to current time - 1 hour
       const isToday = new Date(currentDate).setHours(0,0,0,0) === new Date().setHours(0,0,0,0);
       if (isToday && scrollContainerRef.current) {
+        // Scroll to 100px above the current time
         setTimeout(() => {
           if (scrollContainerRef.current) {
             scrollContainerRef.current.scrollTop = position - 120;
@@ -56,13 +64,16 @@ export const DayView: React.FC<DayViewProps> = ({
       }
     };
     
+    // Update position immediately
     updateCurrentTimePosition();
     
-    const timer = setInterval(updateCurrentTimePosition, 60000);
+    // Set timer to update position
+    const timer = setInterval(updateCurrentTimePosition, 60000); // every minute
     
     return () => clearInterval(timer);
   }, [currentDate]);
   
+  // Event filtering and display logic
   const getEventsForHour = (hour: number) => {
     return processedEvents.filter((event) => {
       const eventDate = new Date(event.start);
@@ -80,6 +91,7 @@ export const DayView: React.FC<DayViewProps> = ({
     });
   };
 
+  // Calculate event position and height based on its start time and duration
   const getEventStyle = (event: CalendarEvent) => {
     const start = new Date(event.start);
     const end = new Date(event.end);
@@ -88,8 +100,8 @@ export const DayView: React.FC<DayViewProps> = ({
     const durationMs = end.getTime() - start.getTime();
     const durationMinutes = Math.ceil(durationMs / (1000 * 60));
     
-    const topPosition = (startMinutes / 60) * 100;
-    const height = (durationMinutes / 60) * 100;
+    const topPosition = (startMinutes / 60) * 100; // Convert minutes to percentage of hour height
+    const height = (durationMinutes / 60) * 100; // Convert duration to percentage of hour height
     
     return {
       top: `${topPosition}%`,
@@ -97,8 +109,8 @@ export const DayView: React.FC<DayViewProps> = ({
       position: 'absolute' as const,
       left: '0',
       right: '0',
-      margin: '0 1px',
-      zIndex: 10,
+      margin: '0 1px', // Small margin for visual separation
+      zIndex: 10, // Add z-index to ensure event is above the cell
     };
   };
 
@@ -113,6 +125,7 @@ export const DayView: React.FC<DayViewProps> = ({
     'personal': 'bg-yellow-500 text-black',
   };
 
+  // Check if it's today to show the current time indicator
   const isToday = new Date(currentDate).setHours(0,0,0,0) === new Date().setHours(0,0,0,0);
 
   return (
@@ -174,6 +187,7 @@ export const DayView: React.FC<DayViewProps> = ({
               );
             })}
             
+            {/* Current time indicator */}
             {isToday && (
               <div 
                 className="absolute left-0 right-0 border-t-2 border-red-500 z-20 flex items-center"

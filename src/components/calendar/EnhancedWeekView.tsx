@@ -1,305 +1,332 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { format, startOfWeek, addDays, isSameDay, getHours, getMinutes } from 'date-fns';
-import { CalendarEvent } from '@/types/calendar';
-import { Button } from '@/components/ui/button';
+import React, { useState } from 'react';
+import { 
+  format, 
+  addDays, 
+  startOfWeek,
+  endOfWeek, 
+  eachDayOfInterval,
+  isSameDay,
+  isToday,
+  addMonths,
+  subMonths,
+  getMonth,
+  getYear
+} from 'date-fns';
+import { ChevronLeft, ChevronRight, Plus, Calendar, MoreVertical, Repeat } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
-import { ChevronDown } from 'lucide-react';
+import { Event } from '@/utils/calendarUtils';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface EnhancedWeekViewProps {
-  currentDate: Date;
-  events: CalendarEvent[];
-  onEventClick: (event: CalendarEvent) => void;
-  onTimeSlotClick: (date: Date) => void;
-  workWeekOnly?: boolean;
-  showHeader?: boolean;
+  date: Date;
+  events: Event[];
+  onEventClick: (event: Event) => void;
+  onDayClick: (date: Date) => void;
+  onCreateEvent: () => void;
+  onDateChange: (date: Date) => void;
+  myCalendars: any[];
+  otherCalendars: any[];
 }
 
-interface EventLayout {
-  [key: string]: {
-    event: CalendarEvent;
-    top: number;
-    height: number;
-    left: number;
-    width: number;
-  }[];
-}
-
-const TIME_COL_WIDTH = 60; // Width of the time column in pixels
-const EVENT_GAP = 2; // Gap between events in pixels
-
-export const EnhancedWeekView: React.FC<EnhancedWeekViewProps> = ({
-  currentDate,
+export function EnhancedWeekView({
+  date,
   events,
   onEventClick,
-  onTimeSlotClick,
-  workWeekOnly = false,
-  showHeader = true
-}) => {
-  const [viewMode, setViewMode] = useState<'workweek' | 'fullweek'>('workweek');
-  const [timezone, setTimezone] = useState<'local' | 'est' | 'pacific'>('local');
-  const [currentTimePosition, setCurrentTimePosition] = useState(0);
-  const [showCurrentTimeIndicator, setShowCurrentTimeIndicator] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  // Helper function to get the start and end of the week based on the view mode
-  const getWeekRange = () => {
-    const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
-    let weekEnd = addDays(weekStart, 6);
-
-    if (viewMode === 'workweek') {
-      weekEnd = addDays(weekStart, 4); // Monday to Friday
-    }
-
-    return { weekStart, weekEnd };
-  };
-
-  // Helper function to calculate the day width
-  const calculateDayWidth = () => {
-    const { weekStart, weekEnd } = getWeekRange();
-    const dayCount = (Number(weekEnd) - Number(weekStart)) / (1000 * 60 * 60 * 24) + 1;
-    return `calc((100% - ${TIME_COL_WIDTH}px) / ${dayCount})`;
-  };
-
-  // Helper function to calculate event position
-  const calculateEventPosition = (event: CalendarEvent, dayStart: Date, dayWidth: string) => {
-    const start = new Date(event.start);
-    const end = new Date(event.end);
-
-    const top = (getHours(start) + getMinutes(start) / 60) * 60;
-    const height = (getHours(end) + getMinutes(end) / 60) * 60 - top;
-
-    const diffDays = (Number(startOfDay(start)) - Number(startOfDay(dayStart))) / (1000 * 60 * 60 * 24);
-    const left = diffDays * parseFloat(dayWidth);
-
-    return { top, height, left, width: parseFloat(dayWidth) };
-  };
-
-  // Helper function to check if a date is within the work week
-  const isWorkDay = (date: Date) => {
-    const day = date.getDay();
-    return day >= 1 && day <= 5; // Monday to Friday
-  };
-
-  // Function to scroll to the current time
-  const scrollToCurrentTime = () => {
-    if (containerRef.current) {
-      const currentTime = new Date();
-      const hours = currentTime.getHours();
-      const minutes = currentTime.getMinutes();
-      const timePosition = (hours * 60) + minutes;
-
-      containerRef.current.scrollTop = timePosition - 50; // Subtract 50px for better view
-    }
-  };
-
-  // Function to update current time position
-  const updateCurrentTimePosition = () => {
-    const now = new Date();
-    const hours = now.getHours();
-    const minutes = now.getMinutes();
-    // Calculate position (each hour is 60px height)
-    const position = (hours * 60) + minutes;
-    setCurrentTimePosition(position);
-  };
-
-  // Effect to scroll to current time on component mount and view mode change
-  useEffect(() => {
-    scrollToCurrentTime();
-  }, [viewMode]);
-
-  // Effect to set up interval for updating current time position
-  useEffect(() => {
-    updateCurrentTimePosition();
-    setShowCurrentTimeIndicator(true);
-
-    const intervalId = setInterval(() => {
-      updateCurrentTimePosition();
-    }, 60000); // Update every minute
-
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, []);
-
-  // Effect to handle timezone changes
-  useEffect(() => {
-    // Placeholder for timezone logic
-    console.log(`Timezone set to: ${timezone}`);
-  }, [timezone]);
-
-  // Render days of the week
-  const renderDaysHeader = () => {
-    const { weekStart, weekEnd } = getWeekRange();
-    const dayWidth = calculateDayWidth();
-    const days = [];
-
-    let currentDay = weekStart;
-    while (currentDay <= weekEnd) {
-      if (viewMode === 'fullweek' || isWorkDay(currentDay)) {
-        days.push(
-          <div
-            key={currentDay.toISOString()}
-            className="day flex-1 text-center py-2"
-            style={{ width: dayWidth }}
-          >
-            {format(currentDay, 'EEE d')}
-          </div>
-        );
-      }
-      currentDay = addDays(currentDay, 1);
-    }
-
-    return days;
-  };
-
-  // Render time slots
-  const renderTimeSlots = () => {
-    const hours = Array.from({ length: 24 }, (_, i) => i);
-
-    return hours.map(hour => (
-      <div
-        key={hour}
-        className="time-slot h-[60px] border-b text-xs text-gray-500 flex items-center justify-end px-2"
-      >
-        {format(new Date(0, 0, 0, hour), 'h a')}
-      </div>
-    ));
-  };
-
-  // Render events for the week
-  const renderEvents = () => {
-    const { weekStart, weekEnd } = getWeekRange();
-    const dayWidth = calculateDayWidth();
-    const eventLayout: EventLayout = {};
-
-    let currentDay = weekStart;
-    let dayIndex = 0;
-
-    while (currentDay <= weekEnd) {
-      if (viewMode === 'fullweek' || isWorkDay(currentDay)) {
-        const dayKey = format(currentDay, 'yyyy-MM-dd');
-        eventLayout[dayKey] = [];
-
-        const dayStart = new Date(currentDay);
-        dayStart.setHours(0, 0, 0, 0);
-
-        const dayEvents = events.filter(event => {
-          const eventStart = new Date(event.start);
-          return isSameDay(eventStart, currentDay);
-        });
-
-        dayEvents.forEach(event => {
-          const { top, height, left, width } = calculateEventPosition(event, dayStart, dayWidth);
-          eventLayout[dayKey].push({ event, top, height, left, width });
-        });
-      }
-      currentDay = addDays(currentDay, 1);
-      dayIndex++;
-    }
-
-    return Object.keys(eventLayout).map(dayKey => {
-      return eventLayout[dayKey].map(({ event, top, height, left, width }) => (
-        <div
-          key={event.id}
-          className="absolute bg-blue-200 border border-blue-500 text-blue-800 text-xs p-1 rounded cursor-pointer"
-          style={{
-            top: top + 'px',
-            height: height + 'px',
-            left: TIME_COL_WIDTH + left + 'px',
-            width: width + 'px',
-          }}
-          onClick={() => onEventClick(event)}
-        >
-          {event.title}
-        </div>
-      ));
+  onDayClick,
+  onCreateEvent,
+  onDateChange,
+  myCalendars,
+  otherCalendars
+}: EnhancedWeekViewProps) {
+  const [miniCalendarMonth, setMiniCalendarMonth] = useState(new Date());
+  
+  const weekStart = startOfWeek(date, { weekStartsOn: 1 });
+  const weekEnd = endOfWeek(date, { weekStartsOn: 1 });
+  const days = eachDayOfInterval({ start: weekStart, end: weekEnd });
+  
+  const miniCalendarStart = startOfWeek(miniCalendarMonth, { weekStartsOn: 1 });
+  const miniCalendarEnd = addDays(miniCalendarStart, 41);
+  const miniCalendarDays = eachDayOfInterval({ start: miniCalendarStart, end: miniCalendarEnd });
+  
+  const miniCalendarMonthName = format(miniCalendarMonth, 'MMMM yyyy');
+  
+  const hours = Array.from({ length: 12 }, (_, i) => i + 12);
+  
+  const getEventForDayAndHour = (day: Date, hour: number) => {
+    return events.filter(event => {
+      const eventHour = event.start.getHours();
+      return isSameDay(event.start, day) && eventHour === hour;
     });
   };
-
-  function startOfDay(date: Date): Date {
-    const newDate = new Date(date);
-    newDate.setHours(0, 0, 0, 0);
-    return newDate;
-  }
-
+  
+  const getEventColor = (type: string) => {
+    switch (type) {
+      case 'client-meeting':
+        return 'bg-orange-500';
+      case 'internal-meeting':
+        return 'bg-blue-500';
+      case 'court':
+        return 'bg-purple-500';
+      case 'deadline':
+        return 'bg-red-500';
+      case 'personal':
+        return 'bg-green-500';
+      default:
+        return 'bg-gray-500';
+    }
+  };
+  
   return (
-    <div className="enhanced-week-view flex flex-col h-full overflow-hidden">
-      {showHeader && (
-        <div className="flex justify-between items-center px-4 py-2">
-          <div className="font-semibold text-lg">
-            {format(startOfWeek(currentDate, { weekStartsOn: 0 }), 'MMMM d')} - 
-            {format(addDays(startOfWeek(currentDate, { weekStartsOn: 0 }), 6), ' MMMM d, yyyy')}
+    <div className="flex flex-col h-full">
+      <div className="flex p-4">
+        <div className="w-64 bg-white border rounded-md mr-4">
+          <div className="flex justify-between items-center p-2 border-b">
+            <button 
+              onClick={() => setMiniCalendarMonth(subMonths(miniCalendarMonth, 1))}
+              className="p-1 hover:bg-gray-100 rounded"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <span className="text-sm font-medium">{miniCalendarMonthName}</span>
+            <button 
+              onClick={() => setMiniCalendarMonth(addMonths(miniCalendarMonth, 1))}
+              className="p-1 hover:bg-gray-100 rounded"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
           </div>
-          <div className="flex gap-2">
-            <Select value={viewMode} onValueChange={(value) => setViewMode(value as 'workweek' | 'fullweek')}>
-              <SelectTrigger className="w-[130px]">
-                <SelectValue placeholder="View mode" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="workweek">Work Week</SelectItem>
-                <SelectItem value="fullweek">Full Week</SelectItem>
-              </SelectContent>
-            </Select>
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-1">
-                  <span>Timezone</span>
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem onSelect={() => setTimezone('local')}>Local Time</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setTimezone('est')}>Eastern Time</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setTimezone('pacific')}>Pacific Time</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          
+          <div className="p-2">
+            <div className="grid grid-cols-7 gap-1">
+              {['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'].map(day => (
+                <div key={day} className="text-xs text-center text-gray-500">
+                  {day}
+                </div>
+              ))}
+              
+              {miniCalendarDays.map(day => {
+                const isCurrentMonth = getMonth(day) === getMonth(miniCalendarMonth) && 
+                                      getYear(day) === getYear(miniCalendarMonth);
+                return (
+                  <div 
+                    key={day.toString()}
+                    onClick={() => onDateChange(day)}
+                    className={cn(
+                      "text-xs h-7 w-7 flex items-center justify-center rounded-full cursor-pointer",
+                      isToday(day) && "bg-yorpro-600 text-white",
+                      isSameDay(day, date) && !isToday(day) && "bg-gray-200",
+                      !isCurrentMonth && "text-gray-300"
+                    )}
+                  >
+                    {format(day, 'd')}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          
+          <div className="p-4 border-t">
+            <h3 className="font-medium mb-2">Today's Events</h3>
+            <div className="space-y-2">
+              {events.filter(event => isToday(event.start)).map(event => (
+                <div 
+                  key={event.id}
+                  onClick={() => onEventClick(event)}
+                  className="p-2 bg-orange-100 rounded text-xs cursor-pointer"
+                >
+                  <span className="font-medium block flex items-center gap-1">
+                    {event.title}
+                    {(event.isRecurring || event.isRecurringInstance) && (
+                      <Repeat className="h-3 w-3 inline-block" />
+                    )}
+                  </span>
+                  <span className="text-gray-500">{format(event.start, 'h:mm a')}</span>
+                </div>
+              ))}
+              {events.filter(event => isToday(event.start)).length === 0 && (
+                <p className="text-xs text-gray-500">No events for today</p>
+              )}
+            </div>
+          </div>
+          
+          <div className="p-4 border-t">
+            <h3 className="font-medium mb-2">My Calendar List</h3>
+            <div className="space-y-2">
+              {myCalendars.map(calendar => (
+                <div key={calendar.id} className="flex items-center">
+                  <div 
+                    className="w-3 h-3 rounded-full mr-2" 
+                    style={{ backgroundColor: calendar.color }}
+                  />
+                  <span className="text-sm truncate">{calendar.name}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-      )}
 
-      <div className="flex-grow overflow-hidden">
-        <div className="week-container relative h-full overflow-hidden">
-          <div 
-            className="days-header flex border-b"
-            style={{ paddingLeft: TIME_COL_WIDTH + 'px' }}
-          >
-            {renderDaysHeader()}
-          </div>
-
-          <div 
-            className="timeslots-container relative h-full overflow-y-auto"
-            ref={containerRef}
-          >
-            <div className="flex relative">
-              <div 
-                className="time-column sticky left-0 bg-white z-10 flex flex-col border-r"
-                style={{ width: TIME_COL_WIDTH + 'px' }}
+        <div className="flex-1 bg-white border rounded-md">
+          <div className="flex justify-between items-center p-4 border-b">
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => onDateChange(addDays(weekStart, -7))}
+                className="p-1 hover:bg-gray-100 rounded"
               >
-                {renderTimeSlots()}
-              </div>
-              <div className="days-grid flex flex-1 relative">
-                {renderEvents()}
-              </div>
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              
+              <span className="font-medium">
+                {format(weekStart, 'MMM d')} - {format(weekEnd, 'MMM d, yyyy')}
+              </span>
+              
+              <button 
+                onClick={() => onDateChange(addDays(weekStart, 7))}
+                className="p-1 hover:bg-gray-100 rounded"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+              
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="ml-2"
+                onClick={() => onDateChange(new Date())}
+              >
+                Today
+              </Button>
             </div>
-
-            {/* Current time indicator */}
-            <div 
-              className="current-time absolute left-0 right-0 border-t border-red-500 z-20"
-              style={{ 
-                top: currentTimePosition + 'px',
-                display: showCurrentTimeIndicator ? 'block' : 'none'
-              }}
-            >
-              <div className="absolute -left-1 -top-2 w-3 h-3 rounded-full bg-red-500" />
+            
+            <div className="flex items-center gap-2">
+              <Select defaultValue="week">
+                <SelectTrigger className="w-30">
+                  <SelectValue placeholder="View" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="day">Day</SelectItem>
+                  <SelectItem value="week">Week</SelectItem>
+                  <SelectItem value="month">Month</SelectItem>
+                  <SelectItem value="agenda">Agenda</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="gap-1"
+                onClick={onCreateEvent}
+              >
+                <Plus className="h-4 w-4" />
+                New Event
+              </Button>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="rounded-full">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem>Print Calendar</DropdownMenuItem>
+                  <DropdownMenuItem>Export Calendar</DropdownMenuItem>
+                  <DropdownMenuItem>Calendar Settings</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+          
+          <div className="p-2">
+            <div className="grid grid-cols-8 border-b">
+              <div className="col-span-1 p-2 text-center font-medium">
+                All Day
+              </div>
+              {days.map(day => (
+                <div 
+                  key={day.toString()}
+                  className={cn(
+                    "col-span-1 p-2 text-center border-l",
+                    isToday(day) && "bg-blue-50"
+                  )}
+                  onClick={() => onDayClick(day)}
+                >
+                  <div className="text-xs text-gray-500">{format(day, 'EEE')}</div>
+                  <div className={cn(
+                    "inline-flex items-center justify-center h-6 w-6 rounded-full",
+                    isToday(day) && "bg-yorpro-600 text-white"
+                  )}>
+                    {format(day, 'd')}
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div className="grid grid-cols-8 overflow-auto max-h-[calc(100vh-300px)]">
+              {hours.map(hour => (
+                <React.Fragment key={hour}>
+                  <div className="col-span-1 p-2 text-right border-b text-xs font-medium text-gray-500">
+                    {hour === 12 ? '12pm' : `${hour % 12}pm`}
+                  </div>
+                  
+                  {days.map(day => {
+                    const eventsForThisSlot = getEventForDayAndHour(day, hour);
+                    return (
+                      <div 
+                        key={`${day}-${hour}`}
+                        className={cn(
+                          "col-span-1 p-1 border-l border-b h-16 relative",
+                          isToday(day) && "bg-blue-50/30"
+                        )}
+                        onClick={() => {
+                          const newDate = new Date(day);
+                          newDate.setHours(hour, 0, 0, 0);
+                          onDayClick(newDate);
+                        }}
+                      >
+                        {eventsForThisSlot.map(event => (
+                          <div 
+                            key={event.id}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onEventClick(event);
+                            }}
+                            className={cn(
+                              "absolute top-0 left-0 right-0 mx-1 p-1 rounded text-white text-xs cursor-pointer",
+                              getEventColor(event.type)
+                            )}
+                            style={{ height: 'calc(100% - 2px)' }}
+                          >
+                            <div className="font-medium truncate flex items-center gap-1">
+                              {event.title}
+                              {(event.isRecurring || event.isRecurringInstance) && (
+                                <Repeat className="h-3 w-3 inline-block" />
+                              )}
+                            </div>
+                            <div className="text-xs opacity-90">
+                              {format(event.start, 'h:mm a')}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })}
+                </React.Fragment>
+              ))}
             </div>
           </div>
         </div>
       </div>
     </div>
   );
-};
-
-export default EnhancedWeekView;
+}

@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { 
-  Calendar as CalendarType, 
+  Calendar, 
   Event,
   isValidUUID
 } from '@/utils/calendarUtils';
@@ -20,8 +20,8 @@ import {
 export type { Calendar, Event } from '@/utils/calendarUtils';
 
 export const useCalendar = () => {
-  const [myCalendars, setMyCalendars] = useState<CalendarType[]>([]);
-  const [otherCalendars, setOtherCalendars] = useState<CalendarType[]>([]);
+  const [myCalendars, setMyCalendars] = useState<Calendar[]>([]);
+  const [otherCalendars, setOtherCalendars] = useState<Calendar[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,27 +29,8 @@ export const useCalendar = () => {
   // Track if data has been updated to trigger a re-fetch
   const [dataUpdated, setDataUpdated] = useState(0);
 
-  // Toggle calendar visibility
-  const toggleCalendar = (calendarId: string) => {
-    // Check if it's in myCalendars
-    if (myCalendars.some(cal => cal.id === calendarId)) {
-      setMyCalendars(prev => prev.map(calendar => 
-        calendar.id === calendarId 
-          ? { ...calendar, checked: !calendar.checked } 
-          : calendar
-      ));
-    } else {
-      // Must be in otherCalendars
-      setOtherCalendars(prev => prev.map(calendar => 
-        calendar.id === calendarId 
-          ? { ...calendar, checked: !calendar.checked } 
-          : calendar
-      ));
-    }
-  };
-
   // Update calendar
-  const updateCalendar = async (calendar: CalendarType) => {
+  const updateCalendar = async (calendar: Calendar) => {
     try {
       // First update the database
       await updateCalendarInDb(calendar);
@@ -111,7 +92,7 @@ export const useCalendar = () => {
   };
 
   // Create calendar
-  const createCalendar = async (calendar: Omit<CalendarType, 'id'>) => {
+  const createCalendar = async (calendar: Omit<Calendar, 'id'>) => {
     try {
       // First create in the database
       const newCalendar = await createCalendarInDb(calendar);
@@ -133,7 +114,7 @@ export const useCalendar = () => {
       const newCalendar = {
         ...calendar,
         id: Math.random().toString(36).substring(2, 9),
-      } as CalendarType;
+      } as Calendar;
       
       setMyCalendars(prev => [...prev, newCalendar]);
       return newCalendar;
@@ -241,32 +222,17 @@ export const useCalendar = () => {
   };
 
   return {
-    currentDate: new Date(),
-    selectedDate: new Date(),
-    view: 'week' as const,
-    calendars: [],
-    events,
     myCalendars,
     otherCalendars,
+    events,
     loading,
     error,
     dataUpdated,
-    setCurrentDate: () => {},
-    setSelectedDate: () => {},
-    setView: () => {},
-    goToToday: () => {},
-    nextMonth: () => {},
-    prevMonth: () => {},
-    nextWeek: () => {},
-    prevWeek: () => {},
-    nextDay: () => {},
-    prevDay: () => {},
     setMyCalendars,
     setOtherCalendars,
     setEvents,
     setLoading,
     setError,
-    toggleCalendar,
     updateCalendar,
     createCalendar,
     createEvent,
