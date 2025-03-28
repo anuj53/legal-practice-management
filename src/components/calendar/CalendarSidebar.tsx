@@ -20,6 +20,7 @@ import { Calendar, CalendarShare } from '@/types/calendar';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface CalendarItem {
   id: string;
@@ -50,6 +51,7 @@ export function CalendarSidebar({
   const [shareEmail, setShareEmail] = useState('');
   const [sharePermission, setSharePermission] = useState<'view' | 'edit' | 'admin'>('view');
   const [sharedWith, setSharedWith] = useState<CalendarShare[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleCreateCalendar = () => {
     setIsCalendarFormOpen(true);
@@ -123,18 +125,30 @@ export function CalendarSidebar({
     setSharedWith(sharedWith.filter(share => share.user_email !== email));
   };
 
+  // Filter calendars based on search query
+  const filteredMyCalendars = myCalendars.filter(cal => 
+    cal.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  
+  const filteredOtherCalendars = otherCalendars.filter(cal => 
+    cal.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   const CalendarCheckbox = ({ calendar, category }: { calendar: CalendarItem, category: 'my' | 'other' }) => (
-    <div className="calendar-list-item">
-      <div 
-        className={`calendar-checkbox ${calendar.checked ? 'bg-white' : 'bg-transparent'}`}
-        style={{ borderColor: calendar.color }}
-        onClick={() => onCalendarToggle(calendar.id, category)}
-      >
+    <div className="flex items-center space-x-2 py-1.5 px-1 hover:bg-gray-100 rounded cursor-pointer"
+         onClick={() => onCalendarToggle(calendar.id, category)}>
+      <div className="flex items-center justify-center h-4 w-4 rounded border"
+           style={{ 
+             backgroundColor: calendar.checked ? calendar.color : 'transparent',
+             borderColor: calendar.color 
+           }}>
         {calendar.checked && (
-          <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: calendar.color }}></div>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" className="h-3 w-3">
+            <path fillRule="evenodd" d="M19.916 4.626a.75.75 0 01.208 1.04l-9 13.5a.75.75 0 01-1.154.114l-6-6a.75.75 0 011.06-1.06l5.353 5.353 8.493-12.739a.75.75 0 011.04-.208z" clipRule="evenodd" />
+          </svg>
         )}
       </div>
-      <span className="flex-1 truncate">{calendar.name}</span>
+      <span className="text-sm flex-1 truncate">{calendar.name}</span>
     </div>
   );
 
@@ -177,7 +191,12 @@ export function CalendarSidebar({
         </Button>
         
         <div className="relative mb-4">
-          <Input placeholder="Search calendars" className="pl-3 pr-8 py-1 h-9 text-sm" />
+          <Input 
+            placeholder="Search calendars" 
+            className="pl-3 pr-8 py-1 h-9 text-sm"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
       </div>
 
@@ -187,9 +206,12 @@ export function CalendarSidebar({
           <ChevronDown className="h-4 w-4" />
         </CollapsibleTrigger>
         <CollapsibleContent className="mt-1">
-          {myCalendars.map(calendar => (
+          {filteredMyCalendars.map(calendar => (
             <CalendarCheckbox key={calendar.id} calendar={calendar} category="my" />
           ))}
+          {filteredMyCalendars.length === 0 && (
+            <p className="text-xs text-gray-500 py-1">No calendars found</p>
+          )}
         </CollapsibleContent>
       </Collapsible>
 
@@ -199,9 +221,12 @@ export function CalendarSidebar({
           <ChevronDown className="h-4 w-4" />
         </CollapsibleTrigger>
         <CollapsibleContent className="mt-1">
-          {otherCalendars.map(calendar => (
+          {filteredOtherCalendars.map(calendar => (
             <CalendarCheckbox key={calendar.id} calendar={calendar} category="other" />
           ))}
+          {filteredOtherCalendars.length === 0 && (
+            <p className="text-xs text-gray-500 py-1">No calendars found</p>
+          )}
         </CollapsibleContent>
       </Collapsible>
 
@@ -243,14 +268,13 @@ export function CalendarSidebar({
             
             <div className="space-y-2">
               <div className="flex items-center">
-                <input 
-                  type="checkbox"
+                <Checkbox
                   id="is-public"
                   checked={isPublic}
-                  onChange={(e) => setIsPublic(e.target.checked)}
+                  onCheckedChange={(checked) => setIsPublic(checked === true)}
                   className="mr-2"
                 />
-                <label htmlFor="is-public" className="text-sm font-medium">
+                <label htmlFor="is-public" className="text-sm font-medium cursor-pointer">
                   Make calendar public
                 </label>
               </div>

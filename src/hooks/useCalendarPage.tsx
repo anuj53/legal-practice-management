@@ -25,6 +25,12 @@ export function useCalendarPage() {
   const myCalendars = calendars.filter(cal => cal.isUserCalendar);
   const otherCalendars = calendars.filter(cal => !cal.isUserCalendar);
   
+  // Get only events from selected calendars
+  const filteredEvents = events.filter(event => {
+    const calendar = calendars.find(cal => cal.id === event.calendar);
+    return calendar && calendar.checked;
+  });
+  
   const handleCalendarToggle = (id: string, category: 'my' | 'other') => {
     toggleCalendar(id);
   };
@@ -168,7 +174,7 @@ export function useCalendarPage() {
     setModalMode,
     myCalendars,
     otherCalendars,
-    events,
+    events: filteredEvents,
     loading: false,
     handleCalendarToggle,
     handleEventClick,

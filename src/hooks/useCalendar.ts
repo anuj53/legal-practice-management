@@ -90,6 +90,7 @@ export const useCalendar = () => {
     setEvents(sampleEvents);
   }, [calendars]);
   
+  // Get only events from visible calendars
   const visibleEvents = events.filter(event => {
     const calendar = calendars.find(cal => cal.id === event.calendar);
     return calendar && calendar.checked;
