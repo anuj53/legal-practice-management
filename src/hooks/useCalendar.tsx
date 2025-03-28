@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { 
@@ -139,6 +138,9 @@ export const useCalendar = () => {
         ...event,
         isRecurring
       };
+      
+      console.log('useCalendar: Creating event with recurrence pattern:', 
+        event.recurrencePattern ? JSON.stringify(event.recurrencePattern) : 'none');
       
       // First create in the database
       const newEvent = await createEventInDb(eventWithRecurringFlag);

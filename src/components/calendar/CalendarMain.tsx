@@ -29,8 +29,8 @@ export function CalendarMain({ view, date, events, onEventClick, onDayClick }: C
         viewEnd = endOfDay(date);
         break;
       case 'week':
-        viewStart = startOfWeek(date);
-        viewEnd = endOfWeek(date);
+        viewStart = startOfWeek(date, { weekStartsOn: 1 }); // Start on Monday
+        viewEnd = endOfWeek(date, { weekStartsOn: 1 }); // End on Sunday
         break;
       case 'month':
         viewStart = startOfMonth(date);
