@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format, addDays } from 'date-fns';
 import { X, Users, MapPin, Clock, CalendarClock, Bell, FileText, Briefcase, Scale, Plus, Trash2 } from 'lucide-react';
@@ -19,52 +18,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from '@/components/ui/separator';
-
-interface Event {
-  id: string;
-  title: string;
-  start: Date;
-  end: Date;
-  type: 'client-meeting' | 'internal-meeting' | 'court' | 'deadline' | 'personal';
-  calendar: string;
-  description?: string;
-  location?: string;
-  attendees?: string[];
-  isRecurring?: boolean;
-  reminder?: string;
-  // Legal-specific fields
-  caseId?: string;
-  clientName?: string;
-  assignedLawyer?: string;
-  courtInfo?: {
-    courtName?: string;
-    judgeDetails?: string;
-    docketNumber?: string;
-  };
-  documents?: Array<{id: string, name: string, url: string}>;
-  // Recurrence options
-  recurrencePattern?: {
-    frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
-    interval: number;
-    endDate?: Date;
-    weekdays?: number[]; // 0-6 for Sunday-Saturday
-    monthDay?: number;
-    occurrences?: number;
-  };
-  isAllDay?: boolean;
-}
+import { CalendarEvent } from '@/types/calendar';
 
 interface EventModalProps {
   isOpen: boolean;
   onClose: () => void;
-  event?: Event | null;
+  event?: CalendarEvent | null;
   mode: 'create' | 'edit' | 'view';
-  onSave: (event: Event) => void;
+  onSave: (event: CalendarEvent) => void;
   onDelete?: (id: string) => void;
 }
 
 export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: EventModalProps) {
-  const defaultEvent: Event = {
+  const defaultEvent: CalendarEvent = {
     id: Math.random().toString(36).substring(2, 9),
     title: '',
     start: new Date(),
@@ -88,7 +54,7 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
     documents: []
   };
   
-  const [formData, setFormData] = useState<Event>(event || defaultEvent);
+  const [formData, setFormData] = useState<CalendarEvent>(event || defaultEvent);
   const [activeTab, setActiveTab] = useState('general');
   const [attendeeInput, setAttendeeInput] = useState('');
   const [documentName, setDocumentName] = useState('');
@@ -96,7 +62,6 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
   const [editMode, setEditMode] = useState(mode !== 'view');
   const [recurrenceOption, setRecurrenceOption] = useState('none');
   
-  // Reset form data when event changes
   useEffect(() => {
     if (event) {
       setFormData(event);
@@ -107,7 +72,6 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
     }
   }, [event, mode]);
   
-  // Basic field handlers
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -117,7 +81,6 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
     setFormData(prev => ({ ...prev, [name]: value }));
   };
   
-  // Date and time handlers
   const handleDateTimeChange = (name: string, value: string) => {
     setFormData(prev => ({ 
       ...prev, 
@@ -125,14 +88,12 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
     }));
   };
   
-  // Handle all-day event
   const handleAllDayChange = (checked: boolean) => {
     setFormData(prev => {
       const newStart = new Date(prev.start);
       const newEnd = new Date(prev.end);
       
       if (checked) {
-        // Set to start of day and end of day
         newStart.setHours(0, 0, 0, 0);
         newEnd.setHours(23, 59, 59, 999);
       }
@@ -146,7 +107,6 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
     });
   };
   
-  // Attendance handlers
   const handleAddAttendee = () => {
     if (attendeeInput.trim()) {
       setFormData(prev => ({
@@ -164,7 +124,6 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
     }));
   };
   
-  // Documents handlers
   const handleAddDocument = () => {
     if (documentName.trim() && documentUrl.trim()) {
       const newDocument = {
@@ -190,7 +149,6 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
     }));
   };
   
-  // Court info handlers
   const handleCourtInfoChange = (name: string, value: string) => {
     setFormData(prev => ({
       ...prev,
@@ -201,7 +159,6 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
     }));
   };
   
-  // Recurrence handlers
   const handleRecurrenceChange = (option: string) => {
     setRecurrenceOption(option);
     
@@ -272,7 +229,6 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
     });
   };
   
-  // Save and delete handlers
   const handleSwitchToEdit = () => {
     setEditMode(true);
   };
@@ -870,7 +826,6 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
                     </div>
                   )}
                   
-                  {/* Legal-specific details */}
                   {(formData.caseId || formData.clientName || formData.assignedLawyer) && (
                     <div className="border-t border-gray-200 pt-4">
                       <h3 className="font-medium mb-3">Legal Details</h3>
@@ -909,7 +864,6 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
                     </div>
                   )}
                   
-                  {/* Court Information */}
                   {formData.courtInfo && (formData.courtInfo.courtName || formData.courtInfo.judgeDetails || formData.courtInfo.docketNumber) && (
                     <div className="border-t border-gray-200 pt-4">
                       <h3 className="font-medium mb-3">Court Information</h3>
@@ -936,7 +890,6 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
                     </div>
                   )}
                   
-                  {/* Documents */}
                   {formData.documents && formData.documents.length > 0 && (
                     <div className="border-t border-gray-200 pt-4">
                       <h3 className="font-medium mb-3">Linked Documents</h3>

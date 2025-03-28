@@ -4,7 +4,7 @@ export interface CalendarEvent {
   title: string;
   start: Date;
   end: Date;
-  type: 'event' | 'client' | 'plan' | 'client-meeting' | 'internal-meeting' | 'court' | 'deadline' | 'personal';
+  type: 'client-meeting' | 'internal-meeting' | 'court' | 'deadline' | 'personal';
   calendar: string; // This is the property name we're standardizing on
   color?: string;
   isAllDay?: boolean;
