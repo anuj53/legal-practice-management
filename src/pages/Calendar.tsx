@@ -40,19 +40,21 @@ export default function Calendar() {
   }
   
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col overflow-hidden">
       {/* Calendar Header - Fixed at top */}
-      <CalendarHeader
-        currentDate={currentDate}
-        view={currentView}
-        onViewChange={setCurrentView}
-        onDateChange={setCurrentDate}
-        onCreateEvent={handleCreateEvent}
-      />
+      <div className="flex-shrink-0">
+        <CalendarHeader
+          currentDate={currentDate}
+          view={currentView}
+          onViewChange={setCurrentView}
+          onDateChange={setCurrentDate}
+          onCreateEvent={handleCreateEvent}
+        />
+      </div>
       
       {/* Main content area with sidebar - Both at full height */}
-      <div className="flex flex-1 h-[calc(100%-64px)] overflow-hidden">
-        {/* Main Calendar Area - This will be scrollable independently */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Main Calendar Area - This will scroll independently */}
         <div className="flex-1 overflow-hidden">
           <CalendarMain
             view={currentView}
@@ -64,7 +66,7 @@ export default function Calendar() {
         </div>
         
         {/* Sidebar - Fixed, not scrolling with calendar content */}
-        <div className="w-64 h-full border-l border-gray-200 flex-shrink-0 bg-white">
+        <div className="w-64 border-l border-gray-200 flex-shrink-0 bg-white overflow-hidden">
           <CalendarSidebar
             myCalendars={myCalendars}
             otherCalendars={otherCalendars}
@@ -75,7 +77,7 @@ export default function Calendar() {
         </div>
       </div>
       
-      {/* Floating new event button - visible in mobile when sidebar is hidden */}
+      {/* Floating new event button - visible on mobile when sidebar is hidden */}
       <MobileActionButton onClick={handleCreateEvent} />
       
       {/* Event Modal */}

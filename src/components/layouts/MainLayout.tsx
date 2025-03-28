@@ -10,8 +10,8 @@ export function MainLayout() {
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-auto bg-gradient-to-br from-gray-50 via-white to-gray-100">
-          <div className="relative min-h-full">
+        <main className="flex-1 overflow-hidden bg-gradient-to-br from-gray-50 via-white to-gray-100">
+          <div className="relative h-full">
             {/* Background patterns */}
             <div className="absolute inset-0 bg-grid-gray-100/25 [mask-image:radial-gradient(white,transparent_85%)]" />
             <div className="absolute top-0 right-0 -mt-16 opacity-30 select-none pointer-events-none">
@@ -44,7 +44,7 @@ export function MainLayout() {
               </svg>
             </div>
             
-            <div className="relative z-10 p-4 md:p-8">
+            <div className="relative z-10 p-4 md:p-8 h-full overflow-hidden">
               <Outlet />
             </div>
           </div>
