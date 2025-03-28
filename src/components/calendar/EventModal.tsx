@@ -23,6 +23,19 @@ import { Separator } from '@/components/ui/separator';
 import { CalendarEvent, Calendar } from '@/types/calendar';
 import { toast } from 'sonner';
 
+const roundToNextHalfHour = (date: Date): Date => {
+  const minutes = date.getMinutes();
+  const roundedDate = new Date(date);
+  
+  if (minutes < 30) {
+    roundedDate.setMinutes(30, 0, 0);
+  } else {
+    roundedDate.setHours(date.getHours() + 1, 0, 0, 0);
+  }
+  
+  return roundedDate;
+};
+
 interface EventModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -44,11 +57,15 @@ export function EventModal({
   myCalendars = [],
   otherCalendars = []
 }: EventModalProps) {
+  const now = new Date();
+  const roundedStartTime = roundToNextHalfHour(now);
+  const defaultEndTime = new Date(roundedStartTime.getTime() + 30 * 60000); // 30 minutes later
+  
   const defaultEvent: CalendarEvent = {
     id: Math.random().toString(36).substring(2, 9),
     title: '',
-    start: new Date(),
-    end: new Date(new Date().getTime() + 30 * 60000), // 30 minutes later
+    start: roundedStartTime,
+    end: defaultEndTime,
     type: 'client-meeting',
     calendar: 'personal',
     description: '',

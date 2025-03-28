@@ -1,7 +1,24 @@
+
 import { useState } from 'react';
 import { CalendarEvent, Calendar, CalendarViewType, CalendarShare } from '@/types/calendar';
 import { useCalendar } from '@/hooks/useCalendar';
 import { toast } from 'sonner';
+
+// Helper function to round time to the nearest half hour
+const roundToNextHalfHour = (date: Date): Date => {
+  const minutes = date.getMinutes();
+  const roundedDate = new Date(date);
+  
+  if (minutes < 30) {
+    // Round to next half hour
+    roundedDate.setMinutes(30, 0, 0);
+  } else {
+    // Round to next hour
+    roundedDate.setHours(date.getHours() + 1, 0, 0, 0);
+  }
+  
+  return roundedDate;
+};
 
 export function useCalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -59,11 +76,15 @@ export function useCalendarPage() {
       return;
     }
     
+    // Use our new helper function to round to the next half hour
     const now = new Date();
+    const roundedStartTime = roundToNextHalfHour(now);
+    const endTime = new Date(roundedStartTime.getTime() + 60 * 60 * 1000); // Add 1 hour to rounded start time
+    
     const defaultEvent: Omit<CalendarEvent, 'id'> = {
       title: '',
-      start: now,
-      end: new Date(now.getTime() + 60 * 60 * 1000),
+      start: roundedStartTime,
+      end: endTime,
       type: 'client-meeting',
       calendar: defaultCalendarId,
       isAllDay: false,
