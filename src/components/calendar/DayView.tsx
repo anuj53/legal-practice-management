@@ -1,10 +1,10 @@
+
 import React, { useEffect, useRef, useState } from 'react';
-import { format, addDays, getDate, isSameDay } from 'date-fns';
+import { format } from 'date-fns';
 import { CalendarEvent } from '@/types/calendar';
 import { cn } from '@/lib/utils';
 import { getHours } from '@/utils/dateUtils';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { generateRecurringEventInstances } from '@/utils/recurrenceUtils';
 
 interface DayViewProps {
   currentDate: Date;
@@ -23,31 +23,20 @@ export const DayView: React.FC<DayViewProps> = ({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [currentTimePosition, setCurrentTimePosition] = useState<number>(0);
   
-  const processedEvents = React.useMemo(() => {
-    const allEvents = [...events.filter(event => !event.isRecurring)];
-    
-    events.filter(event => event.isRecurring && event.recurrencePattern).forEach(recurringEvent => {
-      const instances = generateRecurringEventInstances(
-        recurringEvent, 
-        currentDate, 
-        new Date(currentDate.getTime() + 24 * 60 * 60 * 1000)
-      );
-      allEvents.push(...instances);
-    });
-    
-    return allEvents;
-  }, [events, currentDate]);
-  
+  // Calculate current time indicator position and set up auto-scroll
   useEffect(() => {
     const updateCurrentTimePosition = () => {
       const now = new Date();
       const hours = now.getHours();
       const minutes = now.getMinutes();
+      // Calculate position (each hour is 60px height)
       const position = (hours * 60) + minutes;
       setCurrentTimePosition(position);
       
+      // If it's today, scroll to current time - 1 hour
       const isToday = new Date(currentDate).setHours(0,0,0,0) === new Date().setHours(0,0,0,0);
       if (isToday && scrollContainerRef.current) {
+        // Scroll to 100px above the current time
         setTimeout(() => {
           if (scrollContainerRef.current) {
             scrollContainerRef.current.scrollTop = position - 120;
@@ -56,15 +45,17 @@ export const DayView: React.FC<DayViewProps> = ({
       }
     };
     
+    // Update position immediately
     updateCurrentTimePosition();
     
-    const timer = setInterval(updateCurrentTimePosition, 60000);
+    // Set timer to update position
+    const timer = setInterval(updateCurrentTimePosition, 60000); // every minute
     
     return () => clearInterval(timer);
   }, [currentDate]);
   
   const getEventsForHour = (hour: number) => {
-    return processedEvents.filter((event) => {
+    return events.filter((event) => {
       const eventDate = new Date(event.start);
       const eventHour = eventDate.getHours();
       const eventDay = new Date(eventDate);
@@ -80,28 +71,6 @@ export const DayView: React.FC<DayViewProps> = ({
     });
   };
 
-  const getEventStyle = (event: CalendarEvent) => {
-    const start = new Date(event.start);
-    const end = new Date(event.end);
-    
-    const startMinutes = start.getMinutes();
-    const durationMs = end.getTime() - start.getTime();
-    const durationMinutes = Math.ceil(durationMs / (1000 * 60));
-    
-    const topPosition = (startMinutes / 60) * 100;
-    const height = (durationMinutes / 60) * 100;
-    
-    return {
-      top: `${topPosition}%`,
-      height: `${height}%`,
-      position: 'absolute' as const,
-      left: '0',
-      right: '0',
-      margin: '0 1px',
-      zIndex: 10,
-    };
-  };
-
   const eventColors = {
     'event': 'bg-orange-500 text-white',
     'client': 'bg-green-500 text-white',
@@ -113,6 +82,7 @@ export const DayView: React.FC<DayViewProps> = ({
     'personal': 'bg-yellow-500 text-black',
   };
 
+  // Check if it's today to show the current time indicator
   const isToday = new Date(currentDate).setHours(0,0,0,0) === new Date().setHours(0,0,0,0);
 
   return (
@@ -121,73 +91,66 @@ export const DayView: React.FC<DayViewProps> = ({
         <h2 className="text-xl font-bold">{format(currentDate, 'EEEE, MMMM d, yyyy')}</h2>
       </div>
       
-      <div className="flex-1 overflow-hidden">
+      <ScrollArea className="flex-1">
         <div 
-          className="h-full overflow-y-auto scrollbar-thin"
           ref={scrollContainerRef}
+          className="grid grid-cols-1 relative min-h-[1440px]"
         >
-          <div className="relative min-h-[1440px]">
-            {hours.map((hourLabel, hourIndex) => {
-              const hour = hourIndex % 24;
-              const hourEvents = getEventsForHour(hour);
-              
-              return (
-                <div 
-                  key={hourIndex}
-                  className="flex border-b border-gray-200 h-[60px]"
-                >
-                  <div className="w-[80px] border-r border-gray-200 p-2 text-right sticky left-0 bg-background">
-                    {hourLabel}
-                  </div>
-                  
-                  <div
-                    className="flex-1 p-1 relative cursor-pointer"
-                    onClick={() => {
-                      const newDate = new Date(currentDate);
-                      newDate.setHours(hour);
-                      onTimeSlotClick(newDate);
-                    }}
-                  >
-                    {hourEvents.map((event) => (
-                      <div
-                        key={`${event.id}-${event.start.getTime()}`}
-                        className={cn(
-                          "p-2 rounded cursor-pointer",
-                          eventColors[event.type] || "bg-gray-500 text-white",
-                          event.isRecurring && "border-l-4 border-white"
-                        )}
-                        style={getEventStyle(event)}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onEventClick(event);
-                        }}
-                      >
-                        <div className="h-full w-full flex flex-col">
-                          <div className="truncate font-medium">{format(new Date(event.start), 'h:mm')} {event.title}</div>
-                          {event.description && <div className="truncate text-xs opacity-90">{event.description}</div>}
-                          {event.isRecurring && <div className="text-xs mt-1">↺ Recurring</div>}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
+          {hours.map((hourLabel, hourIndex) => {
+            const hour = hourIndex % 24;
+            const hourEvents = getEventsForHour(hour);
             
-            {isToday && (
+            return (
               <div 
-                className="absolute left-0 right-0 border-t-2 border-red-500 z-20 flex items-center"
-                style={{ top: `${currentTimePosition}px` }}
+                key={hourIndex}
+                className="grid grid-cols-6 border-b border-gray-200 h-[60px]"
               >
-                <div className="h-3 w-3 rounded-full bg-red-500 -ml-1.5 -mt-1.5"></div>
-                <span className="text-xs text-red-500 font-medium ml-1">
-                  {format(new Date(), 'h:mm a')}
-                </span>
+                <div className="col-span-1 border-r border-gray-200 p-2 text-center sticky left-0 bg-background">
+                  {hourLabel}
+                </div>
+                
+                <div
+                  className="col-span-5 p-1 relative"
+                  onClick={() => {
+                    const newDate = new Date(currentDate);
+                    newDate.setHours(hour);
+                    onTimeSlotClick(newDate);
+                  }}
+                >
+                  {hourEvents.map((event) => (
+                    <div
+                      key={event.id}
+                      className={cn(
+                        "p-2 rounded my-1 cursor-pointer",
+                        eventColors[event.type] || "bg-gray-500 text-white"
+                      )}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEventClick(event);
+                      }}
+                    >
+                      {format(event.start, 'h:mm a')} - {event.title}
+                    </div>
+                  ))}
+                </div>
               </div>
-            )}
-          </div>
+            );
+          })}
+          
+          {/* Current time indicator */}
+          {isToday && (
+            <div 
+              className="absolute left-0 right-0 border-t-2 border-red-500 z-20 flex items-center"
+              style={{ top: `${currentTimePosition}px` }}
+            >
+              <div className="h-3 w-3 rounded-full bg-red-500 -ml-1.5 -mt-1.5"></div>
+              <span className="text-xs text-red-500 font-medium ml-1">
+                {format(new Date(), 'h:mm a')}
+              </span>
+            </div>
+          )}
         </div>
-      </div>
+      </ScrollArea>
     </div>
   );
 };

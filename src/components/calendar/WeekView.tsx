@@ -4,7 +4,6 @@ import { format, addDays, startOfWeek } from 'date-fns';
 import { CalendarEvent } from '@/types/calendar';
 import { cn } from '@/lib/utils';
 import { getHours } from '@/utils/dateUtils';
-import { Repeat } from 'lucide-react';
 
 interface WeekViewProps {
   currentDate: Date;
@@ -188,12 +187,7 @@ export const WeekView: React.FC<WeekViewProps> = ({
                           onClick={(e) => handleEventClick(event, e)}
                         >
                           <div className="h-full w-full flex flex-col">
-                            <div className="truncate font-medium flex items-center gap-1">
-                              {format(new Date(event.start), 'h:mm')} {event.title}
-                              {(event.isRecurring || event.isRecurringInstance) && (
-                                <Repeat className="h-3 w-3 inline-block" />
-                              )}
-                            </div>
+                            <div className="truncate font-medium">{format(new Date(event.start), 'h:mm')} {event.title}</div>
                             {event.description && <div className="truncate text-xs opacity-90">{event.description}</div>}
                           </div>
                         </div>

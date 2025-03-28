@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   format, 
@@ -12,7 +13,7 @@ import {
   getMonth,
   getYear
 } from 'date-fns';
-import { ChevronLeft, ChevronRight, Plus, Calendar, MoreVertical, Repeat } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Calendar, MoreVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Event } from '@/utils/calendarUtils';
 import { Button } from '@/components/ui/button';
@@ -51,20 +52,26 @@ export function EnhancedWeekView({
   myCalendars,
   otherCalendars
 }: EnhancedWeekViewProps) {
+  // State for mini calendar
   const [miniCalendarMonth, setMiniCalendarMonth] = useState(new Date());
   
+  // Get week dates
   const weekStart = startOfWeek(date, { weekStartsOn: 1 });
   const weekEnd = endOfWeek(date, { weekStartsOn: 1 });
   const days = eachDayOfInterval({ start: weekStart, end: weekEnd });
   
+  // Get mini calendar days
   const miniCalendarStart = startOfWeek(miniCalendarMonth, { weekStartsOn: 1 });
-  const miniCalendarEnd = addDays(miniCalendarStart, 41);
+  const miniCalendarEnd = addDays(miniCalendarStart, 41); // 6 weeks to ensure we show enough days
   const miniCalendarDays = eachDayOfInterval({ start: miniCalendarStart, end: miniCalendarEnd });
   
+  // Get month name for mini calendar
   const miniCalendarMonthName = format(miniCalendarMonth, 'MMMM yyyy');
   
-  const hours = Array.from({ length: 12 }, (_, i) => i + 12);
+  // For displaying hours in the week view
+  const hours = Array.from({ length: 12 }, (_, i) => i + 12); // 12pm to 11pm
   
+  // Function to check if an event is on a specific day and hour
   const getEventForDayAndHour = (day: Date, hour: number) => {
     return events.filter(event => {
       const eventHour = event.start.getHours();
@@ -72,6 +79,7 @@ export function EnhancedWeekView({
     });
   };
   
+  // Function for getting event background color based on type
   const getEventColor = (type: string) => {
     switch (type) {
       case 'client-meeting':
@@ -92,6 +100,7 @@ export function EnhancedWeekView({
   return (
     <div className="flex flex-col h-full">
       <div className="flex p-4">
+        {/* Mini calendar */}
         <div className="w-64 bg-white border rounded-md mr-4">
           <div className="flex justify-between items-center p-2 border-b">
             <button 
@@ -147,12 +156,7 @@ export function EnhancedWeekView({
                   onClick={() => onEventClick(event)}
                   className="p-2 bg-orange-100 rounded text-xs cursor-pointer"
                 >
-                  <span className="font-medium block flex items-center gap-1">
-                    {event.title}
-                    {(event.isRecurring || event.isRecurringInstance) && (
-                      <Repeat className="h-3 w-3 inline-block" />
-                    )}
-                  </span>
+                  <span className="font-medium block">{event.title}</span>
                   <span className="text-gray-500">{format(event.start, 'h:mm a')}</span>
                 </div>
               ))}
@@ -178,6 +182,7 @@ export function EnhancedWeekView({
           </div>
         </div>
 
+        {/* Main week view */}
         <div className="flex-1 bg-white border rounded-md">
           <div className="flex justify-between items-center p-4 border-b">
             <div className="flex items-center gap-2">
@@ -272,6 +277,7 @@ export function EnhancedWeekView({
               ))}
             </div>
             
+            {/* Hours grid */}
             <div className="grid grid-cols-8 overflow-auto max-h-[calc(100vh-300px)]">
               {hours.map(hour => (
                 <React.Fragment key={hour}>
@@ -307,12 +313,7 @@ export function EnhancedWeekView({
                             )}
                             style={{ height: 'calc(100% - 2px)' }}
                           >
-                            <div className="font-medium truncate flex items-center gap-1">
-                              {event.title}
-                              {(event.isRecurring || event.isRecurringInstance) && (
-                                <Repeat className="h-3 w-3 inline-block" />
-                              )}
-                            </div>
+                            <div className="font-medium truncate">{event.title}</div>
                             <div className="text-xs opacity-90">
                               {format(event.start, 'h:mm a')}
                             </div>

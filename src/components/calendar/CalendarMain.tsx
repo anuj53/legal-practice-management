@@ -1,13 +1,11 @@
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import { DayView } from '@/components/calendar/DayView';
 import { WeekView } from '@/components/calendar/WeekView';
 import { MonthView } from '@/components/calendar/MonthView';
 import { AgendaView } from '@/components/calendar/AgendaView';
 import { CalendarViewType } from '@/types/calendar';
 import { CalendarEvent } from '@/types/calendar';
-import { startOfWeek, endOfWeek, addDays } from 'date-fns';
-import { generateRecurringEventInstances } from '@/utils/recurrenceUtils';
 
 interface CalendarMainProps {
   view: CalendarViewType;
@@ -18,65 +16,12 @@ interface CalendarMainProps {
 }
 
 export function CalendarMain({ view, date, events, onEventClick, onDayClick }: CalendarMainProps) {
-  // Process recurring events for the current view
-  const processedEvents = useMemo(() => {
-    // Create a copy of regular events (exclude recurring parent events since we'll generate instances)
-    let allEvents = events.filter(event => !event.isRecurring);
-    
-    // Find recurring events
-    const recurringEvents = events.filter(event => event.isRecurring && event.recurrencePattern);
-    
-    if (recurringEvents.length > 0) {
-      // For each view, determine the appropriate date range for recurring events
-      let rangeStart: Date, rangeEnd: Date;
-      
-      switch (view) {
-        case 'week':
-          rangeStart = startOfWeek(date, { weekStartsOn: 0 });
-          rangeEnd = endOfWeek(date, { weekStartsOn: 0 });
-          break;
-        case 'day':
-          rangeStart = new Date(date);
-          rangeStart.setHours(0, 0, 0, 0);
-          rangeEnd = new Date(date);
-          rangeEnd.setHours(23, 59, 59, 999);
-          break;
-        case 'month':
-          // For month view, we need a wider range
-          const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
-          const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-          rangeStart = firstDay;
-          rangeEnd = lastDay;
-          break;
-        case 'agenda':
-          // For agenda view, use a wider range
-          rangeStart = new Date(date);
-          rangeStart.setDate(rangeStart.getDate() - 14); // Two weeks back
-          rangeEnd = new Date(date);
-          rangeEnd.setDate(rangeEnd.getDate() + 30); // One month forward
-          break;
-        default:
-          return allEvents;
-      }
-      
-      // Generate instances for each recurring event
-      recurringEvents.forEach(event => {
-        if (event.recurrencePattern) {
-          const instances = generateRecurringEventInstances(event, rangeStart, rangeEnd);
-          allEvents = [...allEvents, ...instances];
-        }
-      });
-    }
-    
-    return allEvents;
-  }, [events, date, view]);
-
   return (
     <div className="h-full overflow-hidden">
       {view === 'day' && (
         <DayView
           currentDate={date}
-          events={processedEvents}
+          events={events}
           onEventClick={onEventClick}
           onTimeSlotClick={onDayClick}
         />
@@ -84,7 +29,7 @@ export function CalendarMain({ view, date, events, onEventClick, onDayClick }: C
       {view === 'week' && (
         <WeekView
           currentDate={date}
-          events={processedEvents}
+          events={events}
           onEventClick={onEventClick}
           onTimeSlotClick={onDayClick}
         />
@@ -92,7 +37,7 @@ export function CalendarMain({ view, date, events, onEventClick, onDayClick }: C
       {view === 'month' && (
         <MonthView
           currentDate={date}
-          events={processedEvents}
+          events={events}
           onSelectDate={onDayClick}
           onEventClick={onEventClick}
         />
@@ -100,7 +45,7 @@ export function CalendarMain({ view, date, events, onEventClick, onDayClick }: C
       {view === 'agenda' && (
         <AgendaView
           currentDate={date}
-          events={processedEvents}
+          events={events}
           onEventClick={onEventClick}
         />
       )}
