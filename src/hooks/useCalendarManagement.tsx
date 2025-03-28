@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { useCalendar } from '@/hooks/useCalendar';
-import { Calendar } from '@/types/calendar';
+import { Calendar } from '@/utils/calendarUtils';
 import { toast } from 'sonner';
 
 export const useCalendarManagement = () => {
