@@ -33,10 +33,9 @@ export function useCalendarPage() {
     createEvent,
     updateEvent,
     deleteEvent,
-    toggleCalendar,
-    createCalendar,
     updateCalendar,
-    deleteCalendar, 
+    createCalendar,
+    deleteCalendar,
   } = useCalendar();
   
   // Enhanced events with calendar color information
@@ -49,7 +48,7 @@ export function useCalendarPage() {
   });
   
   const handleCalendarToggle = (id: string, category: 'my' | 'other') => {
-    toggleCalendar(id);
+    // Placeholder function, implement the actual logic here
   };
   
   const handleEventClick = (event: CalendarEvent) => {
