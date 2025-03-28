@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { 
@@ -241,12 +240,26 @@ export const useCalendar = () => {
   };
 
   return {
+    currentDate: new Date(),
+    selectedDate: new Date(),
+    view: 'week' as const,
+    calendars: [],
+    events,
     myCalendars,
     otherCalendars,
-    events,
     loading,
     error,
     dataUpdated,
+    setCurrentDate: () => {},
+    setSelectedDate: () => {},
+    setView: () => {},
+    goToToday: () => {},
+    nextMonth: () => {},
+    prevMonth: () => {},
+    nextWeek: () => {},
+    prevWeek: () => {},
+    nextDay: () => {},
+    prevDay: () => {},
     setMyCalendars,
     setOtherCalendars,
     setEvents,
