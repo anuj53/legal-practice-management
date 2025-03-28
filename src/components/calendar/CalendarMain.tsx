@@ -22,8 +22,8 @@ export function CalendarMain({ view, date, events, onEventClick, onDayClick }: C
   const processedEvents = useMemo(() => {
     console.log(`Processing events for ${view} view with ${events.length} events`);
     
-    // Create a Set to track event IDs to prevent duplicates
-    const processedEventIds = new Set<string>();
+    // Create a Map to track event IDs to prevent duplicates
+    const processedEventIds = new Map<string, CalendarEvent>();
     
     // Separate recurring and non-recurring events
     const recurringEvents = events.filter(event => event.isRecurring && event.recurrencePattern);
@@ -35,17 +35,14 @@ export function CalendarMain({ view, date, events, onEventClick, onDayClick }: C
     console.log(`Found ${recurringEvents.length} recurring events to process`);
     console.log(`Found ${filteredRegularEvents.length} regular events to display`);
     
-    // Add regular events to our result
-    const result: CalendarEvent[] = [];
-    
-    // Add all regular events first and track their IDs
+    // First add all regular events
     filteredRegularEvents.forEach(event => {
-      processedEventIds.add(event.id);
-      result.push(event);
+      processedEventIds.set(event.id, event);
     });
     
+    // If no recurring events, just return the regular events
     if (recurringEvents.length === 0) {
-      return result;
+      return Array.from(processedEventIds.values());
     }
     
     // Determine the appropriate date range for recurring events based on view
@@ -74,7 +71,7 @@ export function CalendarMain({ view, date, events, onEventClick, onDayClick }: C
         rangeEnd.setDate(rangeEnd.getDate() + 30); // One month forward
         break;
       default:
-        return result;
+        return Array.from(processedEventIds.values());
     }
     
     console.log(`Date range for recurring events: ${rangeStart.toISOString()} to ${rangeEnd.toISOString()}`);
@@ -84,13 +81,13 @@ export function CalendarMain({ view, date, events, onEventClick, onDayClick }: C
       if (event.recurrencePattern) {
         console.log(`Generating instances for event: ${event.title} with pattern:`, event.recurrencePattern);
         const instances = generateRecurringEventInstances(event, rangeStart, rangeEnd);
-        console.log(`Generated ${instances.length} instances`);
+        console.log(`Generated ${instances.length} instances for ${event.title}`);
         
-        // Only add instances that don't duplicate existing events
+        // Add each instance to our map, ensuring no duplicates
         instances.forEach(instance => {
+          // Double-check we don't have duplicate instances
           if (!processedEventIds.has(instance.id)) {
-            processedEventIds.add(instance.id);
-            result.push(instance);
+            processedEventIds.set(instance.id, instance);
           } else {
             console.log(`Skipping duplicate instance with ID: ${instance.id}`);
           }
@@ -98,6 +95,7 @@ export function CalendarMain({ view, date, events, onEventClick, onDayClick }: C
       }
     });
     
+    const result = Array.from(processedEventIds.values());
     console.log(`Total events after processing: ${result.length}`);
     return result;
   }, [events, date, view]);
