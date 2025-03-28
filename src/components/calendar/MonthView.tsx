@@ -1,100 +1,73 @@
+
 import React from 'react';
-import { 
-  format, 
-  startOfMonth,
-  endOfMonth,
-  startOfWeek,
-  endOfWeek,
-  eachDayOfInterval,
-  isSameMonth,
-  isToday,
-  isSameDay
-} from 'date-fns';
+import { format, startOfMonth, getMonth, getYear, isSameDay } from 'date-fns';
+import { CalendarEvent } from '@/types/calendar';
+import { getMonthDaysGrid } from '@/utils/dateUtils';
+import { CalendarGrid } from './CalendarGrid';
 import { cn } from '@/lib/utils';
-import { Event } from '@/utils/calendarUtils';
 
 interface MonthViewProps {
-  date: Date;
-  events: Event[];
-  onEventClick: (event: Event) => void;
-  onDayClick: (date: Date) => void;
+  currentDate: Date;
+  events: CalendarEvent[];
+  onSelectDate: (date: Date) => void;
+  onEventClick: (event: CalendarEvent) => void;
 }
 
-export function MonthView({ date, events, onEventClick, onDayClick }: MonthViewProps) {
-  const monthStart = startOfMonth(date);
-  const monthEnd = endOfMonth(date);
-  const startDate = startOfWeek(monthStart, { weekStartsOn: 1 });
-  const endDate = endOfWeek(monthEnd, { weekStartsOn: 1 });
+export const MonthView: React.FC<MonthViewProps> = ({
+  currentDate,
+  events,
+  onSelectDate,
+  onEventClick,
+}) => {
+  const month = getMonth(currentDate);
+  const year = getYear(currentDate);
+  const monthStart = startOfMonth(currentDate);
+  const daysGrid = getMonthDaysGrid(year, month);
   
-  const days = eachDayOfInterval({ start: startDate, end: endDate });
-  
-  // Group events by day
-  const eventsByDay = days.map(day => ({
-    date: day,
-    events: events.filter(event => isSameDay(event.start, day))
-  }));
-  
+  const eventColors = {
+    'event': 'bg-orange-500 text-white',
+    'client': 'bg-green-500 text-white',
+    'plan': 'bg-orange-500 text-white',
+  };
+
+  const getEventsForDay = (day: Date) => {
+    return events.filter(event => isSameDay(day, new Date(event.start)));
+  };
+
   return (
-    <div className="flex flex-col h-full overflow-auto custom-scrollbar">
-      <div className="grid grid-cols-7 border-b">
-        {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
-          <div key={day} className="text-center py-2 font-medium text-sm">
-            {day}
-          </div>
-        ))}
+    <div className="month-view p-4">
+      <div className="text-center mb-4">
+        <h2 className="text-xl font-bold">{format(monthStart, 'MMMM yyyy')}</h2>
       </div>
       
-      <div className="grid grid-cols-7 flex-1">
-        {eventsByDay.map(({ date: day, events }) => (
-          <div 
-            key={day.toString()}
-            className={cn(
-              "month-day-cell",
-              !isSameMonth(day, date) && "different-month bg-gray-50",
-              isToday(day) && "today bg-blue-50/30"
-            )}
-            onClick={() => onDayClick(day)}
-          >
-            <div className="flex justify-between items-center mb-1">
-              <div className={cn(
-                "h-6 w-6 flex items-center justify-center text-sm font-medium",
-                isToday(day) && "bg-yorpro-600 text-white rounded-full"
-              )}>
-                {format(day, 'd')}
+      <div className="calendar-container">
+        <CalendarGrid
+          days={daysGrid}
+          currentMonth={currentDate}
+          onSelectDate={onSelectDate}
+        />
+        
+        <div className="mt-6">
+          <h3 className="text-lg font-semibold mb-4">Today's Events</h3>
+          <div className="space-y-2">
+            {getEventsForDay(new Date()).map(event => (
+              <div
+                key={event.id}
+                className={cn(
+                  "p-2 rounded cursor-pointer",
+                  eventColors[event.type]
+                )}
+                onClick={() => onEventClick(event)}
+              >
+                {format(new Date(event.start), 'h:mm a')} - {event.title}
               </div>
-              
-              {events.length > 0 && (
-                <span className="text-xs font-medium text-gray-500">
-                  {events.length > 1 ? `${events.length} events` : '1 event'}
-                </span>
-              )}
-            </div>
-            
-            <div className="space-y-1 overflow-y-auto max-h-[80%]">
-              {events.slice(0, 3).map(event => (
-                <div
-                  key={event.id}
-                  className={cn("event-card py-0.5", `event-${event.type}`)}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onEventClick(event);
-                  }}
-                >
-                  <p className="text-xs truncate">
-                    {format(event.start, 'h:mm a')} {event.title}
-                  </p>
-                </div>
-              ))}
-              
-              {events.length > 3 && (
-                <div className="text-xs text-center font-medium text-gray-500">
-                  +{events.length - 3} more
-                </div>
-              )}
-            </div>
+            ))}
+            {getEventsForDay(new Date()).length === 0 && (
+              <div className="text-gray-500">No events today</div>
+            )}
           </div>
-        ))}
+        </div>
       </div>
     </div>
   );
-}
+};
