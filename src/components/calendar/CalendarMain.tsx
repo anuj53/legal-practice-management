@@ -5,13 +5,13 @@ import { WeekView } from '@/components/calendar/WeekView';
 import { MonthView } from '@/components/calendar/MonthView';
 import { AgendaView } from '@/components/calendar/AgendaView';
 import { CalendarView } from '@/components/calendar/CalendarHeader';
-import { Event } from '@/utils/calendarUtils';
+import { CalendarEvent } from '@/types/calendar';
 
 interface CalendarMainProps {
   view: CalendarView;
   date: Date;
-  events: Event[];
-  onEventClick: (event: Event) => void;
+  events: CalendarEvent[];
+  onEventClick: (event: CalendarEvent) => void;
   onDayClick: (date: Date) => void;
 }
 
@@ -20,29 +20,30 @@ export function CalendarMain({ view, date, events, onEventClick, onDayClick }: C
     <div className="flex-1 overflow-hidden">
       {view === 'day' && (
         <DayView
-          date={date}
+          currentDate={date}
           events={events}
           onEventClick={onEventClick}
+          onTimeSlotClick={onDayClick}
         />
       )}
       {view === 'week' && (
         <WeekView
-          date={date}
+          currentDate={date}
           events={events}
           onEventClick={onEventClick}
         />
       )}
       {view === 'month' && (
         <MonthView
-          date={date}
+          currentDate={date}
           events={events}
+          onSelectDate={onDayClick}
           onEventClick={onEventClick}
-          onDayClick={onDayClick}
         />
       )}
       {view === 'agenda' && (
         <AgendaView
-          date={date}
+          currentDate={date}
           events={events}
           onEventClick={onEventClick}
         />

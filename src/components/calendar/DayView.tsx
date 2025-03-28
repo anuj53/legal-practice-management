@@ -41,6 +41,11 @@ export const DayView: React.FC<DayViewProps> = ({
     'event': 'bg-orange-500 text-white',
     'client': 'bg-green-500 text-white',
     'plan': 'bg-orange-500 text-white',
+    'client-meeting': 'bg-green-500 text-white',
+    'internal-meeting': 'bg-blue-500 text-white',
+    'court': 'bg-purple-500 text-white',
+    'deadline': 'bg-red-500 text-white',
+    'personal': 'bg-yellow-500 text-black',
   };
 
   return (
@@ -76,7 +81,7 @@ export const DayView: React.FC<DayViewProps> = ({
                     key={event.id}
                     className={cn(
                       "p-2 rounded my-1 cursor-pointer",
-                      eventColors[event.type]
+                      eventColors[event.type] || "bg-gray-500 text-white"
                     )}
                     onClick={(e) => {
                       e.stopPropagation();

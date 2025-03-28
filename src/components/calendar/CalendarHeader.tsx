@@ -12,6 +12,9 @@ import {
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { CalendarViewType } from '@/types/calendar';
 
+// Export CalendarViewType as alias for use in other files
+export type CalendarView = CalendarViewType;
+
 interface CalendarHeaderProps {
   currentDate: Date;
   view: CalendarViewType;

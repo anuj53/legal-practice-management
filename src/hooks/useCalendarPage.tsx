@@ -1,14 +1,15 @@
 
 import { useState, useEffect } from 'react';
-import { Event, isValidUUID } from '@/utils/calendarUtils';
+import { CalendarEvent } from '@/types/calendar';
 import { useCalendarData } from '@/hooks/useCalendarData';
 import { toast } from 'sonner';
 import { CalendarView } from '@/components/calendar/CalendarHeader';
+import { isValidUUID } from '@/utils/calendarUtils';
 
 export function useCalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [currentView, setCurrentView] = useState<CalendarView>('week');
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('view');
 
@@ -94,7 +95,7 @@ export function useCalendarPage() {
     }
   };
   
-  const handleEventClick = (event: Event) => {
+  const handleEventClick = (event: CalendarEvent) => {
     console.log("Event clicked:", event);
     setSelectedEvent(event);
     setModalMode('view');
@@ -127,11 +128,11 @@ export function useCalendarPage() {
     console.log("Calendar validation check:", isValidUUID(defaultCalendarId));
     
     const now = new Date();
-    const defaultEvent = {
+    const defaultEvent: Omit<CalendarEvent, 'id'> = {
       title: '',
       start: now,
       end: new Date(now.getTime() + 60 * 60 * 1000),
-      type: 'client-meeting' as const,
+      type: 'client-meeting',
       calendar: defaultCalendarId,
       isAllDay: false,
       description: '',
@@ -139,12 +140,12 @@ export function useCalendarPage() {
     };
     
     console.log("Created default event with calendar ID:", defaultEvent.calendar);
-    setSelectedEvent(defaultEvent as Event);
+    setSelectedEvent(defaultEvent as CalendarEvent);
     setModalMode('create');
     setModalOpen(true);
   };
   
-  const handleSaveEvent = async (event: Event) => {
+  const handleSaveEvent = async (event: CalendarEvent) => {
     console.log("handleSaveEvent called with event:", event);
     console.log("Current modal mode:", modalMode);
     
@@ -170,7 +171,7 @@ export function useCalendarPage() {
         const { id, ...eventWithoutId } = event;
         
         // Use the correctly typed object for createEvent
-        const newEvent = await createEvent(eventWithoutId);
+        const newEvent = await createEvent(eventWithoutId as Omit<CalendarEvent, 'id'>);
         
         toast.success('Event created successfully!');
         console.log("New event created:", newEvent);
