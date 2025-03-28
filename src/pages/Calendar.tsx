@@ -79,7 +79,6 @@ export default function Calendar() {
             myCalendars={myCalendars}
             otherCalendars={otherCalendars}
             onCalendarToggle={handleCalendarToggle}
-            onCreateCalendar={handleCreateCalendar}
           />
         </div>
       </div>
