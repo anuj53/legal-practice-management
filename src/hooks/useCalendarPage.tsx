@@ -18,6 +18,7 @@ export function useCalendarPage() {
     updateEvent,
     deleteEvent,
     toggleCalendar,
+    createCalendar,
   } = useCalendar();
   
   // Split calendars into my calendars and other calendars
@@ -66,6 +67,18 @@ export function useCalendarPage() {
     setSelectedEvent(defaultEvent as CalendarEvent);
     setModalMode('create');
     setModalOpen(true);
+  };
+  
+  const handleCreateCalendar = (calendar: Omit<Calendar, 'id'>) => {
+    console.log("Create calendar:", calendar);
+    try {
+      const newCalendar = createCalendar(calendar);
+      toast.success(`Calendar "${calendar.name}" created successfully!`);
+      return newCalendar;
+    } catch (error) {
+      console.error('Error creating calendar:', error);
+      toast.error(`Failed to create calendar: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   };
   
   const handleSaveEvent = async (event: CalendarEvent) => {
@@ -157,5 +170,6 @@ export function useCalendarPage() {
     handleCreateEvent,
     handleSaveEvent,
     handleDeleteEvent,
+    handleCreateCalendar,
   };
 }

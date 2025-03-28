@@ -1,5 +1,6 @@
+
 import { useState, useEffect } from 'react';
-import { addDays, addMonths, subMonths, startOfMonth, isSameMonth } from 'date-fns';
+import { addDays, addMonths, subMonths, startOfMonth, isSameDay } from 'date-fns';
 import { CalendarEvent, Calendar, CalendarViewType } from '@/types/calendar';
 
 // Sample data - in a real app, this would come from an API or database
@@ -150,6 +151,7 @@ export const useCalendar = () => {
   };
   
   const createCalendar = (calendar: Omit<Calendar, 'id'>) => {
+    // Generate a random ID for the new calendar
     const newCalendar: Calendar = {
       ...calendar,
       id: Math.random().toString(36).substring(2, 11)

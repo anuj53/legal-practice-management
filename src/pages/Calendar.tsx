@@ -6,6 +6,7 @@ import { CalendarMain } from '@/components/calendar/CalendarMain';
 import { EventModal } from '@/components/calendar/EventModal';
 import { MobileActionButton } from '@/components/calendar/MobileActionButton';
 import { useCalendarPage } from '@/hooks/useCalendarPage';
+import { toast } from 'sonner';
 
 export default function Calendar() {
   const {
@@ -27,6 +28,7 @@ export default function Calendar() {
     handleCreateEvent,
     handleSaveEvent,
     handleDeleteEvent,
+    handleCreateCalendar,
   } = useCalendarPage();
   
   if (loading) {
@@ -43,7 +45,6 @@ export default function Calendar() {
       <CalendarHeader
         currentDate={currentDate}
         view={currentView}
-        onDateChange={setCurrentDate}
         onViewChange={setCurrentView}
         onCreateEvent={handleCreateEvent}
       />
@@ -64,6 +65,7 @@ export default function Calendar() {
           otherCalendars={otherCalendars}
           onCalendarToggle={handleCalendarToggle}
           onCreateEvent={handleCreateEvent}
+          onCreateCalendar={handleCreateCalendar}
         />
       </div>
       
