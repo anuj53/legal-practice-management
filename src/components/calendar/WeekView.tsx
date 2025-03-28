@@ -92,6 +92,7 @@ export const WeekView: React.FC<WeekViewProps> = ({
       left: '0',
       right: '0',
       margin: '0 1px', // Small margin for visual separation
+      zIndex: 10, // Add z-index to ensure event is above the cell
     };
   };
 
@@ -103,6 +104,12 @@ export const WeekView: React.FC<WeekViewProps> = ({
     dayDate.setHours(0, 0, 0, 0);
     return dayDate.getTime() === today.getTime();
   });
+
+  // Function to handle event click with stopPropagation
+  const handleEventClick = (event: CalendarEvent, e: React.MouseEvent) => {
+    e.stopPropagation();
+    onEventClick(event);
+  };
 
   return (
     <div className="week-view h-full flex flex-col overflow-hidden">
@@ -167,17 +174,17 @@ export const WeekView: React.FC<WeekViewProps> = ({
                       {dayEvents.map((event) => (
                         <div
                           key={event.id}
-                          className="p-1 rounded text-xs cursor-pointer truncate text-white"
+                          className="p-1 rounded text-xs cursor-pointer truncate text-white w-full h-full"
                           style={{ 
                             backgroundColor: event.calendarColor || '#9CA3AF',
                             ...getEventStyle(event)
                           }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onEventClick(event);
-                          }}
+                          onClick={(e) => handleEventClick(event, e)}
                         >
-                          {format(event.start, 'h:mm')} {event.title}
+                          <div className="h-full w-full flex flex-col">
+                            <div className="truncate font-medium">{format(new Date(event.start), 'h:mm')} {event.title}</div>
+                            {event.description && <div className="truncate text-xs opacity-90">{event.description}</div>}
+                          </div>
                         </div>
                       ))}
                     </div>
