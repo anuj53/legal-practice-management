@@ -54,21 +54,45 @@ export const WeekView: React.FC<WeekViewProps> = ({
     return () => clearInterval(timer);
   }, []);
 
+  // Updated function to get events for a day and hour with proper positioning
   const getEventsForDayAndHour = (day: Date, hour: number) => {
     return events.filter((event) => {
-      const eventDate = new Date(event.start);
-      const eventHour = eventDate.getHours();
-      const eventDay = new Date(eventDate);
+      const eventStart = new Date(event.start);
+      const eventDay = new Date(eventStart);
       eventDay.setHours(0, 0, 0, 0);
       
       const dayToCheck = new Date(day);
       dayToCheck.setHours(0, 0, 0, 0);
+      
+      const eventHour = eventStart.getHours();
       
       const isSameDay = eventDay.getTime() === dayToCheck.getTime();
       const isSameHour = eventHour === hour;
       
       return isSameDay && isSameHour;
     });
+  };
+
+  // Calculate event position and height based on its start time and duration
+  const getEventStyle = (event: CalendarEvent) => {
+    const start = new Date(event.start);
+    const end = new Date(event.end);
+    
+    const startMinutes = start.getMinutes();
+    const durationMs = end.getTime() - start.getTime();
+    const durationMinutes = Math.ceil(durationMs / (1000 * 60));
+    
+    const topPosition = (startMinutes / 60) * 100; // Convert minutes to percentage of hour height
+    const height = (durationMinutes / 60) * 100; // Convert duration to percentage of hour height
+    
+    return {
+      top: `${topPosition}%`,
+      height: `${height}%`,
+      position: 'absolute' as const,
+      left: '0',
+      right: '0',
+      margin: '0 1px', // Small margin for visual separation
+    };
   };
 
   // Check if today falls within this week
@@ -144,7 +168,10 @@ export const WeekView: React.FC<WeekViewProps> = ({
                         <div
                           key={event.id}
                           className="p-1 rounded text-xs cursor-pointer truncate text-white"
-                          style={{ backgroundColor: event.calendarColor || '#9CA3AF' }} // Use calendar color
+                          style={{ 
+                            backgroundColor: event.calendarColor || '#9CA3AF',
+                            ...getEventStyle(event)
+                          }}
                           onClick={(e) => {
                             e.stopPropagation();
                             onEventClick(event);
