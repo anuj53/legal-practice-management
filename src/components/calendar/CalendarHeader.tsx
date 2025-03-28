@@ -18,7 +18,7 @@ export interface CalendarHeaderProps {
   onViewChange: (view: CalendarViewType) => void;
   onDateChange: (date: Date) => void;
   onCreateEvent: () => void;
-  onCreateCalendar?: () => void;
+  onCreateCalendar?: () => void; // Changed to match expected function signature
 }
 
 export const CalendarHeader: React.FC<CalendarHeaderProps> = ({

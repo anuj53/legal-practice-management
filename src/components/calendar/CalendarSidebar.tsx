@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -28,7 +27,7 @@ interface CalendarSidebarProps {
   myCalendars: CalendarItem[];
   otherCalendars: CalendarItem[];
   onCalendarToggle: (id: string, category: 'my' | 'other') => void;
-  onCreateEvent: () => void;
+  onCreateEvent?: () => void;
   onCreateCalendar?: (calendar: Omit<Calendar, 'id'>) => void;
 }
 
@@ -39,7 +38,6 @@ export function CalendarSidebar({
   onCreateEvent,
   onCreateCalendar 
 }: CalendarSidebarProps) {
-  // State for calendar management
   const [isCalendarFormOpen, setIsCalendarFormOpen] = useState(false);
   const [calendarName, setCalendarName] = useState('');
   const [calendarColor, setCalendarColor] = useState('#4caf50');
@@ -47,10 +45,8 @@ export function CalendarSidebar({
   const [sharedWith, setSharedWith] = useState<CalendarShare[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Handle calendar creation
   const handleCreateCalendar = () => {
     setIsCalendarFormOpen(true);
-    // Reset form fields
     setCalendarName('');
     setCalendarColor('#4caf50');
     setIsPublic(false);
@@ -74,7 +70,6 @@ export function CalendarSidebar({
         sharedWith: sharedWith
       });
       
-      // Reset form
       setCalendarName('');
       setCalendarColor('#4caf50');
       setIsPublic(false);
@@ -85,7 +80,6 @@ export function CalendarSidebar({
     }
   };
 
-  // Filter calendars based on search query
   const filteredMyCalendars = myCalendars.filter(cal => 
     cal.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -97,14 +91,16 @@ export function CalendarSidebar({
   return (
     <div className="w-64 border-l border-gray-200 bg-white h-full flex flex-col">
       <div className="p-4">
-        <Button 
-          onClick={onCreateEvent}
-          variant="default" 
-          className="w-full justify-start gap-2 mb-4 bg-yorpro-600 hover:bg-yorpro-700"
-        >
-          <Plus className="h-4 w-4" />
-          Create New Event
-        </Button>
+        {onCreateEvent && (
+          <Button 
+            onClick={onCreateEvent}
+            variant="default" 
+            className="w-full justify-start gap-2 mb-4 bg-yorpro-600 hover:bg-yorpro-700"
+          >
+            <Plus className="h-4 w-4" />
+            Create New Event
+          </Button>
+        )}
         
         <Button 
           onClick={handleCreateCalendar}
@@ -141,7 +137,6 @@ export function CalendarSidebar({
         />
       </ScrollArea>
 
-      {/* Calendar Creation Dialog */}
       <Dialog open={isCalendarFormOpen} onOpenChange={setIsCalendarFormOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
