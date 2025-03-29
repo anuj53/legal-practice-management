@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { convertDbEventToEvent, convertEventToDbEvent, isValidUUID } from '@/utils/calendarUtils';
@@ -7,6 +6,7 @@ import { Calendar, Event } from '@/types/calendar';
 // Fetch calendars from Supabase
 export const fetchCalendars = async () => {
   try {
+    console.log('Fetching calendars from database...');
     const { data: calendarsData, error: calendarsError } = await supabase
       .from('calendars')
       .select('*');
@@ -19,11 +19,15 @@ export const fetchCalendars = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     const currentUserId = user?.id;
     
+    console.log('Current user ID:', currentUserId);
+    console.log('Fetched calendars data:', calendarsData);
+    
     if (calendarsData && calendarsData.length > 0) {
       console.log('Found calendars in DB:', calendarsData.length);
       
+      // Filter calendars the user can see (user's own + public/firm calendars)
       const myCalendars = calendarsData
-        .filter(cal => cal.user_id === null || cal.user_id === currentUserId)
+        .filter(cal => cal.user_id === null || cal.user_id === currentUserId || cal.is_firm || cal.is_statute)
         .map(cal => ({
           id: cal.id,
           name: cal.name,
@@ -35,7 +39,15 @@ export const fetchCalendars = async () => {
         }));
       
       const otherCalendars = calendarsData
-        .filter(cal => cal.user_id !== null && cal.user_id !== currentUserId && cal.is_public)
+        .filter(cal => {
+          // Other calendars are those that are:
+          // 1. Not the user's own calendars
+          // 2. Not null user_id (which are system calendars)
+          // 3. Are public
+          return cal.user_id !== null && 
+                 cal.user_id !== currentUserId && 
+                 cal.is_public === true;
+        })
         .map(cal => ({
           id: cal.id,
           name: cal.name,
@@ -46,12 +58,71 @@ export const fetchCalendars = async () => {
           is_public: cal.is_public,
         }));
 
+      console.log('Filtered myCalendars:', myCalendars.length);
+      console.log('Filtered otherCalendars:', otherCalendars.length);
+      
       return { myCalendars, otherCalendars };
+    } else {
+      console.log('No calendars found in database, creating demo calendar');
+      
+      // If no calendars found, create a default calendar for demo purposes
+      const demoCalendar = {
+        name: 'My Calendar',
+        color: '#5cb85c',
+      };
+      
+      try {
+        // Only create if no calendars found - this prevents duplication
+        if(!calendarsData || calendarsData.length === 0) {
+          const { data: newCalendarData, error: createError } = await supabase
+            .from('calendars')
+            .insert({
+              name: demoCalendar.name,
+              color: demoCalendar.color,
+              user_id: currentUserId,
+              is_public: false
+            })
+            .select();
+            
+          if (createError) {
+            console.error('Error creating demo calendar:', createError);
+            throw createError;
+          }
+          
+          if (newCalendarData && newCalendarData.length > 0) {
+            const myCalendars = [{
+              id: newCalendarData[0].id,
+              name: newCalendarData[0].name,
+              color: newCalendarData[0].color,
+              checked: true,
+              is_firm: false,
+              is_statute: false,
+              is_public: false,
+            }];
+            
+            console.log('Created demo calendar:', myCalendars[0]);
+            return { myCalendars, otherCalendars: [] };
+          }
+        }
+      } catch (err) {
+        console.error('Error creating demo calendar:', err);
+      }
+      
+      return { myCalendars: [], otherCalendars: [] };
     }
-    return { myCalendars: [], otherCalendars: [] };
   } catch (err) {
     console.error('Error fetching calendars:', err);
-    return null;
+    // Fallback to demo data in case of error
+    const demoCalendars = [
+      {
+        id: 'demo-calendar-1',
+        name: 'Demo Calendar',
+        color: '#ff9800',
+        checked: true
+      }
+    ];
+    console.log('Using demo calendars due to error:', demoCalendars);
+    return { myCalendars: demoCalendars, otherCalendars: [] };
   }
 };
 
@@ -233,10 +304,17 @@ export const createEventInDb = async (event) => {
       throw new Error(errorMsg);
     }
     
-    // Convert RecurrencePattern to a plain object if it exists
-    const recurrencePatternValue = event.recurrencePattern 
-      ? JSON.parse(JSON.stringify(event.recurrencePattern)) 
-      : null;
+    // Convert RecurrencePattern to a plain JSON object if it exists
+    let recurrencePatternValue = null;
+    if (event.recurrencePattern) {
+      try {
+        // Convert the RecurrencePattern to a plain object
+        recurrencePatternValue = JSON.parse(JSON.stringify(event.recurrencePattern));
+        console.log('Converted recurrence pattern:', recurrencePatternValue);
+      } catch (e) {
+        console.error('Error converting recurrence pattern to JSON:', e);
+      }
+    }
     
     const dbEvent = {
       title: event.title,
@@ -308,10 +386,17 @@ export const updateEventInDb = async (event) => {
       throw new Error(`Invalid UUID format for calendar ID: ${event.calendar}`);
     }
     
-    // Convert RecurrencePattern to a plain object if it exists
-    const recurrencePatternValue = event.recurrencePattern 
-      ? JSON.parse(JSON.stringify(event.recurrencePattern)) 
-      : null;
+    // Convert RecurrencePattern to a plain JSON object if it exists
+    let recurrencePatternValue = null;
+    if (event.recurrencePattern) {
+      try {
+        // Convert the RecurrencePattern to a plain object
+        recurrencePatternValue = JSON.parse(JSON.stringify(event.recurrencePattern));
+        console.log('Converted recurrence pattern for update:', recurrencePatternValue);
+      } catch (e) {
+        console.error('Error converting recurrence pattern to JSON for update:', e);
+      }
+    }
     
     const dbEvent = {
       title: event.title,

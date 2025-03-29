@@ -1,3 +1,4 @@
+
 import { Event } from '@/types/calendar';
 
 // Convert DB event object to UI Event object
@@ -16,17 +17,30 @@ export const convertDbEventToEvent = (dbEvent: any): Event => {
           // Otherwise assume it's already a JSON object
           recurrencePattern = dbEvent.recurrence_pattern;
         }
+        console.log('Parsed recurrence pattern:', recurrencePattern);
       } catch (e) {
         console.error('Error parsing recurrence pattern:', e);
       }
     }
     
-    return {
+    // Ensure dates are properly converted
+    const startDate = dbEvent.start_time ? new Date(dbEvent.start_time) : new Date();
+    const endDate = dbEvent.end_time ? new Date(dbEvent.end_time) : new Date(startDate.getTime() + 3600000); // Default to 1 hour later
+    
+    // Check if dates are valid
+    if (isNaN(startDate.getTime())) {
+      console.error('Invalid start date:', dbEvent.start_time);
+    }
+    if (isNaN(endDate.getTime())) {
+      console.error('Invalid end date:', dbEvent.end_time);
+    }
+    
+    const convertedEvent = {
       id: dbEvent.id,
       title: dbEvent.title,
       description: dbEvent.description || '',
-      start: new Date(dbEvent.start_time),
-      end: new Date(dbEvent.end_time),
+      start: startDate,
+      end: endDate,
       location: dbEvent.location || '',
       type: dbEvent.type || 'client-meeting',
       calendar: dbEvent.calendar_id,
@@ -34,6 +48,9 @@ export const convertDbEventToEvent = (dbEvent: any): Event => {
       recurrencePattern: recurrencePattern,
       recurrenceId: dbEvent.recurrence_id,
     };
+    
+    console.log('Converted event result:', convertedEvent);
+    return convertedEvent;
   } catch (error) {
     console.error('Error converting DB event to Event:', error);
     throw error;
@@ -46,6 +63,27 @@ export const convertEventToDbEvent = (event: Event): any => {
   console.log('Converting Event to DB event:', event);
   
   try {
+    // Ensure dates are valid before conversion
+    if (!event.start || isNaN(event.start.getTime())) {
+      console.error('Invalid start date in event:', event);
+      throw new Error('Invalid start date in event');
+    }
+    
+    if (!event.end || isNaN(event.end.getTime())) {
+      console.error('Invalid end date in event:', event);
+      throw new Error('Invalid end date in event');
+    }
+    
+    // Convert recurrencePattern to a plain object if it exists
+    let recurrencePatternValue = null;
+    if (event.recurrencePattern) {
+      try {
+        recurrencePatternValue = JSON.parse(JSON.stringify(event.recurrencePattern));
+      } catch (e) {
+        console.error('Error converting recurrence pattern to DB format:', e);
+      }
+    }
+    
     return {
       id: event.id,
       title: event.title,
@@ -56,7 +94,7 @@ export const convertEventToDbEvent = (event: Event): any => {
       type: event.type || 'client-meeting',
       calendar_id: event.calendar,
       is_recurring: event.isRecurring || false,
-      recurrence_pattern: event.recurrencePattern ? JSON.parse(JSON.stringify(event.recurrencePattern)) : null,
+      recurrence_pattern: recurrencePatternValue,
       recurrence_id: event.recurrenceId || null,
     };
   } catch (error) {

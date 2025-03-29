@@ -1,5 +1,6 @@
+
 import { useState, useEffect } from 'react';
-import { CalendarEvent, CalendarViewType, RecurrencePattern } from '@/types/calendar';
+import { CalendarEvent, CalendarViewType } from '@/types/calendar';
 import { useCalendar } from '@/hooks/useCalendar.tsx';
 import { useEventManagement } from '@/hooks/useEventManagement';
 import { useCalendarManagement } from '@/hooks/useCalendarManagement';
@@ -21,8 +22,9 @@ export function useCalendarPage() {
   } = useCalendar();
   
   useEffect(() => {
-    if (!apiLoading && rawEvents.length > 0) {
+    if (!apiLoading) {
       setIsLoading(false);
+      console.log("API loading completed, raw events count:", rawEvents.length);
     }
   }, [rawEvents, apiLoading, dataUpdated]);
   
@@ -95,21 +97,30 @@ export function useCalendarPage() {
 
     const processedEvents = [...events];
     
-    events.forEach(event => {
-      if (event.isRecurring && event.recurrencePattern) {
-        const instances = generateRecurringInstances(
-          event,
-          event.recurrencePattern,
-          viewStart,
-          viewEnd
-        );
-        
-        if (instances.length > 0) {
-          console.log(`Adding ${instances.length} recurring instances for event ${event.title}`);
-          processedEvents.push(...instances);
+    // Generate recurring instances if needed
+    if (events.length > 0) {
+      events.forEach(event => {
+        if (event.isRecurring && event.recurrencePattern) {
+          try {
+            const instances = generateRecurringInstances(
+              event,
+              event.recurrencePattern,
+              viewStart,
+              viewEnd
+            );
+            
+            if (instances.length > 0) {
+              console.log(`Adding ${instances.length} recurring instances for event ${event.title}`);
+              processedEvents.push(...instances);
+            }
+          } catch (error) {
+            console.error("Error generating recurring instances for event:", event.id, error);
+          }
         }
-      }
-    });
+      });
+    } else {
+      console.log("No events to process for recurrence");
+    }
     
     console.log("Total displayed events being set:", processedEvents.length);
     setDisplayedEvents(processedEvents);

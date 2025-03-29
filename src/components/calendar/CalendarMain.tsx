@@ -12,7 +12,7 @@ interface CalendarMainProps {
   date: Date;
   events: Event[];
   onEventClick: (event: Event) => void;
-  onTimeSlotClick: (date: Date) => void; // Ensure this prop is defined correctly
+  onTimeSlotClick: (date: Date) => void;
 }
 
 export function CalendarMain({ view, date, events, onEventClick, onTimeSlotClick }: CalendarMainProps) {
@@ -46,6 +46,14 @@ export function CalendarMain({ view, date, events, onEventClick, onTimeSlotClick
     
     return { viewStart, viewEnd };
   }, [view, date]);
+
+  // Debug log for events
+  console.log(`Rendering ${view} view with ${events.length} events`, {
+    date: date,
+    viewStart: viewDates.viewStart,
+    viewEnd: viewDates.viewEnd,
+    events: events
+  });
 
   return (
     <div className="h-full overflow-hidden">
