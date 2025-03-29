@@ -1,5 +1,6 @@
 
 import { addHours, addDays, subDays, startOfDay } from 'date-fns';
+import { CalendarShare } from '@/types/calendar';
 
 // Types
 export interface Calendar {
@@ -11,6 +12,7 @@ export interface Calendar {
   is_firm?: boolean;
   is_statute?: boolean;
   is_public?: boolean;
+  sharedWith?: CalendarShare[];
 }
 
 export interface Event {
@@ -27,6 +29,7 @@ export interface Event {
   createdBy?: string;
   attendees?: string[];
   isAllDay?: boolean;
+  reminder?: string;
   // Legal-specific fields
   caseId?: string;
   clientName?: string;
@@ -59,6 +62,43 @@ export const isValidUUID = (id: string): boolean => {
   const isValid = uuidRegex.test(id);
   console.log(`UUID validation for "${id}": ${isValid}`);
   return isValid;
+};
+
+// Converter functions for database interactions
+export const convertEventToDbEvent = (event: Omit<Event, 'id'> | Event) => {
+  return {
+    title: event.title,
+    description: event.description || null,
+    start_time: event.start.toISOString(),
+    end_time: event.end.toISOString(),
+    location: event.location || null,
+    is_recurring: event.isRecurring || false,
+    calendar_id: event.calendar,
+    recurrence_pattern: event.recurrencePattern ? JSON.stringify(event.recurrencePattern) : null,
+    // ID is included only if present
+    ...(('id' in event) ? { id: event.id } : {})
+  };
+};
+
+export const convertDbEventToEvent = (dbEvent: any, eventTypeMap: Record<string, any> = {}): Event => {
+  // Get event type information
+  const eventTypeInfo = dbEvent.event_type_id ? eventTypeMap[dbEvent.event_type_id] : null;
+  
+  return {
+    id: dbEvent.id,
+    title: dbEvent.title,
+    description: dbEvent.description || '',
+    start: new Date(dbEvent.start_time),
+    end: new Date(dbEvent.end_time),
+    type: eventTypeInfo ? eventTypeInfo.name : 'client-meeting',
+    color: eventTypeInfo ? eventTypeInfo.color : null,
+    calendar: dbEvent.calendar_id,
+    location: dbEvent.location || '',
+    isRecurring: dbEvent.is_recurring || false,
+    createdBy: dbEvent.created_by,
+    isAllDay: false,
+    recurrencePattern: dbEvent.recurrence_pattern ? JSON.parse(dbEvent.recurrence_pattern) : undefined
+  };
 };
 
 // Generate demo events for testing based on the existing calendars

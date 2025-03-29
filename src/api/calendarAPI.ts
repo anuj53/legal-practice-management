@@ -1,7 +1,6 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Calendar, Event, convertDbEventToEvent, convertEventToDbEvent, isValidUUID } from '@/utils/calendarUtils';
+import { Calendar, Event, isValidUUID, convertDbEventToEvent, convertEventToDbEvent } from '@/utils/calendarUtils';
 
 // Fetch calendars from Supabase
 export const fetchCalendars = async () => {
@@ -35,6 +34,7 @@ export const fetchCalendars = async () => {
           is_firm: cal.is_firm || false,
           is_statute: cal.is_statute || false,
           is_public: cal.is_public || false,
+          sharedWith: [], // Initialize with empty array
         }));
       
       const otherCalendars = calendarsData
@@ -47,6 +47,7 @@ export const fetchCalendars = async () => {
           is_firm: cal.is_firm || false,
           is_statute: cal.is_statute || false,
           is_public: cal.is_public || false,
+          sharedWith: [], // Initialize with empty array
         }));
 
       return { myCalendars, otherCalendars };
@@ -84,7 +85,8 @@ export const fetchEvents = async () => {
         is_recurring,
         event_type_id,
         calendar_id,
-        created_by
+        created_by,
+        recurrence_pattern
       `);
 
     if (eventsError) {
@@ -105,25 +107,7 @@ export const fetchEvents = async () => {
         return acc;
       }, {}) : {};
       
-      const convertedEvents = eventsData.map(dbEvent => {
-        // Get event type information
-        const eventTypeInfo = dbEvent.event_type_id ? eventTypeMap[dbEvent.event_type_id] : null;
-        
-        return {
-          id: dbEvent.id,
-          title: dbEvent.title,
-          description: dbEvent.description || '',
-          start: new Date(dbEvent.start_time),
-          end: new Date(dbEvent.end_time),
-          type: eventTypeInfo ? eventTypeInfo.name : 'client-meeting',
-          color: eventTypeInfo ? eventTypeInfo.color : null,
-          calendar: dbEvent.calendar_id,
-          location: dbEvent.location || '',
-          isRecurring: dbEvent.is_recurring || false,
-          createdBy: dbEvent.created_by,
-          isAllDay: false, // You might want to add this to your database
-        };
-      });
+      const convertedEvents = eventsData.map(dbEvent => convertDbEventToEvent(dbEvent, eventTypeMap));
       
       console.log('Converted events:', convertedEvents.length);
       return convertedEvents;
@@ -139,17 +123,20 @@ export const fetchEvents = async () => {
 // Update calendar in Supabase
 export const updateCalendarInDb = async (calendar: Calendar) => {
   try {
+    // Remove sharedWith from the data sent to Supabase if it exists
+    const { sharedWith, ...calendarData } = calendar;
+    
     const { data, error } = await supabase
       .from('calendars')
       .update({
-        name: calendar.name,
-        color: calendar.color,
-        is_firm: calendar.is_firm || false,
-        is_statute: calendar.is_statute || false,
-        is_public: calendar.is_public || false,
+        name: calendarData.name,
+        color: calendarData.color,
+        is_firm: calendarData.is_firm || false,
+        is_statute: calendarData.is_statute || false,
+        is_public: calendarData.is_public || false,
         updated_at: new Date().toISOString() 
       })
-      .eq('id', calendar.id)
+      .eq('id', calendarData.id)
       .select();
 
     if (error) {
@@ -174,15 +161,18 @@ export const createCalendarInDb = async (calendar: Omit<Calendar, 'id'>) => {
       throw new Error('User must be authenticated to create a calendar');
     }
     
+    // Remove sharedWith from the data sent to Supabase if it exists
+    const { sharedWith, ...calendarData } = calendar as any;
+    
     const { data, error } = await supabase
       .from('calendars')
       .insert({
-        name: calendar.name,
-        color: calendar.color,
+        name: calendarData.name,
+        color: calendarData.color,
         user_id: user.id,
-        is_firm: calendar.is_firm || false,
-        is_statute: calendar.is_statute || false,
-        is_public: calendar.is_public || false
+        is_firm: calendarData.is_firm || false,
+        is_statute: calendarData.is_statute || false,
+        is_public: calendarData.is_public || false
       })
       .select();
 
@@ -193,10 +183,11 @@ export const createCalendarInDb = async (calendar: Omit<Calendar, 'id'>) => {
     
     console.log('Calendar created in DB:', data);
     
-    // Return new calendar with generated ID
+    // Return new calendar with generated ID and sharedWith array
     return {
-      ...calendar,
+      ...calendarData,
       id: data[0].id,
+      sharedWith: sharedWith || []
     } as Calendar;
   } catch (err) {
     console.error('Error creating calendar:', err);
@@ -262,6 +253,7 @@ export const createEventInDb = async (event: Omit<Event, 'id'>) => {
       end_time: event.end.toISOString(),
       location: event.location || null,
       is_recurring: event.isRecurring || false,
+      recurrence_pattern: event.recurrencePattern ? JSON.stringify(event.recurrencePattern) : null,
       event_type_id: eventTypeId,
       calendar_id: event.calendar,
       created_by: user.id
@@ -287,19 +279,7 @@ export const createEventInDb = async (event: Omit<Event, 'id'>) => {
     }
     
     // Return new event with generated ID
-    const newEvent = {
-      id: data[0].id,
-      title: data[0].title,
-      description: data[0].description || '',
-      start: new Date(data[0].start_time),
-      end: new Date(data[0].end_time),
-      type: event.type || 'client-meeting',
-      calendar: data[0].calendar_id,
-      location: data[0].location || '',
-      isRecurring: data[0].is_recurring || false,
-      createdBy: data[0].created_by,
-      isAllDay: event.isAllDay || false
-    };
+    const newEvent = convertDbEventToEvent(data[0]);
     
     console.log('API: Converted new event:', newEvent);
     return newEvent;
@@ -354,6 +334,7 @@ export const updateEventInDb = async (event: Event) => {
       end_time: event.end.toISOString(),
       location: event.location || null,
       is_recurring: event.isRecurring || false,
+      recurrence_pattern: event.recurrencePattern ? JSON.stringify(event.recurrencePattern) : null,
       event_type_id: eventTypeId,
       calendar_id: event.calendar,
       updated_at: new Date().toISOString()
@@ -380,19 +361,7 @@ export const updateEventInDb = async (event: Event) => {
     }
     
     // Return the updated event
-    const updatedEvent = {
-      id: data[0].id,
-      title: data[0].title,
-      description: data[0].description || '',
-      start: new Date(data[0].start_time),
-      end: new Date(data[0].end_time),
-      type: event.type || 'client-meeting',
-      calendar: data[0].calendar_id,
-      location: data[0].location || '',
-      isRecurring: data[0].is_recurring || false,
-      createdBy: data[0].created_by,
-      isAllDay: event.isAllDay || false
-    };
+    const updatedEvent = convertDbEventToEvent(data[0]);
     
     return updatedEvent;
   } catch (err) {

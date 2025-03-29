@@ -102,7 +102,8 @@ export const useCalendar = () => {
           checked: true,
           is_firm: false,
           is_statute: false,
-          is_public: false
+          is_public: false,
+          sharedWith: []
         },
         {
           name: 'Firm Calendar',
@@ -110,7 +111,8 @@ export const useCalendar = () => {
           checked: true,
           is_firm: true,
           is_statute: false,
-          is_public: true
+          is_public: true,
+          sharedWith: []
         },
         {
           name: 'Statute of Limitations',
@@ -118,7 +120,8 @@ export const useCalendar = () => {
           checked: true,
           is_firm: false,
           is_statute: true,
-          is_public: false
+          is_public: false,
+          sharedWith: []
         }
       ];
       
@@ -195,6 +198,7 @@ export const useCalendar = () => {
       const newCalendar = {
         ...calendar,
         id: Math.random().toString(36).substring(2, 9),
+        sharedWith: calendar.sharedWith || []
       } as Calendar;
       
       setMyCalendars(prev => [...prev, newCalendar]);

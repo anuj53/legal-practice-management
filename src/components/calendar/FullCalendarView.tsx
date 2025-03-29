@@ -1,86 +1,43 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useRef, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import listPlugin from '@fullcalendar/list';
-import { CalendarEvent, CalendarViewType } from '@/types/calendar';
-import { EventClickArg, DateSelectArg, EventInput, DateClickArg } from '@fullcalendar/core';
+import { formatISO } from 'date-fns';
+import { Event } from '@/utils/calendarUtils';
+import { CalendarViewType } from '@/types/calendar';
+import { DateSelectArg, EventClickArg, DateInput } from '@fullcalendar/core';
 
 interface FullCalendarViewProps {
-  events: CalendarEvent[];
   view: CalendarViewType;
   date: Date;
-  onEventClick: (event: CalendarEvent) => void;
-  onDateSelect?: (start: Date, end: Date) => void;
+  events: Event[];
+  onEventClick: (event: Event) => void;
   onDateClick?: (date: Date) => void;
+  onDateSelect?: (start: Date, end: Date) => void;
 }
 
-export const FullCalendarView: React.FC<FullCalendarViewProps> = ({
-  events,
+export function FullCalendarView({
   view,
   date,
+  events,
   onEventClick,
-  onDateSelect,
   onDateClick,
-}) => {
-  // Convert our events to FullCalendar format
-  const calendarEvents: EventInput[] = events.map(event => ({
-    id: event.id,
-    title: event.title,
-    start: event.start,
-    end: event.end,
-    allDay: event.isAllDay,
-    extendedProps: {
-      ...event,
-    },
-    backgroundColor: event.color || getEventColor(event.type),
-    borderColor: event.color || getEventColor(event.type),
-  }));
+  onDateSelect
+}: FullCalendarViewProps) {
+  const calendarRef = useRef<FullCalendar | null>(null);
 
-  // Handle event click
-  const handleEventClick = (clickInfo: EventClickArg) => {
-    const originalEvent = events.find(e => e.id === clickInfo.event.id);
-    if (originalEvent) {
-      onEventClick(originalEvent);
+  useEffect(() => {
+    if (calendarRef.current) {
+      const api = calendarRef.current.getApi();
+      api.changeView(getViewType(view));
+      api.gotoDate(date);
     }
-  };
+  }, [view, date]);
 
-  // Handle date select (for creating events)
-  const handleDateSelect = (selectInfo: DateSelectArg) => {
-    if (onDateSelect) {
-      onDateSelect(selectInfo.start, selectInfo.end);
-    }
-  };
-
-  // Handle date click
-  const handleDateClick = (arg: DateClickArg) => {
-    if (onDateClick) {
-      onDateClick(arg.date);
-    }
-  };
-
-  // Get color based on event type
-  function getEventColor(type: string) {
-    switch (type) {
-      case 'client-meeting':
-        return '#22C55E'; // green-500
-      case 'internal-meeting':
-        return '#3B82F6'; // blue-500
-      case 'court':
-        return '#A855F7'; // purple-500
-      case 'deadline':
-        return '#EF4444'; // red-500
-      case 'personal':
-        return '#F59E0B'; // amber-500
-      default:
-        return '#6B7280'; // gray-500
-    }
-  }
-
-  // Map our view type to FullCalendar view
-  const getFullCalendarView = () => {
+  const getViewType = (view: CalendarViewType): string => {
     switch (view) {
       case 'day':
         return 'timeGridDay';
@@ -95,30 +52,82 @@ export const FullCalendarView: React.FC<FullCalendarViewProps> = ({
     }
   };
 
+  const handleEventClick = (info: EventClickArg) => {
+    const eventId = info.event.id;
+    const clickedEvent = events.find(e => e.id === eventId);
+    if (clickedEvent) {
+      onEventClick(clickedEvent);
+    }
+  };
+
+  const handleDateClick = (arg: any) => {
+    if (onDateClick) {
+      onDateClick(arg.date);
+    }
+  };
+
+  const handleDateSelect = (selectInfo: DateSelectArg) => {
+    if (onDateSelect) {
+      onDateSelect(selectInfo.start, selectInfo.end);
+    }
+  };
+
+  // Transform our events to FullCalendar format
+  const calendarEvents = events.map(event => ({
+    id: event.id,
+    title: event.title,
+    start: formatISO(event.start),
+    end: formatISO(event.end),
+    allDay: event.isAllDay,
+    backgroundColor: event.color || getDefaultColor(event.type),
+    borderColor: event.color || getDefaultColor(event.type),
+  }));
+
+  const getDefaultColor = (type: string): string => {
+    switch (type) {
+      case 'client-meeting':
+        return '#22C55E';
+      case 'internal-meeting':
+        return '#3B82F6';
+      case 'court':
+        return '#A855F7';
+      case 'deadline':
+        return '#EF4444';
+      case 'personal':
+        return '#F59E0B';
+      default:
+        return '#6B7280';
+    }
+  };
+
   return (
     <div className="h-full">
       <FullCalendar
-        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
-        initialView={getFullCalendarView()}
-        headerToolbar={false} // We're using our custom header
-        events={calendarEvents}
+        ref={calendarRef}
+        plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
+        initialView={getViewType(view)}
         initialDate={date}
-        editable={true}
-        selectable={true}
-        selectMirror={true}
-        dayMaxEvents={true}
-        weekends={true}
+        headerToolbar={false}
+        events={calendarEvents}
         eventClick={handleEventClick}
-        select={handleDateSelect}
         dateClick={handleDateClick}
-        height="100%"
+        selectable={true}
+        select={handleDateSelect}
+        dayMaxEvents={true}
         nowIndicator={true}
-        allDaySlot={true}
-        slotMinTime="07:00:00"
-        slotMaxTime="20:00:00"
-        slotDuration="00:30:00"
+        slotMinTime="06:00:00"
+        slotMaxTime="22:00:00"
+        height="100%"
+        expandRows={true}
         stickyHeaderDates={true}
+        allDaySlot={true}
+        slotDuration="00:30:00"
+        businessHours={{
+          daysOfWeek: [1, 2, 3, 4, 5],
+          startTime: '08:00',
+          endTime: '18:00',
+        }}
       />
     </div>
   );
-};
+}

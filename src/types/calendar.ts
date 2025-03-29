@@ -11,3 +11,8 @@ export interface CalendarShare {
 }
 
 export type CalendarViewType = 'day' | 'week' | 'month' | 'agenda';
+
+export interface ReminderType {
+  type: 'email' | 'notification';
+  time: number; // minutes before event
+}
