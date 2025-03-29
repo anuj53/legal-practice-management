@@ -120,8 +120,8 @@ export function FullCalendarView({
         select={handleDateSelect}
         dayMaxEvents={true}
         nowIndicator={true}
-        slotMinTime="06:00:00"
-        slotMaxTime="22:00:00"
+        slotMinTime="00:00:00"  // Changed from 06:00:00 to show full day
+        slotMaxTime="24:00:00"  // Changed from 22:00:00 to show full day
         height="100%"
         expandRows={true}
         stickyHeaderDates={true}
@@ -136,3 +136,4 @@ export function FullCalendarView({
     </div>
   );
 }
+
