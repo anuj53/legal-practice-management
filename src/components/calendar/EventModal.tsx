@@ -82,7 +82,9 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
       setEditMode(mode !== 'view');
       setRecurrenceOption('none');
     }
-  }, [event, mode]);
+    
+    setActiveTab('general');
+  }, [event, mode, isOpen]);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
