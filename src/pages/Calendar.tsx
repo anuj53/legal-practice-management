@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { CalendarHeader } from '@/components/calendar/CalendarHeader';
 import { CalendarSidebar } from '@/components/calendar/CalendarSidebar';
@@ -156,7 +157,7 @@ export default function Calendar() {
   }
   
   return (
-    <div className="flex h-full flex-col overflow-hidden bg-gradient-to-br from-gray-50 to-white">
+    <div className="flex flex-col h-full overflow-hidden bg-gradient-to-br from-gray-50 to-white">
       <div className="flex-shrink-0 px-2 sm:px-4 pt-2 sm:pt-4">
         <CalendarHeader
           currentDate={currentDate}
@@ -170,7 +171,7 @@ export default function Calendar() {
         />
       </div>
       
-      <div className="flex flex-1 overflow-hidden px-2 sm:px-4 pb-2 sm:pb-4">
+      <div className="flex flex-1 overflow-hidden px-2 sm:px-4 pb-2 sm:pb-4 h-[calc(100%-4rem)]">
         <div className="flex-1 overflow-hidden relative bg-white rounded-lg shadow-md border border-gray-100">
           <CalendarMain
             view={currentView}
