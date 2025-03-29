@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -14,7 +15,7 @@ interface FullCalendarViewProps {
   date: Date;
   events: Event[];
   onEventClick: (event: Event) => void;
-  onDateClick?: (date: Date) => void;
+  onDateClick?: ((date: Date) => void) | null;
   onDateSelect?: (start: Date, end: Date) => void;
   onCreateEvent?: (start: Date, end: Date) => void;
 }
@@ -79,6 +80,7 @@ export function FullCalendarView({
   };
 
   const handleDateClick = (arg: any) => {
+    // Only process date clicks if the handler is provided and not null
     if (onDateClick) {
       onDateClick(arg.date);
     }
@@ -113,7 +115,7 @@ export function FullCalendarView({
         headerToolbar={false}
         events={calendarEvents}
         eventClick={handleEventClick}
-        dateClick={handleDateClick}
+        dateClick={onDateClick !== null ? handleDateClick : undefined}
         selectable={true}
         select={handleDateSelect}
         dayMaxEvents={true}

@@ -28,7 +28,7 @@ export function CalendarMain({
         date={date}
         events={events}
         onEventClick={onEventClick}
-        onDateClick={onDayClick}
+        onDateClick={null} // Set to null to disable day click behavior
         onCreateEvent={onCreateEvent}
         onDateSelect={(start, end) => {
           // When user selects a time range and no create function is provided,
