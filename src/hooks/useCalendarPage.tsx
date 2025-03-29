@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { CalendarEvent, Calendar, CalendarViewType, CalendarShare } from '@/types/calendar';
 import { useCalendar } from '@/hooks/useCalendar';

@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Calendar, Event, convertDbEventToEvent, convertEventToDbEvent, isValidUUID } from '@/utils/calendarUtils';
@@ -168,6 +167,48 @@ export const createCalendarInDb = async (calendar: Omit<Calendar, 'id'>) => {
   }
 };
 
+// Convert local Event to database format
+export const convertEventToDbEvent = (eventObj: Event | Omit<Event, 'id'>) => {
+  // Log the input for debugging
+  console.log('Converting app event to DB event, input:', eventObj);
+  
+  // Validate calendar ID
+  if (!eventObj.calendar) {
+    console.error('Missing calendar ID in event:', eventObj);
+    throw new Error('Missing calendar ID for database operation');
+  }
+  
+  if (!isValidUUID(eventObj.calendar)) {
+    console.error('Invalid calendar ID format in event:', eventObj);
+    throw new Error(`Invalid calendar ID format: ${eventObj.calendar}`);
+  }
+  
+  // Get current user ID
+  const userId = supabase.auth.getUser().then(({ data }) => data.user?.id);
+  
+  // Create a clean database event object with only the fields we need to store
+  const dbEvent = {
+    title: eventObj.title,
+    description: eventObj.description,
+    start_time: eventObj.start.toISOString(),
+    end_time: eventObj.end.toISOString(),
+    location: eventObj.location,
+    is_recurring: eventObj.isRecurring || false,
+    // Map the type to event_type_id (this would normally be a lookup)
+    // For now we're just setting it to null and the type will be handled elsewhere
+    event_type_id: null,
+    calendar_id: eventObj.calendar,
+    updated_at: new Date().toISOString(),
+    created_by: '', // This will be replaced with actual user ID before database operation
+    // Only include ID if it exists in the event object (for updates)
+    ...('id' in eventObj ? { id: eventObj.id } : {})
+  };
+  
+  console.log('Converted to DB event:', dbEvent);
+  console.log('Calendar ID being used:', dbEvent.calendar_id);
+  return dbEvent;
+};
+
 // Create event in Supabase
 export const createEventInDb = async (event: Omit<Event, 'id'>) => {
   try {
@@ -207,20 +248,11 @@ export const createEventInDb = async (event: Omit<Event, 'id'>) => {
       throw new Error('User must be logged in to create an event');
     }
     
-    // Create the DB event object with required fields for insert
-    const dbEvent = {
-      title: event.title,
-      description: event.description || '',
-      start_time: event.start.toISOString(),
-      end_time: event.end.toISOString(),
-      location: event.location || '',
-      is_recurring: event.isRecurring || false,
-      // Add event_type_id based on the type
-      event_type_id: null, // In a real app, map this to a real type ID
-      calendar_id: event.calendar,
-      created_by: user.id, // Added the required created_by field
-      updated_at: new Date().toISOString()
-    };
+    // Convert to database format
+    const dbEvent = convertEventToDbEvent(event);
+    
+    // Add the created_by field
+    dbEvent.created_by = user.id;
     
     console.log('API: Formatted DB event for create:', dbEvent);
     console.log('API: Calendar ID being used:', dbEvent.calendar_id);
