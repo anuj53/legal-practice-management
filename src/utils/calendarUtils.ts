@@ -1,5 +1,4 @@
-
-import { addHours, addDays, subDays, startOfDay } from 'date-fns';
+import { addHours, addDays, subDays, startOfDay, addMonths, addWeeks, addYears } from 'date-fns';
 import { CalendarShare } from '@/types/calendar';
 
 // Types
@@ -100,6 +99,76 @@ export const convertDbEventToEvent = (dbEvent: any, eventTypeMap: Record<string,
     isAllDay: false,
     recurrencePattern: dbEvent.recurrence_pattern ? JSON.parse(dbEvent.recurrence_pattern) : undefined
   };
+};
+
+// This function expands recurring events based on their recurrence pattern
+export const expandRecurringEvents = (events: Event[]): Event[] => {
+  const expandedEvents: Event[] = [];
+  
+  events.forEach(event => {
+    // Add the original event
+    expandedEvents.push(event);
+    
+    // If the event is not recurring, no expansion needed
+    if (!event.isRecurring || !event.recurrencePattern) {
+      return;
+    }
+    
+    const { frequency, interval, occurrences, endDate } = event.recurrencePattern;
+    const eventDuration = event.end.getTime() - event.start.getTime();
+    
+    let currentDate = new Date(event.start);
+    let count = 1; // Already added the original event
+    
+    // Keep adding occurrences until we reach the limit or end date
+    while (
+      (occurrences ? count < occurrences : true) && 
+      (endDate ? currentDate < endDate : true)
+    ) {
+      // Advance the date based on frequency and interval
+      switch (frequency) {
+        case 'daily':
+          currentDate = addDays(currentDate, interval);
+          break;
+        case 'weekly':
+          currentDate = addWeeks(currentDate, interval);
+          break;
+        case 'monthly':
+          currentDate = addMonths(currentDate, interval);
+          break;
+        case 'yearly':
+          currentDate = addYears(currentDate, interval);
+          break;
+      }
+      
+      // Stop if we've reached the end date
+      if (endDate && currentDate > endDate) {
+        break;
+      }
+      
+      // Create a new occurrence
+      const newStart = new Date(currentDate);
+      const newEnd = new Date(newStart.getTime() + eventDuration);
+      
+      // Create a new instance with same properties but different dates
+      const newEvent: Event = {
+        ...event,
+        id: `${event.id}_occurrence_${count}`, // Create a unique ID for this occurrence
+        start: newStart,
+        end: newEnd,
+      };
+      
+      expandedEvents.push(newEvent);
+      count++;
+      
+      // Stop if we've reached the occurrences limit
+      if (occurrences && count >= occurrences) {
+        break;
+      }
+    }
+  });
+  
+  return expandedEvents;
 };
 
 // Generate demo events for testing based on the existing calendars

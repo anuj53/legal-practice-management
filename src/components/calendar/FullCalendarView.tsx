@@ -6,7 +6,7 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import listPlugin from '@fullcalendar/list';
 import { formatISO } from 'date-fns';
-import { Event } from '@/utils/calendarUtils';
+import { Event, expandRecurringEvents } from '@/utils/calendarUtils';
 import { CalendarViewType } from '@/types/calendar';
 import { DateSelectArg, EventClickArg } from '@fullcalendar/core';
 
@@ -75,7 +75,12 @@ export function FullCalendarView({
 
   const handleEventClick = (info: EventClickArg) => {
     const eventId = info.event.id;
-    const clickedEvent = events.find(e => e.id === eventId);
+    // Handle occurrence IDs (remove _occurrence_X suffix)
+    const originalId = eventId.includes('_occurrence_') 
+      ? eventId.split('_occurrence_')[0] 
+      : eventId;
+    
+    const clickedEvent = events.find(e => e.id === originalId);
     if (clickedEvent) {
       onEventClick(clickedEvent);
     }
@@ -97,7 +102,10 @@ export function FullCalendarView({
     }
   };
 
-  const calendarEvents = events.map(event => ({
+  // Expand recurring events before rendering
+  const expandedEvents = expandRecurringEvents(events);
+  
+  const calendarEvents = expandedEvents.map(event => ({
     id: event.id,
     title: event.title,
     start: formatISO(event.start),
