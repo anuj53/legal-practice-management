@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { CalendarViewType } from '@/types/calendar';
 import { Calendar, Event } from '@/utils/calendarUtils';
@@ -12,7 +11,6 @@ export function useCalendarPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('view');
 
-  // Use the correct useCalendar hook and destruct the needed properties
   const {
     myCalendars = [],
     otherCalendars = [],
@@ -26,7 +24,6 @@ export function useCalendarPage() {
     deleteCalendar
   } = useCalendar();
   
-  // Get only events from selected calendars - safeguard for undefined myCalendars or otherCalendars
   const filteredEvents = events.filter(event => {
     const calendar = [...(myCalendars || []), ...(otherCalendars || [])].find(cal => cal.id === event.calendar);
     return calendar && calendar.checked;
@@ -61,7 +58,6 @@ export function useCalendarPage() {
   const handleCreateEvent = () => {
     console.log("Create event clicked");
     
-    // Use the first calendar ID
     const defaultCalendarId = myCalendars.length > 0 ? myCalendars[0].id : '';
     
     if (!defaultCalendarId) {
@@ -89,7 +85,6 @@ export function useCalendarPage() {
   const handleCreateCalendar = (calendar: Omit<Calendar, 'id'>) => {
     console.log("Create calendar:", calendar);
     try {
-      // Handle sharing permissions
       if (calendar.sharedWith && calendar.sharedWith.length > 0) {
         console.log("Calendar shared with:", calendar.sharedWith);
       }
@@ -130,7 +125,6 @@ export function useCalendarPage() {
     console.log("handleSaveEvent called with event:", event);
     console.log("Current modal mode:", modalMode);
     
-    // Log recurrence information for debugging
     if (event.isRecurring && event.recurrencePattern) {
       console.log("Recurrence pattern:", {
         frequency: event.recurrencePattern.frequency,
@@ -141,32 +135,32 @@ export function useCalendarPage() {
     }
     
     try {
-      // For new events in create mode
       if (modalMode === 'create') {
         console.log("Creating new event");
         
-        // Validate calendar ID
         if (!event.calendar) {
           console.error("Missing calendar ID for new event");
           toast.error("Cannot save: Missing calendar ID");
           return;
         }
         
-        // Create a properly typed object without 'id' property
         const { id, ...eventWithoutId } = event;
         
-        // Use the correctly typed object for createEvent
-        const newEvent = await createEvent(eventWithoutId);
+        const eventToCreate = {
+          ...eventWithoutId,
+          isRecurring: !!event.isRecurring,
+          recurrencePattern: event.recurrencePattern || undefined
+        };
+        
+        const newEvent = await createEvent(eventToCreate);
         
         toast.success('Event created successfully!');
         console.log("New event created:", newEvent);
       } 
-      // For existing events in edit mode
       else {
         console.log("Updating existing event with ID:", event.id);
         console.log("Event calendar ID:", event.calendar);
         
-        // Validate both event ID and calendar ID
         if (!event.id) {
           console.error("Missing event ID for update");
           toast.error("Cannot update event: Missing ID");
@@ -179,8 +173,13 @@ export function useCalendarPage() {
           return;
         }
         
-        // Update event
-        const updatedEvent = await updateEvent(event);
+        const eventToUpdate = {
+          ...event,
+          isRecurring: !!event.isRecurring,
+          recurrencePattern: event.recurrencePattern || undefined
+        };
+        
+        const updatedEvent = await updateEvent(eventToUpdate);
         toast.success('Event updated successfully!');
         console.log("Event updated:", updatedEvent);
       }

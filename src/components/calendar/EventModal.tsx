@@ -66,9 +66,21 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
     if (event) {
       setFormData(event);
       setEditMode(mode !== 'view');
+      
+      if (event.isRecurring && event.recurrencePattern) {
+        setRecurrenceOption(event.recurrencePattern.frequency || 'none');
+      } else {
+        setRecurrenceOption('none');
+      }
+      
+      console.log("Event loaded in modal:", event);
+      if (event.isRecurring) {
+        console.log("Recurrence pattern:", event.recurrencePattern);
+      }
     } else {
       setFormData(defaultEvent);
       setEditMode(mode !== 'view');
+      setRecurrenceOption('none');
     }
   }, [event, mode]);
   
@@ -175,15 +187,12 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
           interval: 1
         };
         
-        if (option === 'daily') {
-          pattern = { ...pattern, frequency: 'daily' };
-        } else if (option === 'weekly') {
-          pattern = { ...pattern, frequency: 'weekly' };
-        } else if (option === 'monthly') {
-          pattern = { ...pattern, frequency: 'monthly' };
-        } else if (option === 'yearly') {
-          pattern = { ...pattern, frequency: 'yearly' };
-        }
+        pattern = { 
+          ...pattern, 
+          frequency: option as 'daily' | 'weekly' | 'monthly' | 'yearly'
+        };
+        
+        console.log("Setting recurrence pattern:", pattern);
         
         return {
           ...prev,
@@ -812,15 +821,18 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
                       <div>
                         <div className="font-medium">Recurring Event</div>
                         <div className="text-gray-700">
-                          Repeats every {formData.recurrencePattern.interval} {
+                          Repeats every {formData.recurrencePattern.interval || 1} {
                             formData.recurrencePattern.frequency === 'daily' ? 'day(s)' : 
                             formData.recurrencePattern.frequency === 'weekly' ? 'week(s)' :
-                            formData.recurrencePattern.frequency === 'monthly' ? 'month(s)' : 'year(s)'
+                            formData.recurrencePattern.frequency === 'monthly' ? 'month(s)' : 
+                            formData.recurrencePattern.frequency === 'yearly' ? 'year(s)' : ''
                           }
                           {formData.recurrencePattern.endDate && 
-                            ` until ${format(formData.recurrencePattern.endDate, 'MMMM d, yyyy')}`}
+                            ` until ${format(new Date(formData.recurrencePattern.endDate), 'MMMM d, yyyy')}`}
                           {formData.recurrencePattern.occurrences &&
                             ` for ${formData.recurrencePattern.occurrences} occurrences`}
+                          {!formData.recurrencePattern.endDate && !formData.recurrencePattern.occurrences &&
+                            ` (no end date)`}
                         </div>
                       </div>
                     </div>
