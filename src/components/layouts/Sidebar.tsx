@@ -50,7 +50,7 @@ const SidebarItem = ({
       )
     }
   >
-    <Icon className={cn("h-5 w-5 transition-transform group-hover:scale-110", collapsed && "mx-auto")} />
+    <Icon className={cn("h-5 w-5 transition-all group-hover:scale-110", collapsed && "mx-auto")} />
     {!collapsed && <span>{label}</span>}
   </NavLink>
 );
@@ -110,7 +110,7 @@ export function Sidebar({ collapsed = false }: SidebarProps) {
       
       {!collapsed && (
         <div className="p-3 mt-auto">
-          <div className="rounded-lg bg-gradient-to-r from-yorpro-700/80 to-yorpro-700/50 backdrop-blur-sm p-3 border border-yorpro-600/30 shadow-lg">
+          <div className="rounded-lg bg-gradient-to-r from-yorpro-600/20 to-yorpro-700/20 backdrop-blur-sm p-3 border border-yorpro-500/30 shadow-lg">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-full bg-gradient-to-br from-yorpro-500 to-yorpro-400 flex items-center justify-center shadow-md">
                 <span className="font-semibold text-white">JD</span>
@@ -121,7 +121,7 @@ export function Sidebar({ collapsed = false }: SidebarProps) {
               </div>
             </div>
             <div className="mt-2 pt-2 border-t border-yorpro-600/20">
-              <Button variant="ghost" size="sm" className="w-full justify-center text-white/80 hover:text-white hover:bg-yorpro-600/50 text-xs">
+              <Button variant="gradient" size="sm" className="w-full justify-center hover:bg-yorpro-600/50 text-xs">
                 Manage Account
               </Button>
             </div>

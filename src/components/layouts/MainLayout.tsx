@@ -7,6 +7,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Menu } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export function MainLayout() {
   const isMobile = useIsMobile();
@@ -14,12 +15,12 @@ export function MainLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden bg-gray-50">
       {isMobile ? (
         // Mobile version with slide-out sidebar
         <>
           <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-            <SheetContent side="left" className="p-0 w-64">
+            <SheetContent side="left" className="p-0 w-72">
               <Sidebar />
             </SheetContent>
           </Sheet>
@@ -34,8 +35,10 @@ export function MainLayout() {
             </Header>
             <main className="flex-1 overflow-hidden bg-gradient-to-br from-gray-50 via-white to-gray-100">
               <div className="relative h-full">
-                {/* Background patterns */}
+                {/* Updated background patterns with modern design */}
                 <div className="absolute inset-0 bg-grid-gray-100/25 [mask-image:radial-gradient(white,transparent_85%)]" />
+                
+                {/* Top right decorative element */}
                 <div className="absolute top-0 right-0 -mt-16 opacity-30 select-none pointer-events-none">
                   <svg width="400" height="400" viewBox="0 0 400 400" fill="none">
                     <g opacity="0.2">
@@ -52,6 +55,7 @@ export function MainLayout() {
                   </svg>
                 </div>
                 
+                {/* Bottom left decorative element */}
                 <div className="absolute bottom-0 left-0 opacity-30 select-none pointer-events-none">
                   <svg width="300" height="300" viewBox="0 0 300 300" fill="none">
                     <path d="M0 0L300 300" stroke="url(#paint1_linear)" strokeWidth="2" />
@@ -67,7 +71,9 @@ export function MainLayout() {
                 </div>
                 
                 <div className="relative z-10 h-full">
-                  <Outlet />
+                  <ScrollArea className="h-full w-full">
+                    <Outlet />
+                  </ScrollArea>
                 </div>
               </div>
             </main>
@@ -79,9 +85,9 @@ export function MainLayout() {
           <div className={`${sidebarCollapsed ? 'w-16' : 'w-64'} transition-all duration-300 ease-in-out relative`}>
             <Sidebar collapsed={sidebarCollapsed} />
             <Button 
-              variant="ghost" 
+              variant="gradient"
               size="icon" 
-              className="absolute top-1/2 -right-3 h-6 w-6 bg-white border shadow-sm rounded-full"
+              className="absolute top-1/2 -right-3 h-6 w-6 rounded-full"
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
             >
               {sidebarCollapsed ? 
@@ -94,8 +100,10 @@ export function MainLayout() {
             <Header />
             <main className="flex-1 overflow-hidden bg-gradient-to-br from-gray-50 via-white to-gray-100">
               <div className="relative h-full">
-                {/* Background patterns */}
+                {/* Updated background patterns with modern design */}
                 <div className="absolute inset-0 bg-grid-gray-100/25 [mask-image:radial-gradient(white,transparent_85%)]" />
+                
+                {/* Top right decorative element */}
                 <div className="absolute top-0 right-0 -mt-16 opacity-30 select-none pointer-events-none">
                   <svg width="400" height="400" viewBox="0 0 400 400" fill="none">
                     <g opacity="0.2">
@@ -112,6 +120,7 @@ export function MainLayout() {
                   </svg>
                 </div>
                 
+                {/* Bottom left decorative element */}
                 <div className="absolute bottom-0 left-0 opacity-30 select-none pointer-events-none">
                   <svg width="300" height="300" viewBox="0 0 300 300" fill="none">
                     <path d="M0 0L300 300" stroke="url(#paint1_linear)" strokeWidth="2" />
@@ -127,7 +136,9 @@ export function MainLayout() {
                 </div>
                 
                 <div className="relative z-10 h-full">
-                  <Outlet />
+                  <ScrollArea className="h-full w-full">
+                    <Outlet />
+                  </ScrollArea>
                 </div>
               </div>
             </main>

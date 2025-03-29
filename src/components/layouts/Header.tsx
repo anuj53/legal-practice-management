@@ -60,13 +60,17 @@ export function Header({ children }: HeaderProps) {
         )}
 
         {!isMobile && (
-          <div className="hidden sm:flex items-center px-3 py-1.5 bg-white rounded-md border">
+          <div className="hidden sm:flex items-center px-3 py-1.5 bg-white rounded-md border border-gray-200 shadow-sm">
             <Clock className="h-5 w-5 mr-2 text-gray-700" />
             <span className="font-medium">00:00:00</span>
           </div>
         )}
 
-        <Button className="bg-blue-600 hover:bg-blue-700 gap-1" size={isMobile ? "sm" : "default"}>
+        <Button 
+          variant="gradient" 
+          className="btn-modern gap-1" 
+          size={isMobile ? "sm" : "default"}
+        >
           <Plus className={isMobile ? "h-3 w-3" : "h-4 w-4"} />
           {!isMobile && "Add New Entry"}
         </Button>

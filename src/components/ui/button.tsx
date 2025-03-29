@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
@@ -9,15 +10,15 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        outline:
-          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
-        secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        default: "bg-gradient-to-r from-yorpro-600 to-yorpro-500 hover:from-yorpro-700 hover:to-yorpro-600 text-white shadow-sm",
+        destructive: "bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white shadow-sm",
+        outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        secondary: "bg-gradient-to-r from-gray-200 to-gray-100 hover:from-gray-300 hover:to-gray-200 text-gray-800 shadow-sm",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
+        gradient: "bg-gradient-to-r from-yorpro-600 via-yorpro-500 to-yorpro-400 hover:from-yorpro-700 hover:via-yorpro-600 hover:to-yorpro-500 text-white shadow-md",
+        "gradient-purple": "bg-gradient-to-r from-purple-600 via-purple-500 to-purple-400 hover:from-purple-700 hover:via-purple-600 hover:to-purple-500 text-white shadow-md",
+        "gradient-teal": "bg-gradient-to-r from-teal-600 via-teal-500 to-teal-400 hover:from-teal-700 hover:via-teal-600 hover:to-teal-500 text-white shadow-md",
       },
       size: {
         default: "h-10 px-4 py-2",
