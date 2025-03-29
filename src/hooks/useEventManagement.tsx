@@ -106,10 +106,20 @@ export function useEventManagement() {
           return;
         }
         
+        // Make a copy of the event without the id and calendarColor props
         const { id, calendarColor, ...eventWithoutId } = event;
+        
+        console.log("Event being sent to createEvent:", eventWithoutId);
         
         let newEvent = await createEvent(eventWithoutId as any);
         console.log("New event created:", newEvent);
+        
+        // Add debugging to check DB event creation success
+        if (!newEvent || !newEvent.id) {
+          console.error("Failed to create event or event ID is missing");
+          toast.error("Event creation failed - server returned invalid data");
+          return;
+        }
         
         if (recurrencePattern && newEvent) {
           console.log("Making event recurring with pattern:", recurrencePattern);
@@ -118,6 +128,8 @@ export function useEventManagement() {
         }
         
         toast.success('Event created successfully!');
+        // Force refresh the calendar data
+        window.dispatchEvent(new CustomEvent('calendar-data-update'));
       } 
       else if (event.isRecurring && recurrenceEditMode !== 'single') {
         console.log(`Updating ${recurrenceEditMode === 'all' ? 'all occurrences' : 'future occurrences'} of recurring event`);
@@ -129,6 +141,8 @@ export function useEventManagement() {
         console.log("Updated recurring event:", updatedEvent);
         
         toast.success('Recurring event updated successfully!');
+        // Force refresh the calendar data
+        window.dispatchEvent(new CustomEvent('calendar-data-update'));
       }
       else {
         console.log("Updating existing event with ID:", event.id);
@@ -164,6 +178,9 @@ export function useEventManagement() {
           console.log("Updated event:", updatedEvent);
           toast.success('Event updated successfully!');
         }
+        
+        // Force refresh the calendar data
+        window.dispatchEvent(new CustomEvent('calendar-data-update'));
       }
       
       setModalOpen(false);
@@ -186,6 +203,10 @@ export function useEventManagement() {
       
       await deleteEvent(id);
       toast.success('Event deleted successfully!');
+      
+      // Force refresh the calendar data
+      window.dispatchEvent(new CustomEvent('calendar-data-update'));
+      
       setModalOpen(false);
     } catch (error) {
       console.error('Error deleting event:', error);

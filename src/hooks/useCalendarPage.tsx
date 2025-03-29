@@ -12,6 +12,7 @@ export function useCalendarPage() {
   const [currentView, setCurrentView] = useState<CalendarViewType>('week');
   const [displayedEvents, setDisplayedEvents] = useState<CalendarEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [forceUpdate, setForceUpdate] = useState(0);
 
   const {
     myCalendars,
@@ -21,12 +22,26 @@ export function useCalendarPage() {
     dataUpdated = 0
   } = useCalendar();
   
+  // Listen for custom event to force refresh
+  useEffect(() => {
+    const handleDataUpdate = () => {
+      console.log("Detected calendar data update event, forcing refresh");
+      setForceUpdate(prev => prev + 1);
+    };
+    
+    window.addEventListener('calendar-data-update', handleDataUpdate);
+    
+    return () => {
+      window.removeEventListener('calendar-data-update', handleDataUpdate);
+    };
+  }, []);
+  
   useEffect(() => {
     if (!apiLoading) {
       setIsLoading(false);
       console.log("API loading completed, raw events count:", rawEvents.length);
     }
-  }, [rawEvents, apiLoading, dataUpdated]);
+  }, [rawEvents, apiLoading, dataUpdated, forceUpdate]);
   
   const {
     selectedEvent,
@@ -124,7 +139,7 @@ export function useCalendarPage() {
     
     console.log("Total displayed events being set:", processedEvents.length);
     setDisplayedEvents(processedEvents);
-  }, [events, currentDate, currentView]);
+  }, [events, currentDate, currentView, forceUpdate]);
   
   const handleDayClick = (date: Date) => {
     setCurrentDate(date);

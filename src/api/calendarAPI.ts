@@ -304,6 +304,16 @@ export const createEventInDb = async (event) => {
       throw new Error(errorMsg);
     }
     
+    // Ensure start and end are Date objects
+    const startDate = event.start instanceof Date ? event.start : new Date(event.start);
+    const endDate = event.end instanceof Date ? event.end : new Date(event.end);
+    
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      const errorMsg = 'Invalid start or end date format';
+      console.error(errorMsg);
+      throw new Error(errorMsg);
+    }
+    
     // Convert RecurrencePattern to a plain JSON object if it exists
     let recurrencePatternValue = null;
     if (event.recurrencePattern) {
@@ -319,8 +329,8 @@ export const createEventInDb = async (event) => {
     const dbEvent = {
       title: event.title,
       description: event.description || '',
-      start_time: event.start.toISOString(),
-      end_time: event.end.toISOString(),
+      start_time: startDate.toISOString(),
+      end_time: endDate.toISOString(),
       location: event.location || '',
       type: event.type || 'client-meeting',
       calendar_id: event.calendar,
