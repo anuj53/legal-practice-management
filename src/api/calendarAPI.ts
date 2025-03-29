@@ -201,6 +201,12 @@ export const createEventInDb = async (event: Omit<Event, 'id'>) => {
       throw new Error(errorMsg);
     }
     
+    // Get current user ID for created_by field
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('User must be logged in to create an event');
+    }
+    
     // Create the DB event object with required fields for insert
     const dbEvent = {
       title: event.title,
@@ -209,14 +215,15 @@ export const createEventInDb = async (event: Omit<Event, 'id'>) => {
       end_time: event.end.toISOString(),
       location: event.location || '',
       is_recurring: event.isRecurring || false,
-      type: event.type || 'client-meeting',
+      // Add event_type_id based on the type
+      event_type_id: null, // In a real app, map this to a real type ID
       calendar_id: event.calendar,
+      created_by: user.id, // Added the required created_by field
       updated_at: new Date().toISOString()
     };
     
     console.log('API: Formatted DB event for create:', dbEvent);
     console.log('API: Calendar ID being used:', dbEvent.calendar_id);
-    console.log('API: Calendar ID is valid UUID:', isValidUUID(dbEvent.calendar_id));
     
     const { data, error } = await supabase
       .from('events')
@@ -277,6 +284,15 @@ export const updateEventInDb = async (event: Event) => {
     // Convert to database format
     const dbEvent = convertEventToDbEvent(event);
     
+    // Get current user ID
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('User must be logged in to update an event');
+    }
+    
+    // Add the created_by field for update
+    dbEvent.created_by = user.id;
+    
     console.log('API: Formatted DB event for update:', dbEvent);
     
     const { data, error } = await supabase
@@ -329,6 +345,34 @@ export const deleteEventFromDb = async (id: string) => {
     return true;
   } catch (err) {
     console.error('Error deleting event:', err);
+    throw err;
+  }
+};
+
+// Delete calendar from Supabase
+export const deleteCalendarFromDb = async (id: string) => {
+  try {
+    console.log('API: Deleting calendar from DB:', id);
+    
+    // Validate UUID before attempting to delete
+    if (!isValidUUID(id)) {
+      throw new Error(`Invalid UUID format for calendar ID: ${id}`);
+    }
+    
+    const { error } = await supabase
+      .from('calendars')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting calendar from DB:', error);
+      throw error;
+    }
+    
+    console.log('API: Calendar deleted from DB');
+    return true;
+  } catch (err) {
+    console.error('Error deleting calendar:', err);
     throw err;
   }
 };

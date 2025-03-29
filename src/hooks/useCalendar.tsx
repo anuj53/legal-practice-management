@@ -13,7 +13,8 @@ import {
   createCalendarInDb,
   createEventInDb,
   updateEventInDb,
-  deleteEventFromDb
+  deleteEventFromDb,
+  deleteCalendarFromDb
 } from '@/api/calendarAPI';
 
 export type { Calendar, Event } from '@/utils/calendarUtils';
@@ -83,6 +84,30 @@ export const useCalendar = () => {
       
       setMyCalendars(prev => [...prev, newCalendar]);
       return newCalendar;
+    }
+  };
+
+  // Delete calendar
+  const deleteCalendar = async (id: string) => {
+    try {
+      // First delete from the database
+      await deleteCalendarFromDb(id);
+      
+      // Then update local state
+      setMyCalendars(prev => prev.filter(cal => cal.id !== id));
+      setOtherCalendars(prev => prev.filter(cal => cal.id !== id));
+      
+      // Also remove any events associated with this calendar
+      setEvents(prev => prev.filter(event => event.calendar !== id));
+      
+      // Trigger a data refresh
+      setDataUpdated(prev => prev + 1);
+      
+      toast.success('Calendar deleted successfully');
+    } catch (err) {
+      console.error('Error deleting calendar:', err);
+      setError('Failed to delete calendar');
+      toast.error('Failed to delete calendar');
     }
   };
 
@@ -200,6 +225,7 @@ export const useCalendar = () => {
     setError,
     updateCalendar,
     createCalendar,
+    deleteCalendar, // Added this function
     createEvent,
     updateEvent,
     deleteEvent,

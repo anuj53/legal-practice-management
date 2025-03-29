@@ -9,7 +9,7 @@ import { useCalendarPage } from '@/hooks/useCalendarPage';
 import { toast } from 'sonner';
 import { CalendarManagement } from '@/components/calendar/CalendarManagement';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Calendar as CalendarType, CalendarShare } from '@/types/calendar';
+import { Calendar as CalendarType } from '@/types/calendar';
 
 export default function Calendar() {
   const [calendarDialogOpen, setCalendarDialogOpen] = useState(false);

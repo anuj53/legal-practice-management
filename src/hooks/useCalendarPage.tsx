@@ -12,27 +12,35 @@ export function useCalendarPage() {
   const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('view');
 
   const {
-    calendars,
+    myCalendars,
+    otherCalendars,
     events,
     createEvent,
     updateEvent,
     deleteEvent,
-    toggleCalendar,
     createCalendar,
+    updateCalendar,
+    deleteCalendar
   } = useCalendar();
-  
-  // Split calendars into my calendars and other calendars
-  const myCalendars = calendars.filter(cal => cal.isUserCalendar);
-  const otherCalendars = calendars.filter(cal => !cal.isUserCalendar);
   
   // Get only events from selected calendars
   const filteredEvents = events.filter(event => {
-    const calendar = calendars.find(cal => cal.id === event.calendar);
+    const calendar = [...myCalendars, ...otherCalendars].find(cal => cal.id === event.calendar);
     return calendar && calendar.checked;
   });
   
-  const handleCalendarToggle = (id: string, category: 'my' | 'other') => {
-    toggleCalendar(id);
+  const handleCalendarToggle = (id: string) => {
+    const calendarList = [...myCalendars, ...otherCalendars];
+    const calendar = calendarList.find(cal => cal.id === id);
+    
+    if (calendar) {
+      const updatedCalendar = {
+        ...calendar,
+        checked: !calendar.checked
+      };
+      
+      updateCalendar(updatedCalendar);
+    }
   };
   
   const handleEventClick = (event: CalendarEvent) => {
@@ -51,7 +59,7 @@ export function useCalendarPage() {
     console.log("Create event clicked");
     
     // Use the first calendar ID
-    const defaultCalendarId = calendars.length > 0 ? calendars[0].id : '';
+    const defaultCalendarId = myCalendars.length > 0 ? myCalendars[0].id : '';
     
     if (!defaultCalendarId) {
       toast.error("Cannot create event: No calendars available");
@@ -89,6 +97,29 @@ export function useCalendarPage() {
     } catch (error) {
       console.error('Error creating calendar:', error);
       toast.error(`Failed to create calendar: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+  
+  const handleUpdateCalendar = (calendar: Calendar) => {
+    console.log("Update calendar:", calendar);
+    try {
+      updateCalendar(calendar);
+      toast.success(`Calendar "${calendar.name}" updated successfully!`);
+      return calendar;
+    } catch (error) {
+      console.error('Error updating calendar:', error);
+      toast.error(`Failed to update calendar: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+  
+  const handleDeleteCalendar = (id: string) => {
+    console.log("Delete calendar:", id);
+    try {
+      deleteCalendar(id);
+      toast.success('Calendar deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting calendar:', error);
+      toast.error(`Failed to delete calendar: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
   
@@ -183,5 +214,7 @@ export function useCalendarPage() {
     handleSaveEvent,
     handleDeleteEvent,
     handleCreateCalendar,
+    handleUpdateCalendar,
+    handleDeleteCalendar,
   };
 }
