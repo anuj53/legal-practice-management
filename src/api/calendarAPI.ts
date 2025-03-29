@@ -31,9 +31,9 @@ export const fetchCalendars = async () => {
           name: cal.name,
           color: cal.color,
           checked: true,
-          is_firm: cal.is_firm,
-          is_statute: cal.is_statute,
-          is_public: cal.is_public,
+          is_firm: cal.is_firm || false,
+          is_statute: cal.is_statute || false,
+          is_public: cal.is_public || false,
         }));
       
       const otherCalendars = calendarsData
@@ -43,9 +43,9 @@ export const fetchCalendars = async () => {
           name: cal.name,
           color: cal.color,
           checked: false,
-          is_firm: cal.is_firm,
-          is_statute: cal.is_statute,
-          is_public: cal.is_public,
+          is_firm: cal.is_firm || false,
+          is_statute: cal.is_statute || false,
+          is_public: cal.is_public || false,
         }));
 
       return { myCalendars, otherCalendars };
@@ -72,7 +72,7 @@ export const fetchEvents = async () => {
         end_time,
         location,
         is_recurring,
-        type,
+        event_type_id,
         calendar_id
       `);
 
@@ -85,7 +85,14 @@ export const fetchEvents = async () => {
       console.log('Found events in DB:', eventsData.length);
       console.log('Sample event from DB:', eventsData[0]);
       
-      const convertedEvents = eventsData.map(convertDbEventToEvent);
+      const convertedEvents = eventsData.map(dbEvent => {
+        // Map event_type_id to the type field expected by our app
+        return convertDbEventToEvent({
+          ...dbEvent,
+          type: dbEvent.event_type_id ? 'client-meeting' : 'internal-meeting' // Default mapping
+        });
+      });
+      
       console.log('Converted events:', convertedEvents.length);
       if (convertedEvents.length > 0) {
         console.log('Sample converted event:', convertedEvents[0]);
@@ -138,6 +145,7 @@ export const createCalendarInDb = async (calendar: Omit<Calendar, 'id'>) => {
       .insert({
         name: calendar.name,
         color: calendar.color,
+        user_id: (await supabase.auth.getUser()).data.user?.id || '',
         is_firm: calendar.is_firm || false,
         is_statute: calendar.is_statute || false,
         is_public: calendar.is_public || false

@@ -1,4 +1,3 @@
-
 import { addHours, addDays, subDays, startOfDay } from 'date-fns';
 
 // Types
@@ -69,13 +68,30 @@ export const convertDbEventToEvent = (dbEvent: any): Event => {
     throw new Error('Cannot convert invalid DB event: missing calendar_id');
   }
   
+  // Map the event_type_id or type to our application's type enum
+  let eventType: 'client-meeting' | 'internal-meeting' | 'court' | 'deadline' | 'personal' = 'client-meeting';
+  
+  // If there's a direct type field, use it (backward compatibility)
+  if (dbEvent.type && typeof dbEvent.type === 'string') {
+    // Ensure the type is one of our allowed values
+    if (['client-meeting', 'internal-meeting', 'court', 'deadline', 'personal'].includes(dbEvent.type)) {
+      eventType = dbEvent.type as any;
+    }
+  } 
+  // Otherwise try to map from event_type_id 
+  else if (dbEvent.event_type_id) {
+    // In a real app, you might fetch the event type details and map accordingly
+    // For now, we'll default based on the presence of an ID
+    eventType = 'client-meeting';
+  }
+  
   const event = {
     id: dbEvent.id,
     title: dbEvent.title,
     description: dbEvent.description || '',
     start: new Date(dbEvent.start_time),
     end: new Date(dbEvent.end_time),
-    type: dbEvent.type || 'client-meeting',
+    type: eventType,
     calendar: dbEvent.calendar_id,
     location: dbEvent.location || '',
     isRecurring: dbEvent.is_recurring || false,
@@ -112,7 +128,9 @@ export const convertEventToDbEvent = (eventObj: Event | Omit<Event, 'id'>) => {
     end_time: eventObj.end.toISOString(),
     location: eventObj.location,
     is_recurring: eventObj.isRecurring || false,
-    type: eventObj.type,
+    // Map the type to event_type_id (this would normally be a lookup)
+    // For now we're just setting it to null and the type will be handled elsewhere
+    event_type_id: null,
     calendar_id: eventObj.calendar,
     updated_at: new Date().toISOString(),
     // Only include ID if it exists in the event object (for updates)
