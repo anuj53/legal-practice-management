@@ -6,11 +6,12 @@ import { Header } from './Header';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Menu } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Menu } from 'lucide-react';
 
 export function MainLayout() {
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -31,8 +32,8 @@ export function MainLayout() {
                 </Button>
               </SheetTrigger>
             </Header>
-            <main className="flex-1 overflow-hidden bg-gradient-to-br from-gray-50 via-white to-gray-100">
-              <div className="relative h-full">
+            <main className="flex-1 overflow-auto bg-gradient-to-br from-gray-50 via-white to-gray-100">
+              <div className="relative min-h-full">
                 {/* Background patterns */}
                 <div className="absolute inset-0 bg-grid-gray-100/25 [mask-image:radial-gradient(white,transparent_85%)]" />
                 <div className="absolute top-0 right-0 -mt-16 opacity-30 select-none pointer-events-none">
@@ -65,7 +66,7 @@ export function MainLayout() {
                   </svg>
                 </div>
                 
-                <div className="relative z-10 p-2 sm:p-4 md:p-8 h-full overflow-hidden">
+                <div className="relative z-10 p-2 sm:p-4 md:p-8 h-full overflow-auto">
                   <Outlet />
                 </div>
               </div>
@@ -73,13 +74,26 @@ export function MainLayout() {
           </div>
         </>
       ) : (
-        // Desktop version
+        // Desktop version with collapsible sidebar
         <>
-          <Sidebar />
+          <div className={`${sidebarCollapsed ? 'w-16' : 'w-64'} transition-all duration-300 ease-in-out relative`}>
+            <Sidebar collapsed={sidebarCollapsed} />
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="absolute top-1/2 -right-3 h-6 w-6 bg-white border shadow-sm rounded-full"
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            >
+              {sidebarCollapsed ? 
+                <ChevronRight className="h-3 w-3" /> : 
+                <ChevronLeft className="h-3 w-3" />
+              }
+            </Button>
+          </div>
           <div className="flex-1 flex flex-col overflow-hidden">
             <Header />
-            <main className="flex-1 overflow-hidden bg-gradient-to-br from-gray-50 via-white to-gray-100">
-              <div className="relative h-full">
+            <main className="flex-1 overflow-auto bg-gradient-to-br from-gray-50 via-white to-gray-100">
+              <div className="relative min-h-full">
                 {/* Background patterns */}
                 <div className="absolute inset-0 bg-grid-gray-100/25 [mask-image:radial-gradient(white,transparent_85%)]" />
                 <div className="absolute top-0 right-0 -mt-16 opacity-30 select-none pointer-events-none">
@@ -112,7 +126,7 @@ export function MainLayout() {
                   </svg>
                 </div>
                 
-                <div className="relative z-10 p-4 md:p-8 h-full overflow-hidden">
+                <div className="relative z-10 p-4 md:p-8 h-full overflow-auto">
                   <Outlet />
                 </div>
               </div>
