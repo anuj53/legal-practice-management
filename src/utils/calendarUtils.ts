@@ -106,11 +106,9 @@ export const expandRecurringEvents = (events: Event[]): Event[] => {
   const expandedEvents: Event[] = [];
   
   events.forEach(event => {
-    // Add the original event
-    expandedEvents.push(event);
-    
-    // If the event is not recurring, no expansion needed
+    // If the event is not recurring, just add it and continue
     if (!event.isRecurring || !event.recurrencePattern) {
+      expandedEvents.push(event);
       return;
     }
     
@@ -118,13 +116,33 @@ export const expandRecurringEvents = (events: Event[]): Event[] => {
     const eventDuration = event.end.getTime() - event.start.getTime();
     
     let currentDate = new Date(event.start);
-    let count = 1; // Already added the original event
+    let count = 0; // Start count at 0 since we haven't added any occurrences yet
     
     // Keep adding occurrences until we reach the limit or end date
     while (
       (occurrences ? count < occurrences : true) && 
-      (endDate ? currentDate < endDate : true)
+      (endDate ? currentDate <= endDate : true)
     ) {
+      // Create a new occurrence for current date
+      const newStart = new Date(currentDate);
+      const newEnd = new Date(newStart.getTime() + eventDuration);
+      
+      // Create a new instance with same properties but different dates
+      const newEvent: Event = {
+        ...event,
+        id: count === 0 ? event.id : `${event.id}_occurrence_${count}`,
+        start: newStart,
+        end: newEnd,
+      };
+      
+      expandedEvents.push(newEvent);
+      count++;
+      
+      // Stop if we've reached the occurrences limit
+      if (occurrences && count >= occurrences) {
+        break;
+      }
+      
       // Advance the date based on frequency and interval
       switch (frequency) {
         case 'daily':
@@ -139,31 +157,6 @@ export const expandRecurringEvents = (events: Event[]): Event[] => {
         case 'yearly':
           currentDate = addYears(currentDate, interval);
           break;
-      }
-      
-      // Stop if we've reached the end date
-      if (endDate && currentDate > endDate) {
-        break;
-      }
-      
-      // Create a new occurrence
-      const newStart = new Date(currentDate);
-      const newEnd = new Date(newStart.getTime() + eventDuration);
-      
-      // Create a new instance with same properties but different dates
-      const newEvent: Event = {
-        ...event,
-        id: `${event.id}_occurrence_${count}`, // Create a unique ID for this occurrence
-        start: newStart,
-        end: newEnd,
-      };
-      
-      expandedEvents.push(newEvent);
-      count++;
-      
-      // Stop if we've reached the occurrences limit
-      if (occurrences && count >= occurrences) {
-        break;
       }
     }
   });
