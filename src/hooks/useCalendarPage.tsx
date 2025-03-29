@@ -130,6 +130,16 @@ export function useCalendarPage() {
     console.log("handleSaveEvent called with event:", event);
     console.log("Current modal mode:", modalMode);
     
+    // Log recurrence information for debugging
+    if (event.isRecurring && event.recurrencePattern) {
+      console.log("Recurrence pattern:", {
+        frequency: event.recurrencePattern.frequency,
+        interval: event.recurrencePattern.interval,
+        occurrences: event.recurrencePattern.occurrences,
+        endDate: event.recurrencePattern.endDate
+      });
+    }
+    
     try {
       // For new events in create mode
       if (modalMode === 'create') {

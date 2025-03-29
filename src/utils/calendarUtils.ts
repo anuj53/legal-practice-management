@@ -118,10 +118,15 @@ export const expandRecurringEvents = (events: Event[]): Event[] => {
     let currentDate = new Date(event.start);
     let count = 0; // Start count at 0 since we haven't added any occurrences yet
     
+    // For debugging
+    console.log(`Expanding recurring event: "${event.title}", frequency: ${frequency}, interval: ${interval}, occurrences: ${occurrences}`);
+    
     // Keep adding occurrences until we reach the limit or end date
     while (
       (occurrences ? count < occurrences : true) && 
-      (endDate ? currentDate <= endDate : true)
+      (endDate ? currentDate <= endDate : true) &&
+      // Safeguard against infinite loops (limit to 100 occurrences if no other limits)
+      (!occurrences && !endDate ? count < 100 : true)
     ) {
       // Create a new occurrence for current date
       const newStart = new Date(currentDate);
@@ -137,6 +142,9 @@ export const expandRecurringEvents = (events: Event[]): Event[] => {
       
       expandedEvents.push(newEvent);
       count++;
+      
+      // Log the occurrence for debugging
+      console.log(`Added occurrence ${count} on ${newStart.toISOString()}`);
       
       // Stop if we've reached the occurrences limit
       if (occurrences && count >= occurrences) {

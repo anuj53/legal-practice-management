@@ -80,8 +80,15 @@ export function FullCalendarView({
       ? eventId.split('_occurrence_')[0] 
       : eventId;
     
-    const clickedEvent = events.find(e => e.id === originalId);
-    if (clickedEvent) {
+    // Find the original event (not the occurrence) to preserve recurrence pattern
+    const originalEvent = events.find(e => e.id === originalId);
+    if (originalEvent) {
+      // Pass the original event but with the start/end dates of the clicked occurrence
+      const clickedEvent = {
+        ...originalEvent,
+        start: info.event.start || originalEvent.start,
+        end: info.event.end || originalEvent.end
+      };
       onEventClick(clickedEvent);
     }
   };
@@ -105,6 +112,16 @@ export function FullCalendarView({
   // Expand recurring events before rendering
   const expandedEvents = expandRecurringEvents(events);
   
+  console.log('Expanding events:', events.length, 'to', expandedEvents.length, 'occurrences');
+  
+  // Debug log for recurring events
+  events.filter(e => e.isRecurring).forEach(e => {
+    console.log('Recurring event:', e.title, 
+      'pattern:', e.recurrencePattern?.frequency, 
+      'interval:', e.recurrencePattern?.interval, 
+      'occurrences:', e.recurrencePattern?.occurrences);
+  });
+  
   const calendarEvents = expandedEvents.map(event => ({
     id: event.id,
     title: event.title,
@@ -113,6 +130,13 @@ export function FullCalendarView({
     allDay: event.isAllDay,
     backgroundColor: event.color || getDefaultColor(event.type),
     borderColor: event.color || getDefaultColor(event.type),
+    // Add extendedProps to support additional metadata
+    extendedProps: {
+      isRecurring: event.isRecurring,
+      recurrencePattern: event.recurrencePattern,
+      type: event.type,
+      calendar: event.calendar
+    }
   }));
 
   return (
