@@ -12,68 +12,62 @@ export type Database = {
       calendars: {
         Row: {
           color: string
-          created_at: string | null
+          created_at: string
           id: string
-          is_firm: boolean | null
-          is_public: boolean | null
-          is_statute: boolean | null
+          is_default: boolean | null
           name: string
-          updated_at: string | null
-          user_id: string | null
+          updated_at: string
+          user_id: string
         }
         Insert: {
-          color?: string
-          created_at?: string | null
+          color: string
+          created_at?: string
           id?: string
-          is_firm?: boolean | null
-          is_public?: boolean | null
-          is_statute?: boolean | null
+          is_default?: boolean | null
           name: string
-          updated_at?: string | null
-          user_id?: string | null
+          updated_at?: string
+          user_id: string
         }
         Update: {
           color?: string
-          created_at?: string | null
+          created_at?: string
           id?: string
-          is_firm?: boolean | null
-          is_public?: boolean | null
-          is_statute?: boolean | null
+          is_default?: boolean | null
           name?: string
-          updated_at?: string | null
-          user_id?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
       event_attendees: {
         Row: {
-          created_at: string | null
+          created_at: string
           email: string | null
-          event_id: string | null
+          event_id: string
           id: string
           name: string | null
-          status: string | null
-          updated_at: string | null
+          response_status: string | null
+          updated_at: string
           user_id: string | null
         }
         Insert: {
-          created_at?: string | null
+          created_at?: string
           email?: string | null
-          event_id?: string | null
+          event_id: string
           id?: string
           name?: string | null
-          status?: string | null
-          updated_at?: string | null
+          response_status?: string | null
+          updated_at?: string
           user_id?: string | null
         }
         Update: {
-          created_at?: string | null
+          created_at?: string
           email?: string | null
-          event_id?: string | null
+          event_id?: string
           id?: string
           name?: string | null
-          status?: string | null
-          updated_at?: string | null
+          response_status?: string | null
+          updated_at?: string
           user_id?: string | null
         }
         Relationships: [
@@ -88,31 +82,28 @@ export type Database = {
       }
       event_reminders: {
         Row: {
-          created_at: string | null
-          event_id: string | null
+          created_at: string
+          event_id: string
           id: string
-          notification_type: string
-          time_before: number
-          time_unit: string
-          updated_at: string | null
+          reminder_time: number
+          reminder_type: string
+          updated_at: string
         }
         Insert: {
-          created_at?: string | null
-          event_id?: string | null
+          created_at?: string
+          event_id: string
           id?: string
-          notification_type: string
-          time_before: number
-          time_unit: string
-          updated_at?: string | null
+          reminder_time: number
+          reminder_type: string
+          updated_at?: string
         }
         Update: {
-          created_at?: string | null
-          event_id?: string | null
+          created_at?: string
+          event_id?: string
           id?: string
-          notification_type?: string
-          time_before?: number
-          time_unit?: string
-          updated_at?: string | null
+          reminder_time?: number
+          reminder_type?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -124,54 +115,78 @@ export type Database = {
           },
         ]
       }
+      event_types: {
+        Row: {
+          color: string
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          color: string
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       events: {
         Row: {
-          calendar_id: string | null
-          created_at: string | null
+          calendar_id: string
+          created_at: string
+          created_by: string
           description: string | null
           end_time: string
+          event_type_id: string | null
           id: string
           is_recurring: boolean | null
           location: string | null
-          recurrence_id: string | null
+          matter_id: string | null
           recurrence_pattern: Json | null
           start_time: string
           title: string
-          type: string | null
-          updated_at: string | null
-          user_id: string | null
+          updated_at: string
         }
         Insert: {
-          calendar_id?: string | null
-          created_at?: string | null
+          calendar_id: string
+          created_at?: string
+          created_by: string
           description?: string | null
           end_time: string
+          event_type_id?: string | null
           id?: string
           is_recurring?: boolean | null
           location?: string | null
-          recurrence_id?: string | null
+          matter_id?: string | null
           recurrence_pattern?: Json | null
           start_time: string
           title: string
-          type?: string | null
-          updated_at?: string | null
-          user_id?: string | null
+          updated_at?: string
         }
         Update: {
-          calendar_id?: string | null
-          created_at?: string | null
+          calendar_id?: string
+          created_at?: string
+          created_by?: string
           description?: string | null
           end_time?: string
+          event_type_id?: string | null
           id?: string
           is_recurring?: boolean | null
           location?: string | null
-          recurrence_id?: string | null
+          matter_id?: string | null
           recurrence_pattern?: Json | null
           start_time?: string
           title?: string
-          type?: string | null
-          updated_at?: string | null
-          user_id?: string | null
+          updated_at?: string
         }
         Relationships: [
           {
@@ -179,6 +194,13 @@ export type Database = {
             columns: ["calendar_id"]
             isOneToOne: false
             referencedRelation: "calendars"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_event_type_id_fkey"
+            columns: ["event_type_id"]
+            isOneToOne: false
+            referencedRelation: "event_types"
             referencedColumns: ["id"]
           },
         ]
@@ -212,6 +234,12 @@ export type Database = {
       delete_recurrence_rule: {
         Args: {
           rule_id: string
+        }
+        Returns: boolean
+      }
+      is_organization_admin: {
+        Args: {
+          org_id: string
         }
         Returns: boolean
       }
