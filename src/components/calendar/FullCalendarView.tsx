@@ -172,8 +172,8 @@ export function FullCalendarView({
           startTime: '08:00',
           endTime: '18:00',
         }}
-        // Custom styling
-        eventBorderRadius={4}
+        // Custom styling with CSS classes instead of props
+        eventClassNames="rounded-md shadow-sm hover:shadow-md transition-shadow"
         eventMinHeight={24}
         dayHeaderFormat={{
           weekday: 'short',
