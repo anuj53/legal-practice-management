@@ -1,7 +1,14 @@
+
 import React from 'react';
 import { format, addDays, subDays } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { ChevronLeft, ChevronRight, Plus, Calendar } from 'lucide-react';
 import { CalendarViewType } from '@/types/calendar';
 
@@ -11,7 +18,7 @@ export interface CalendarHeaderProps {
   onViewChange: (view: CalendarViewType) => void;
   onDateChange: (date: Date) => void;
   onCreateEvent: () => void;
-  onCreateCalendar?: () => void;
+  onCreateCalendar?: () => void; // Changed to match expected function signature
 }
 
 export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
@@ -30,6 +37,7 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
       weekStart.setDate(currentDate.getDate() - currentDate.getDay());
       const weekEnd = new Date(weekStart);
       weekEnd.setDate(weekStart.getDate() + 6);
+      
       return `${format(weekStart, 'MMM d')} – ${format(weekEnd, 'MMM d, yyyy')}`;
     } else if (view === 'day') {
       return format(currentDate, 'MMMM d, yyyy');
@@ -44,6 +52,7 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
     } else if (view === 'week') {
       onDateChange(subDays(currentDate, 7));
     } else {
+      // Month or agenda
       const newDate = new Date(currentDate);
       newDate.setMonth(currentDate.getMonth() - 1);
       onDateChange(newDate);
@@ -56,6 +65,7 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
     } else if (view === 'week') {
       onDateChange(addDays(currentDate, 7));
     } else {
+      // Month or agenda
       const newDate = new Date(currentDate);
       newDate.setMonth(currentDate.getMonth() + 1);
       onDateChange(newDate);
@@ -66,9 +76,10 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
     onDateChange(new Date());
   };
 
-  return <div className="flex justify-between items-center mb-4">
+  return (
+    <div className="flex justify-between items-center mb-4">
       <div className="flex items-center space-x-2">
-        <Button variant="secondary" size="sm" onClick={handleToday}>
+        <Button variant="outline" size="sm" onClick={handleToday}>
           Today
         </Button>
         <Button variant="ghost" size="icon" onClick={handlePrevious}>
@@ -83,7 +94,10 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
       </div>
       
       <div className="flex items-center space-x-2">
-        <Select value={view} onValueChange={value => onViewChange(value as CalendarViewType)}>
+        <Select
+          value={view}
+          onValueChange={(value) => onViewChange(value as CalendarViewType)}
+        >
           <SelectTrigger className="w-[120px]">
             <SelectValue placeholder="View" />
           </SelectTrigger>
@@ -95,15 +109,28 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
           </SelectContent>
         </Select>
 
-        <Button variant="default" size="sm" onClick={onCreateEvent} className="gap-1">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="gap-1" 
+          onClick={onCreateEvent}
+        >
           <Plus className="h-4 w-4" />
           New Event
         </Button>
 
-        {onCreateCalendar && <Button variant="secondary" size="sm" className="gap-1" onClick={onCreateCalendar}>
+        {onCreateCalendar && (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="gap-1" 
+            onClick={onCreateCalendar}
+          >
             <Calendar className="h-4 w-4" />
             New Calendar
-          </Button>}
+          </Button>
+        )}
       </div>
-    </div>;
+    </div>
+  );
 };

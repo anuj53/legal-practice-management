@@ -13,7 +13,7 @@ export function MobileActionButton({ onClick }: MobileActionButtonProps) {
       <Button 
         onClick={onClick}
         size="icon" 
-        className="h-12 w-12 rounded-full shadow-md bg-yorpro-600 hover:bg-yorpro-700 text-white"
+        className="h-12 w-12 rounded-full shadow-lg bg-yorpro-600 hover:bg-yorpro-700"
       >
         <Plus className="h-6 w-6" />
       </Button>

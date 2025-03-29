@@ -1,12 +1,12 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { convertDbEventToEvent, convertEventToDbEvent, isValidUUID } from '@/utils/calendarUtils';
-import { Calendar, Event } from '@/types/calendar';
+import { Calendar, Event, convertDbEventToEvent, convertEventToDbEvent, isValidUUID } from '@/utils/calendarUtils';
 
 // Fetch calendars from Supabase
 export const fetchCalendars = async () => {
   try {
-    console.log('Fetching calendars from database...');
+    // Fetch calendars from database
     const { data: calendarsData, error: calendarsError } = await supabase
       .from('calendars')
       .select('*');
@@ -16,18 +16,16 @@ export const fetchCalendars = async () => {
       throw calendarsError;
     }
 
+    // Get current user
     const { data: { user } } = await supabase.auth.getUser();
     const currentUserId = user?.id;
-    
-    console.log('Current user ID:', currentUserId);
-    console.log('Fetched calendars data:', calendarsData);
     
     if (calendarsData && calendarsData.length > 0) {
       console.log('Found calendars in DB:', calendarsData.length);
       
-      // Filter calendars the user can see (user's own + public/firm calendars)
+      // Transform to expected format and separate into my/other calendars
       const myCalendars = calendarsData
-        .filter(cal => cal.user_id === null || cal.user_id === currentUserId || cal.is_firm || cal.is_statute)
+        .filter(cal => cal.user_id === null || cal.user_id === currentUserId)
         .map(cal => ({
           id: cal.id,
           name: cal.name,
@@ -39,15 +37,7 @@ export const fetchCalendars = async () => {
         }));
       
       const otherCalendars = calendarsData
-        .filter(cal => {
-          // Other calendars are those that are:
-          // 1. Not the user's own calendars
-          // 2. Not null user_id (which are system calendars)
-          // 3. Are public
-          return cal.user_id !== null && 
-                 cal.user_id !== currentUserId && 
-                 cal.is_public === true;
-        })
+        .filter(cal => cal.user_id !== null && cal.user_id !== currentUserId && cal.is_public)
         .map(cal => ({
           id: cal.id,
           name: cal.name,
@@ -58,71 +48,12 @@ export const fetchCalendars = async () => {
           is_public: cal.is_public,
         }));
 
-      console.log('Filtered myCalendars:', myCalendars.length);
-      console.log('Filtered otherCalendars:', otherCalendars.length);
-      
       return { myCalendars, otherCalendars };
-    } else {
-      console.log('No calendars found in database, creating demo calendar');
-      
-      // If no calendars found, create a default calendar for demo purposes
-      const demoCalendar = {
-        name: 'My Calendar',
-        color: '#5cb85c',
-      };
-      
-      try {
-        // Only create if no calendars found - this prevents duplication
-        if(!calendarsData || calendarsData.length === 0) {
-          const { data: newCalendarData, error: createError } = await supabase
-            .from('calendars')
-            .insert({
-              name: demoCalendar.name,
-              color: demoCalendar.color,
-              user_id: currentUserId,
-              is_public: false
-            })
-            .select();
-            
-          if (createError) {
-            console.error('Error creating demo calendar:', createError);
-            throw createError;
-          }
-          
-          if (newCalendarData && newCalendarData.length > 0) {
-            const myCalendars = [{
-              id: newCalendarData[0].id,
-              name: newCalendarData[0].name,
-              color: newCalendarData[0].color,
-              checked: true,
-              is_firm: false,
-              is_statute: false,
-              is_public: false,
-            }];
-            
-            console.log('Created demo calendar:', myCalendars[0]);
-            return { myCalendars, otherCalendars: [] };
-          }
-        }
-      } catch (err) {
-        console.error('Error creating demo calendar:', err);
-      }
-      
-      return { myCalendars: [], otherCalendars: [] };
     }
+    return null;
   } catch (err) {
     console.error('Error fetching calendars:', err);
-    // Fallback to demo data in case of error
-    const demoCalendars = [
-      {
-        id: 'demo-calendar-1',
-        name: 'Demo Calendar',
-        color: '#ff9800',
-        checked: true
-      }
-    ];
-    console.log('Using demo calendars due to error:', demoCalendars);
-    return { myCalendars: demoCalendars, otherCalendars: [] };
+    throw err;
   }
 };
 
@@ -130,6 +61,7 @@ export const fetchCalendars = async () => {
 export const fetchEvents = async () => {
   try {
     console.log('Fetching events from database...');
+    // Fetch events from database
     const { data: eventsData, error: eventsError } = await supabase
       .from('events')
       .select(`
@@ -139,14 +71,9 @@ export const fetchEvents = async () => {
         start_time,
         end_time,
         location,
-        type,
-        calendar_id,
-        user_id,
         is_recurring,
-        recurrence_pattern,
-        recurrence_id,
-        created_at,
-        updated_at
+        type,
+        calendar_id
       `);
 
     if (eventsError) {
@@ -158,10 +85,7 @@ export const fetchEvents = async () => {
       console.log('Found events in DB:', eventsData.length);
       console.log('Sample event from DB:', eventsData[0]);
       
-      const convertedEvents = eventsData.map(event => {
-        return convertDbEventToEvent(event);
-      });
-      
+      const convertedEvents = eventsData.map(convertDbEventToEvent);
       console.log('Converted events:', convertedEvents.length);
       if (convertedEvents.length > 0) {
         console.log('Sample converted event:', convertedEvents[0]);
@@ -173,12 +97,12 @@ export const fetchEvents = async () => {
     return [];
   } catch (err) {
     console.error('Error fetching events:', err);
-    return [];
+    throw err;
   }
 };
 
 // Update calendar in Supabase
-export const updateCalendarInDb = async (calendar) => {
+export const updateCalendarInDb = async (calendar: Calendar) => {
   try {
     const { data, error } = await supabase
       .from('calendars')
@@ -207,7 +131,7 @@ export const updateCalendarInDb = async (calendar) => {
 };
 
 // Create calendar in Supabase
-export const createCalendarInDb = async (calendar) => {
+export const createCalendarInDb = async (calendar: Omit<Calendar, 'id'>) => {
   try {
     const { data, error } = await supabase
       .from('calendars')
@@ -225,6 +149,7 @@ export const createCalendarInDb = async (calendar) => {
       throw error;
     }
     
+    // Return new calendar with generated ID
     return {
       ...calendar,
       id: data[0].id,
@@ -235,51 +160,15 @@ export const createCalendarInDb = async (calendar) => {
   }
 };
 
-// Delete calendar from Supabase
-export const deleteCalendarFromDb = async (id) => {
-  try {
-    console.log('API: Deleting calendar from DB:', id);
-    
-    if (!isValidUUID(id)) {
-      throw new Error(`Invalid UUID format for calendar ID: ${id}`);
-    }
-    
-    const { error: eventsError } = await supabase
-      .from('events')
-      .delete()
-      .eq('calendar_id', id);
-      
-    if (eventsError) {
-      console.error('Error deleting events for calendar from DB:', eventsError);
-      throw eventsError;
-    }
-    
-    const { error } = await supabase
-      .from('calendars')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      console.error('Error deleting calendar from DB:', error);
-      throw error;
-    }
-    
-    console.log('API: Calendar and associated events deleted from DB');
-    return true;
-  } catch (err) {
-    console.error('Error deleting calendar:', err);
-    throw err;
-  }
-};
-
 // Create event in Supabase
-export const createEventInDb = async (event) => {
+export const createEventInDb = async (event: Omit<Event, 'id'>) => {
   try {
     console.log('API: Creating event in DB:', event);
     console.log('API: Calendar ID:', event.calendar);
     console.log('API: Calendar ID type:', typeof event.calendar);
     console.log('API: Calendar ID is valid UUID:', isValidUUID(event.calendar));
     
+    // Comprehensive validation for create
     if (!event.calendar) {
       const errorMsg = 'Calendar ID is missing or empty';
       console.error(errorMsg);
@@ -304,46 +193,22 @@ export const createEventInDb = async (event) => {
       throw new Error(errorMsg);
     }
     
-    // Ensure start and end are Date objects
-    const startDate = event.start instanceof Date ? event.start : new Date(event.start);
-    const endDate = event.end instanceof Date ? event.end : new Date(event.end);
-    
-    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-      const errorMsg = 'Invalid start or end date format';
-      console.error(errorMsg);
-      throw new Error(errorMsg);
-    }
-    
-    // Convert RecurrencePattern to a plain JSON object if it exists
-    let recurrencePatternValue = null;
-    if (event.recurrencePattern) {
-      try {
-        // Convert the RecurrencePattern to a plain object
-        recurrencePatternValue = JSON.parse(JSON.stringify(event.recurrencePattern));
-        console.log('Converted recurrence pattern:', recurrencePatternValue);
-      } catch (e) {
-        console.error('Error converting recurrence pattern to JSON:', e);
-      }
-    }
-    
-    const { data: { user } } = await supabase.auth.getUser();
-    const currentUserId = user?.id || 'anonymous';
-    
+    // Create the DB event object with required fields for insert
     const dbEvent = {
       title: event.title,
       description: event.description || '',
-      start_time: startDate.toISOString(),
-      end_time: endDate.toISOString(),
+      start_time: event.start.toISOString(),
+      end_time: event.end.toISOString(),
       location: event.location || '',
-      calendar_id: event.calendar,
       is_recurring: event.isRecurring || false,
-      recurrence_pattern: recurrencePatternValue,
-      created_by: currentUserId,
+      type: event.type || 'client-meeting',
+      calendar_id: event.calendar,
       updated_at: new Date().toISOString()
     };
     
     console.log('API: Formatted DB event for create:', dbEvent);
     console.log('API: Calendar ID being used:', dbEvent.calendar_id);
+    console.log('API: Calendar ID is valid UUID:', isValidUUID(dbEvent.calendar_id));
     
     const { data, error } = await supabase
       .from('events')
@@ -362,6 +227,7 @@ export const createEventInDb = async (event) => {
       throw new Error('No data returned from event creation');
     }
     
+    // Return new event with generated ID
     const newEvent = convertDbEventToEvent(data[0]);
     console.log('API: Converted new event:', newEvent);
     return newEvent;
@@ -372,12 +238,13 @@ export const createEventInDb = async (event) => {
 };
 
 // Update event in Supabase
-export const updateEventInDb = async (event) => {
+export const updateEventInDb = async (event: Event) => {
   try {
     console.log('API: Updating event in DB:', event);
     console.log('API: Event ID:', event.id);
     console.log('API: Calendar ID:', event.calendar);
     
+    // Thorough UUID validation for update
     if (!event.id) {
       throw new Error('Event ID cannot be empty for update operation');
     }
@@ -390,6 +257,7 @@ export const updateEventInDb = async (event) => {
       throw new Error(`Invalid UUID format for event ID: ${event.id}`);
     }
     
+    // Calendar ID validation
     if (!event.calendar) {
       throw new Error('Calendar ID cannot be empty');
     }
@@ -398,29 +266,8 @@ export const updateEventInDb = async (event) => {
       throw new Error(`Invalid UUID format for calendar ID: ${event.calendar}`);
     }
     
-    // Convert RecurrencePattern to a plain JSON object if it exists
-    let recurrencePatternValue = null;
-    if (event.recurrencePattern) {
-      try {
-        // Convert the RecurrencePattern to a plain object
-        recurrencePatternValue = JSON.parse(JSON.stringify(event.recurrencePattern));
-        console.log('Converted recurrence pattern for update:', recurrencePatternValue);
-      } catch (e) {
-        console.error('Error converting recurrence pattern to JSON for update:', e);
-      }
-    }
-    
-    const dbEvent = {
-      title: event.title,
-      description: event.description || '',
-      start_time: event.start.toISOString(),
-      end_time: event.end.toISOString(),
-      location: event.location || '',
-      calendar_id: event.calendar,
-      is_recurring: event.isRecurring || false,
-      recurrence_pattern: recurrencePatternValue,
-      updated_at: new Date().toISOString()
-    };
+    // Convert to database format
+    const dbEvent = convertEventToDbEvent(event);
     
     console.log('API: Formatted DB event for update:', dbEvent);
     
@@ -442,6 +289,7 @@ export const updateEventInDb = async (event) => {
       return event;
     }
     
+    // Return the updated event from the database
     return convertDbEventToEvent(data[0]);
   } catch (err) {
     console.error('Error updating event:', err);
@@ -450,23 +298,13 @@ export const updateEventInDb = async (event) => {
 };
 
 // Delete event from Supabase
-export const deleteEventFromDb = async (id) => {
+export const deleteEventFromDb = async (id: string) => {
   try {
     console.log('API: Deleting event from DB:', id);
     
+    // Validate UUID before attempting to delete
     if (!isValidUUID(id)) {
       throw new Error(`Invalid UUID format for event ID: ${id}`);
-    }
-    
-    const { data: event, error: eventError } = await supabase
-      .from('events')
-      .select('*')
-      .eq('id', id)
-      .single();
-      
-    if (eventError) {
-      console.error('Error fetching event before deletion:', eventError);
-      throw eventError;
     }
     
     const { error } = await supabase

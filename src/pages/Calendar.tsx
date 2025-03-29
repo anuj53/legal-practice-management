@@ -9,8 +9,7 @@ import { useCalendarPage } from '@/hooks/useCalendarPage';
 import { toast } from 'sonner';
 import { CalendarManagement } from '@/components/calendar/CalendarManagement';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Calendar as CalendarType } from '@/types/calendar';
-import { Loader2 } from 'lucide-react';
+import { Calendar as CalendarType, CalendarShare } from '@/types/calendar';
 
 export default function Calendar() {
   const [calendarDialogOpen, setCalendarDialogOpen] = useState(false);
@@ -41,18 +40,21 @@ export default function Calendar() {
     handleDeleteCalendar,
   } = useCalendarPage();
   
+  // Wrapper function to open the calendar dialog for creation
   const createCalendarWrapper = () => {
     setCalendarDialogMode('create');
     setSelectedCalendar(null);
     setCalendarDialogOpen(true);
   };
   
+  // Wrapper function to open the calendar dialog for editing
   const editCalendarWrapper = (calendar: CalendarType) => {
     setCalendarDialogMode('edit');
     setSelectedCalendar(calendar);
     setCalendarDialogOpen(true);
   };
   
+  // Wrapper for creating calendar that will close the dialog after creation
   const onCreateCalendar = (calendar: Omit<CalendarType, 'id'>) => {
     try {
       handleCreateCalendar(calendar);
@@ -64,6 +66,7 @@ export default function Calendar() {
     }
   };
   
+  // Wrapper for updating calendar
   const onUpdateCalendar = (calendar: CalendarType) => {
     try {
       handleUpdateCalendar(calendar);
@@ -75,6 +78,7 @@ export default function Calendar() {
     }
   };
   
+  // Wrapper for deleting calendar
   const onDeleteCalendar = (id: string) => {
     try {
       handleDeleteCalendar(id);
@@ -89,35 +93,14 @@ export default function Calendar() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-2" />
-          <p>Loading calendar data...</p>
-        </div>
-      </div>
-    );
-  }
-  
-  if (myCalendars.length === 0 && !loading) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full">
-        <div className="text-center max-w-md p-4">
-          <h2 className="text-xl font-medium mb-2">No calendars found</h2>
-          <p className="text-gray-500 mb-4">
-            You don't have any calendars yet. Create your first calendar to get started.
-          </p>
-          <button 
-            onClick={createCalendarWrapper}
-            className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90"
-          >
-            Create Calendar
-          </button>
-        </div>
+        <p>Loading calendar data...</p>
       </div>
     );
   }
   
   return (
     <div className="flex h-full flex-col overflow-hidden">
+      {/* Calendar Header - Fixed at top */}
       <div className="flex-shrink-0">
         <CalendarHeader
           currentDate={currentDate}
@@ -129,17 +112,20 @@ export default function Calendar() {
         />
       </div>
       
+      {/* Main content area with sidebar - Both at full height */}
       <div className="flex flex-1 overflow-hidden">
+        {/* Main Calendar Area - This will scroll independently */}
         <div className="flex-1 overflow-hidden">
           <CalendarMain
             view={currentView}
             date={currentDate}
             events={events}
             onEventClick={handleEventClick}
-            onTimeSlotClick={handleDayClick}
+            onDayClick={handleDayClick}
           />
         </div>
         
+        {/* Sidebar - Fixed, not scrolling with calendar content */}
         <div className="w-64 border-l border-gray-200 flex-shrink-0 bg-white overflow-hidden">
           <CalendarSidebar
             myCalendars={myCalendars}
@@ -150,8 +136,10 @@ export default function Calendar() {
         </div>
       </div>
       
+      {/* Floating new event button - visible on mobile when sidebar is hidden */}
       <MobileActionButton onClick={handleCreateEvent} />
       
+      {/* Event Modal */}
       <EventModal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
@@ -159,10 +147,9 @@ export default function Calendar() {
         mode={modalMode}
         onSave={handleSaveEvent}
         onDelete={handleDeleteEvent}
-        myCalendars={myCalendars}
-        otherCalendars={otherCalendars}
       />
       
+      {/* Calendar Creation/Editing Dialog */}
       <Dialog open={calendarDialogOpen} onOpenChange={setCalendarDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <CalendarManagement

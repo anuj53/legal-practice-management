@@ -37,11 +37,7 @@ export const DayView: React.FC<DayViewProps> = ({
       const isToday = new Date(currentDate).setHours(0,0,0,0) === new Date().setHours(0,0,0,0);
       if (isToday && scrollContainerRef.current) {
         // Scroll to 100px above the current time
-        setTimeout(() => {
-          if (scrollContainerRef.current) {
-            scrollContainerRef.current.scrollTop = position - 120;
-          }
-        }, 100);
+        scrollContainerRef.current.scrollTop = position - 100;
       }
     };
     

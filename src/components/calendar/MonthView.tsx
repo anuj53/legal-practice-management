@@ -26,6 +26,14 @@ export const MonthView: React.FC<MonthViewProps> = ({
     return events.filter(event => isSameDay(day, new Date(event.start)));
   };
   
+  const eventColors = {
+    'client-meeting': 'bg-orange-500 text-white',
+    'internal-meeting': 'bg-blue-500 text-white',
+    'court': 'bg-purple-500 text-white',
+    'deadline': 'bg-red-500 text-white',
+    'personal': 'bg-amber-400 text-black',
+  };
+
   const getMaxEventsToShow = () => {
     return window.innerWidth > 1024 ? 3 : 2;
   };
@@ -35,9 +43,8 @@ export const MonthView: React.FC<MonthViewProps> = ({
       key={event.id}
       className={cn(
         "px-2 py-1 mb-1 text-xs rounded truncate cursor-pointer",
-        "text-white" // Default text color
+        eventColors[event.type] || "bg-gray-500 text-white"
       )}
-      style={{ backgroundColor: event.calendarColor || '#9CA3AF' }} // Use calendar color or fallback to gray
       onClick={(e) => {
         e.stopPropagation();
         onEventClick(event);

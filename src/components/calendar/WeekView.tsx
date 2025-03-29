@@ -54,17 +54,15 @@ export const WeekView: React.FC<WeekViewProps> = ({
     return () => clearInterval(timer);
   }, []);
 
-  // Updated function to get events for a day and hour with proper positioning
   const getEventsForDayAndHour = (day: Date, hour: number) => {
     return events.filter((event) => {
-      const eventStart = new Date(event.start);
-      const eventDay = new Date(eventStart);
+      const eventDate = new Date(event.start);
+      const eventHour = eventDate.getHours();
+      const eventDay = new Date(eventDate);
       eventDay.setHours(0, 0, 0, 0);
       
       const dayToCheck = new Date(day);
       dayToCheck.setHours(0, 0, 0, 0);
-      
-      const eventHour = eventStart.getHours();
       
       const isSameDay = eventDay.getTime() === dayToCheck.getTime();
       const isSameHour = eventHour === hour;
@@ -73,27 +71,15 @@ export const WeekView: React.FC<WeekViewProps> = ({
     });
   };
 
-  // Calculate event position and height based on its start time and duration
-  const getEventStyle = (event: CalendarEvent) => {
-    const start = new Date(event.start);
-    const end = new Date(event.end);
-    
-    const startMinutes = start.getMinutes();
-    const durationMs = end.getTime() - start.getTime();
-    const durationMinutes = Math.ceil(durationMs / (1000 * 60));
-    
-    const topPosition = (startMinutes / 60) * 100; // Convert minutes to percentage of hour height
-    const height = (durationMinutes / 60) * 100; // Convert duration to percentage of hour height
-    
-    return {
-      top: `${topPosition}%`,
-      height: `${height}%`,
-      position: 'absolute' as const,
-      left: '0',
-      right: '0',
-      margin: '0 1px', // Small margin for visual separation
-      zIndex: 10, // Add z-index to ensure event is above the cell
-    };
+  const eventColors = {
+    'event': 'bg-orange-500 text-white',
+    'client': 'bg-green-500 text-white',
+    'plan': 'bg-orange-500 text-white',
+    'client-meeting': 'bg-green-500 text-white',
+    'internal-meeting': 'bg-blue-500 text-white',
+    'court': 'bg-purple-500 text-white',
+    'deadline': 'bg-red-500 text-white',
+    'personal': 'bg-yellow-500 text-black',
   };
 
   // Check if today falls within this week
@@ -104,23 +90,6 @@ export const WeekView: React.FC<WeekViewProps> = ({
     dayDate.setHours(0, 0, 0, 0);
     return dayDate.getTime() === today.getTime();
   });
-
-  // Function to handle event click with stopPropagation
-  const handleEventClick = (event: CalendarEvent, e: React.MouseEvent) => {
-    e.stopPropagation();
-    onEventClick(event);
-  };
-  
-  // Function to handle time slot click
-  const handleTimeSlotClick = (day: Date, hour: number) => {
-    if (onTimeSlotClick) {
-      const newDate = new Date(day);
-      newDate.setHours(hour);
-      newDate.setMinutes(0);
-      newDate.setSeconds(0);
-      onTimeSlotClick(newDate);
-    }
-  };
 
   return (
     <div className="week-view h-full flex flex-col overflow-hidden">
@@ -171,25 +140,30 @@ export const WeekView: React.FC<WeekViewProps> = ({
                     <div 
                       key={`${hourIndex}-${dayIndex}`} 
                       className={cn(
-                        "col-span-1 border-r border-b border-gray-200 p-1 h-[60px] relative cursor-pointer",
+                        "col-span-1 border-r border-b border-gray-200 p-1 h-[60px] relative",
                         new Date(day).setHours(0,0,0,0) === new Date().setHours(0,0,0,0) && "bg-blue-50/30"
                       )}
-                      onClick={() => handleTimeSlotClick(day, hour)}
+                      onClick={() => {
+                        if (onTimeSlotClick) {
+                          const newDate = new Date(day);
+                          newDate.setHours(hour);
+                          onTimeSlotClick(newDate);
+                        }
+                      }}
                     >
                       {dayEvents.map((event) => (
                         <div
                           key={event.id}
-                          className="p-1 rounded text-xs cursor-pointer truncate text-white w-full h-full"
-                          style={{ 
-                            backgroundColor: event.calendarColor || '#9CA3AF',
-                            ...getEventStyle(event)
+                          className={cn(
+                            "p-1 rounded text-xs cursor-pointer truncate",
+                            eventColors[event.type] || "bg-gray-500 text-white"
+                          )}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEventClick(event);
                           }}
-                          onClick={(e) => handleEventClick(event, e)}
                         >
-                          <div className="h-full w-full flex flex-col">
-                            <div className="truncate font-medium">{format(new Date(event.start), 'h:mm')} {event.title}</div>
-                            {event.description && <div className="truncate text-xs opacity-90">{event.description}</div>}
-                          </div>
+                          {format(event.start, 'h:mm')} {event.title}
                         </div>
                       ))}
                     </div>

@@ -83,24 +83,11 @@ export const useCalendar = () => {
   const [view, setView] = useState<CalendarViewType>('week');
   const [calendars, setCalendars] = useState<Calendar[]>(generateSampleCalendars());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [dataUpdated, setDataUpdated] = useState(0); // Add dataUpdated state
-  
-  const [myCalendars, setMyCalendars] = useState<Calendar[]>([]);
-  const [otherCalendars, setOtherCalendars] = useState<Calendar[]>([]);
   
   useEffect(() => {
     // In a real app, you would fetch events from an API
     const sampleEvents = generateSampleEvents(calendars);
     setEvents(sampleEvents);
-    
-    // Update myCalendars and otherCalendars
-    setMyCalendars(calendars.filter(cal => cal.isUserCalendar));
-    setOtherCalendars(calendars.filter(cal => !cal.isUserCalendar));
-    setLoading(false); // Set loading to false after data is loaded
-    
-    // Increment dataUpdated when data is refreshed
-    setDataUpdated(prev => prev + 1);
   }, [calendars]);
   
   // Get only events from visible calendars
@@ -180,29 +167,12 @@ export const useCalendar = () => {
     return newCalendar;
   };
   
-  const updateCalendar = (updatedCalendar: Calendar) => {
-    setCalendars(calendars.map(calendar => 
-      calendar.id === updatedCalendar.id ? updatedCalendar : calendar
-    ));
-    return updatedCalendar;
-  };
-  
-  const deleteCalendar = (calendarId: string) => {
-    setCalendars(calendars.filter(calendar => calendar.id !== calendarId));
-    // Also remove events for this calendar
-    setEvents(events.filter(event => event.calendar !== calendarId));
-  };
-  
   return {
     currentDate,
     selectedDate,
     view,
     calendars,
     events: visibleEvents,
-    myCalendars,
-    otherCalendars,
-    loading, // Add loading state to the return
-    dataUpdated, // Add dataUpdated to the return
     setCurrentDate,
     setSelectedDate,
     setView,
@@ -217,8 +187,6 @@ export const useCalendar = () => {
     createEvent,
     updateEvent,
     deleteEvent,
-    createCalendar,
-    updateCalendar,
-    deleteCalendar
+    createCalendar
   };
 };
