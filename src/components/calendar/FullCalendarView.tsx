@@ -18,6 +18,7 @@ interface FullCalendarViewProps {
   onDateClick?: ((date: Date) => void) | null;
   onDateSelect?: (start: Date, end: Date) => void;
   onCreateEvent?: (start: Date, end: Date) => void;
+  showFullDay?: boolean; // New prop to control time range
 }
 
 export function FullCalendarView({
@@ -27,7 +28,8 @@ export function FullCalendarView({
   onEventClick,
   onDateClick,
   onDateSelect,
-  onCreateEvent
+  onCreateEvent,
+  showFullDay = true // Default to showing full day
 }: FullCalendarViewProps) {
   const calendarRef = useRef<FullCalendar | null>(null);
 
@@ -120,8 +122,8 @@ export function FullCalendarView({
         select={handleDateSelect}
         dayMaxEvents={true}
         nowIndicator={true}
-        slotMinTime="00:00:00"  // Changed from 06:00:00 to show full day
-        slotMaxTime="24:00:00"  // Changed from 22:00:00 to show full day
+        slotMinTime={showFullDay ? "00:00:00" : "08:00:00"}  // Dynamically set based on showFullDay prop
+        slotMaxTime={showFullDay ? "24:00:00" : "18:00:00"}  // Dynamically set based on showFullDay prop
         height="100%"
         expandRows={true}
         stickyHeaderDates={true}
@@ -136,4 +138,3 @@ export function FullCalendarView({
     </div>
   );
 }
-

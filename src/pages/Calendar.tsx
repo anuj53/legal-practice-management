@@ -12,6 +12,8 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Calendar as CalendarType } from '@/types/calendar';
 import { AuthForm } from '@/components/auth/AuthForm';
 import { supabase } from '@/integrations/supabase/client';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 export default function Calendar() {
   console.log('Calendar page initializing');
@@ -19,6 +21,7 @@ export default function Calendar() {
   const [calendarDialogMode, setCalendarDialogMode] = useState<'create' | 'edit'>('create');
   const [selectedCalendar, setSelectedCalendar] = useState<CalendarType | null>(null);
   const [session, setSession] = useState(null);
+  const [showFullDay, setShowFullDay] = useState(true); // Add state for full day toggle
   
   console.log('Before calling useCalendarPage hook');
   const {
@@ -27,11 +30,11 @@ export default function Calendar() {
     currentView,
     setCurrentView,
     selectedEvent,
-    setSelectedEvent, // Added missing state setter function
+    setSelectedEvent,
     modalOpen,
     setModalOpen,
     modalMode,
-    setModalMode, // Added missing state setter function
+    setModalMode,
     myCalendars,
     otherCalendars,
     events,
@@ -179,6 +182,20 @@ export default function Calendar() {
           onCreateEvent={handleCreateEvent}
           onCreateCalendar={createCalendarWrapper}
         />
+        
+        {/* Add the business hours toggle switch */}
+        <div className="flex items-center justify-end mb-2 mr-4">
+          <div className="flex items-center space-x-2">
+            <Label htmlFor="show-full-day" className="text-sm font-medium">
+              {showFullDay ? "Full Day View" : "Business Hours Only"}
+            </Label>
+            <Switch
+              id="show-full-day"
+              checked={showFullDay}
+              onCheckedChange={setShowFullDay}
+            />
+          </div>
+        </div>
       </div>
       
       <div className="flex flex-1 overflow-hidden">
@@ -190,6 +207,7 @@ export default function Calendar() {
             onEventClick={handleEventClick}
             onDayClick={handleDayClick}
             onCreateEvent={handleTimeSlotSelect}
+            showFullDay={showFullDay} // Pass the state to CalendarMain
           />
         </div>
         
