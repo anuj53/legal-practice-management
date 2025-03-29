@@ -1,12 +1,14 @@
-import { useState } from 'react';
-import { CalendarEvent, Calendar, CalendarViewType, CalendarShare } from '@/types/calendar';
+
+import { useState, useEffect } from 'react';
+import { CalendarViewType } from '@/types/calendar';
+import { Calendar, Event } from '@/utils/calendarUtils';
 import { useCalendar } from '@/hooks/useCalendar';
 import { toast } from 'sonner';
 
 export function useCalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [currentView, setCurrentView] = useState<CalendarViewType>('week');
-  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('view');
 
@@ -14,6 +16,7 @@ export function useCalendarPage() {
     myCalendars,
     otherCalendars,
     events,
+    loading,
     createEvent,
     updateEvent,
     deleteEvent,
@@ -42,7 +45,7 @@ export function useCalendarPage() {
     }
   };
   
-  const handleEventClick = (event: CalendarEvent) => {
+  const handleEventClick = (event: Event) => {
     console.log("Event clicked:", event);
     setSelectedEvent(event);
     setModalMode('view');
@@ -66,7 +69,7 @@ export function useCalendarPage() {
     }
     
     const now = new Date();
-    const defaultEvent: Omit<CalendarEvent, 'id'> = {
+    const defaultEvent: Omit<Event, 'id'> = {
       title: '',
       start: now,
       end: new Date(now.getTime() + 60 * 60 * 1000),
@@ -77,7 +80,7 @@ export function useCalendarPage() {
       location: '',
     };
     
-    setSelectedEvent(defaultEvent as CalendarEvent);
+    setSelectedEvent(defaultEvent as Event);
     setModalMode('create');
     setModalOpen(true);
   };
@@ -122,7 +125,7 @@ export function useCalendarPage() {
     }
   };
   
-  const handleSaveEvent = async (event: CalendarEvent) => {
+  const handleSaveEvent = async (event: Event) => {
     console.log("handleSaveEvent called with event:", event);
     console.log("Current modal mode:", modalMode);
     
@@ -142,7 +145,7 @@ export function useCalendarPage() {
         const { id, ...eventWithoutId } = event;
         
         // Use the correctly typed object for createEvent
-        const newEvent = createEvent(eventWithoutId);
+        const newEvent = await createEvent(eventWithoutId);
         
         toast.success('Event created successfully!');
         console.log("New event created:", newEvent);
@@ -166,7 +169,7 @@ export function useCalendarPage() {
         }
         
         // Update event
-        const updatedEvent = updateEvent(event);
+        const updatedEvent = await updateEvent(event);
         toast.success('Event updated successfully!');
         console.log("Event updated:", updatedEvent);
       }
@@ -182,7 +185,7 @@ export function useCalendarPage() {
     console.log("Deleting event:", id);
     
     try {
-      deleteEvent(id);
+      await deleteEvent(id);
       toast.success('Event deleted successfully!');
       setModalOpen(false);
     } catch (error) {
@@ -205,7 +208,7 @@ export function useCalendarPage() {
     myCalendars,
     otherCalendars,
     events: filteredEvents,
-    loading: false,
+    loading,
     handleCalendarToggle,
     handleEventClick,
     handleDayClick,

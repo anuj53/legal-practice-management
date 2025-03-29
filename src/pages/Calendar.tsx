@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { CalendarHeader } from '@/components/calendar/CalendarHeader';
 import { CalendarSidebar } from '@/components/calendar/CalendarSidebar';
@@ -9,11 +10,14 @@ import { toast } from 'sonner';
 import { CalendarManagement } from '@/components/calendar/CalendarManagement';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Calendar as CalendarType } from '@/types/calendar';
+import { AuthForm } from '@/components/auth/AuthForm';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Calendar() {
   const [calendarDialogOpen, setCalendarDialogOpen] = useState(false);
   const [calendarDialogMode, setCalendarDialogMode] = useState<'create' | 'edit'>('create');
   const [selectedCalendar, setSelectedCalendar] = useState<CalendarType | null>(null);
+  const [session, setSession] = useState(null);
   
   const {
     currentDate,
@@ -38,6 +42,25 @@ export default function Calendar() {
     handleUpdateCalendar,
     handleDeleteCalendar,
   } = useCalendarPage();
+  
+  // Check for authentication
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
+      
+      // Set up auth state change subscription
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        (event, newSession) => {
+          setSession(newSession);
+        }
+      );
+      
+      return () => subscription.unsubscribe();
+    };
+    
+    checkAuth();
+  }, []);
   
   const createCalendarWrapper = () => {
     setCalendarDialogMode('create');
@@ -83,6 +106,15 @@ export default function Calendar() {
       toast.error("Failed to delete calendar");
     }
   };
+  
+  // If not authenticated, show login form
+  if (!session) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <AuthForm />
+      </div>
+    );
+  }
   
   if (loading) {
     return (

@@ -1,11 +1,7 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { 
-  Calendar, 
-  Event,
-  isValidUUID
-} from '@/utils/calendarUtils';
+import { Calendar, Event, isValidUUID } from '@/utils/calendarUtils';
 import {
   fetchCalendars,
   fetchEvents,
@@ -16,8 +12,7 @@ import {
   deleteEventFromDb,
   deleteCalendarFromDb
 } from '@/api/calendarAPI';
-
-export type { Calendar, Event } from '@/utils/calendarUtils';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useCalendar = () => {
   const [myCalendars, setMyCalendars] = useState<Calendar[]>([]);
@@ -25,9 +20,129 @@ export const useCalendar = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [session, setSession] = useState(null);
   
   // Track if data has been updated to trigger a re-fetch
   const [dataUpdated, setDataUpdated] = useState(0);
+
+  // Initialize auth state
+  useEffect(() => {
+    // Check for authentication
+    const initAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
+      
+      // Set up auth state change subscription
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        (event, newSession) => {
+          setSession(newSession);
+          // Force data refresh when auth state changes
+          if (event === 'SIGNED_IN') {
+            loadCalendarData();
+          } else if (event === 'SIGNED_OUT') {
+            // Clear data on sign out
+            setMyCalendars([]);
+            setOtherCalendars([]);
+            setEvents([]);
+          }
+        }
+      );
+      
+      return () => subscription.unsubscribe();
+    };
+    
+    initAuth();
+  }, []);
+  
+  // Load calendar data from the database
+  const loadCalendarData = async () => {
+    try {
+      setLoading(true);
+      
+      // First check if we have a user session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.log('No active session, skipping data load');
+        setLoading(false);
+        return;
+      }
+      
+      // Fetch calendars
+      const calendarsResult = await fetchCalendars();
+      if (calendarsResult) {
+        setMyCalendars(calendarsResult.myCalendars);
+        setOtherCalendars(calendarsResult.otherCalendars);
+      } else {
+        // If no calendars returned, create default calendars
+        await createDefaultCalendars();
+      }
+      
+      // Fetch events
+      const eventsData = await fetchEvents();
+      setEvents(eventsData);
+      
+      setError(null);
+    } catch (err) {
+      console.error('Error loading calendar data:', err);
+      setError('Failed to load calendar data');
+      toast.error('Failed to load calendar data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Create default calendars for new users
+  const createDefaultCalendars = async () => {
+    try {
+      // Default calendars to create
+      const defaultCalendars = [
+        {
+          name: 'My Calendar',
+          color: '#3B82F6',
+          checked: true,
+          is_firm: false,
+          is_statute: false,
+          is_public: false
+        },
+        {
+          name: 'Firm Calendar',
+          color: '#22C55E',
+          checked: true,
+          is_firm: true,
+          is_statute: false,
+          is_public: true
+        },
+        {
+          name: 'Statute of Limitations',
+          color: '#EF4444',
+          checked: true,
+          is_firm: false,
+          is_statute: true,
+          is_public: false
+        }
+      ];
+      
+      // Create each default calendar
+      const createdCalendars: Calendar[] = [];
+      for (const calendar of defaultCalendars) {
+        const newCalendar = await createCalendarInDb(calendar);
+        createdCalendars.push(newCalendar);
+      }
+      
+      // Set the new calendars
+      setMyCalendars(createdCalendars);
+      
+      toast.success('Default calendars created');
+    } catch (err) {
+      console.error('Error creating default calendars:', err);
+      toast.error('Failed to create default calendars');
+    }
+  };
+
+  // Load data on initial mount and when dataUpdated changes
+  useEffect(() => {
+    loadCalendarData();
+  }, [dataUpdated]);
 
   // Update calendar
   const updateCalendar = async (calendar: Calendar) => {
@@ -76,7 +191,7 @@ export const useCalendar = () => {
       setError('Failed to create calendar');
       toast.error('Failed to create calendar');
       
-      // Fall back to client-side ID generation for demo mode
+      // Fall back to client-side ID generation as a last resort
       const newCalendar = {
         ...calendar,
         id: Math.random().toString(36).substring(2, 9),
@@ -225,7 +340,7 @@ export const useCalendar = () => {
     setError,
     updateCalendar,
     createCalendar,
-    deleteCalendar, // Added this function
+    deleteCalendar,
     createEvent,
     updateEvent,
     deleteEvent,

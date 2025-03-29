@@ -35,8 +35,8 @@ export const FullCalendarView: React.FC<FullCalendarViewProps> = ({
     extendedProps: {
       ...event,
     },
-    backgroundColor: getEventColor(event.type),
-    borderColor: getEventColor(event.type),
+    backgroundColor: event.color || getEventColor(event.type),
+    borderColor: event.color || getEventColor(event.type),
   }));
 
   // Handle event click

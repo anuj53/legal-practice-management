@@ -1,18 +1,14 @@
 
 import React from 'react';
-import { DayView } from '@/components/calendar/DayView';
-import { WeekView } from '@/components/calendar/WeekView';
-import { MonthView } from '@/components/calendar/MonthView';
-import { AgendaView } from '@/components/calendar/AgendaView';
 import { FullCalendarView } from '@/components/calendar/FullCalendarView';
 import { CalendarViewType } from '@/types/calendar';
-import { CalendarEvent } from '@/types/calendar';
+import { Event } from '@/utils/calendarUtils';
 
 interface CalendarMainProps {
   view: CalendarViewType;
   date: Date;
-  events: CalendarEvent[];
-  onEventClick: (event: CalendarEvent) => void;
+  events: Event[];
+  onEventClick: (event: Event) => void;
   onDayClick: (date: Date) => void;
 }
 

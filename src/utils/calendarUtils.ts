@@ -1,3 +1,4 @@
+
 import { addHours, addDays, subDays, startOfDay } from 'date-fns';
 
 // Types
@@ -19,11 +20,13 @@ export interface Event {
   end: Date;
   type: 'client-meeting' | 'internal-meeting' | 'court' | 'deadline' | 'personal';
   calendar: string;
+  color?: string;
   description?: string;
   location?: string;
-  attendees?: string[];
   isRecurring?: boolean;
-  reminder?: string;
+  createdBy?: string;
+  attendees?: string[];
+  isAllDay?: boolean;
   // Legal-specific fields
   caseId?: string;
   clientName?: string;
@@ -43,7 +46,6 @@ export interface Event {
     monthDay?: number;
     occurrences?: number;
   };
-  isAllDay?: boolean;
 }
 
 // Helper function to validate UUID format
@@ -57,89 +59,6 @@ export const isValidUUID = (id: string): boolean => {
   const isValid = uuidRegex.test(id);
   console.log(`UUID validation for "${id}": ${isValid}`);
   return isValid;
-};
-
-// Convert database event to local Event format
-export const convertDbEventToEvent = (dbEvent: any): Event => {
-  console.log('Converting DB event to app event:', dbEvent);
-  
-  if (!dbEvent || !dbEvent.calendar_id) {
-    console.error('Invalid DB event:', dbEvent);
-    throw new Error('Cannot convert invalid DB event: missing calendar_id');
-  }
-  
-  // Map the event_type_id or type to our application's type enum
-  let eventType: 'client-meeting' | 'internal-meeting' | 'court' | 'deadline' | 'personal' = 'client-meeting';
-  
-  // If there's a direct type field, use it (backward compatibility)
-  if (dbEvent.type && typeof dbEvent.type === 'string') {
-    // Ensure the type is one of our allowed values
-    if (['client-meeting', 'internal-meeting', 'court', 'deadline', 'personal'].includes(dbEvent.type)) {
-      eventType = dbEvent.type as any;
-    }
-  } 
-  // Otherwise try to map from event_type_id 
-  else if (dbEvent.event_type_id) {
-    // In a real app, you might fetch the event type details and map accordingly
-    // For now, we'll default based on the presence of an ID
-    eventType = 'client-meeting';
-  }
-  
-  const event = {
-    id: dbEvent.id,
-    title: dbEvent.title,
-    description: dbEvent.description || '',
-    start: new Date(dbEvent.start_time),
-    end: new Date(dbEvent.end_time),
-    type: eventType,
-    calendar: dbEvent.calendar_id,
-    location: dbEvent.location || '',
-    isRecurring: dbEvent.is_recurring || false,
-    attendees: [], // Assume empty for now as they're stored in a separate table
-    isAllDay: false,
-  };
-  
-  console.log('Converted event:', event);
-  console.log('Calendar ID:', event.calendar, 'Valid:', isValidUUID(event.calendar));
-  return event;
-};
-
-// Convert local Event to database format
-export const convertEventToDbEvent = (eventObj: Event | Omit<Event, 'id'>) => {
-  // Log the input for debugging
-  console.log('Converting app event to DB event, input:', eventObj);
-  
-  // Validate calendar ID
-  if (!eventObj.calendar) {
-    console.error('Missing calendar ID in event:', eventObj);
-    throw new Error('Missing calendar ID for database operation');
-  }
-  
-  if (!isValidUUID(eventObj.calendar)) {
-    console.error('Invalid calendar ID format in event:', eventObj);
-    throw new Error(`Invalid calendar ID format: ${eventObj.calendar}`);
-  }
-  
-  // Create a clean database event object with only the fields we need to store
-  const dbEvent = {
-    title: eventObj.title,
-    description: eventObj.description,
-    start_time: eventObj.start.toISOString(),
-    end_time: eventObj.end.toISOString(),
-    location: eventObj.location,
-    is_recurring: eventObj.isRecurring || false,
-    // Map the type to event_type_id (this would normally be a lookup)
-    // For now we're just setting it to null and the type will be handled elsewhere
-    event_type_id: null,
-    calendar_id: eventObj.calendar,
-    updated_at: new Date().toISOString(),
-    // Only include ID if it exists in the event object (for updates)
-    ...('id' in eventObj ? { id: eventObj.id } : {})
-  };
-  
-  console.log('Converted to DB event:', dbEvent);
-  console.log('Calendar ID being used:', dbEvent.calendar_id);
-  return dbEvent;
 };
 
 // Generate demo events for testing based on the existing calendars

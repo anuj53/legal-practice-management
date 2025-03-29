@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Calendar, Event, convertDbEventToEvent, convertEventToDbEvent, isValidUUID } from '@/utils/calendarUtils';
@@ -5,6 +6,7 @@ import { Calendar, Event, convertDbEventToEvent, convertEventToDbEvent, isValidU
 // Fetch calendars from Supabase
 export const fetchCalendars = async () => {
   try {
+    console.log('Fetching calendars from database...');
     // Fetch calendars from database
     const { data: calendarsData, error: calendarsError } = await supabase
       .from('calendars')
@@ -24,7 +26,7 @@ export const fetchCalendars = async () => {
       
       // Transform to expected format and separate into my/other calendars
       const myCalendars = calendarsData
-        .filter(cal => cal.user_id === null || cal.user_id === currentUserId)
+        .filter(cal => cal.user_id === currentUserId)
         .map(cal => ({
           id: cal.id,
           name: cal.name,
@@ -36,7 +38,7 @@ export const fetchCalendars = async () => {
         }));
       
       const otherCalendars = calendarsData
-        .filter(cal => cal.user_id !== null && cal.user_id !== currentUserId && cal.is_public)
+        .filter(cal => cal.user_id !== currentUserId && cal.is_public)
         .map(cal => ({
           id: cal.id,
           name: cal.name,
@@ -49,7 +51,9 @@ export const fetchCalendars = async () => {
 
       return { myCalendars, otherCalendars };
     }
-    return null;
+    
+    // If no calendars found, return empty arrays
+    return { myCalendars: [], otherCalendars: [] };
   } catch (err) {
     console.error('Error fetching calendars:', err);
     throw err;
@@ -60,6 +64,13 @@ export const fetchCalendars = async () => {
 export const fetchEvents = async () => {
   try {
     console.log('Fetching events from database...');
+    // First check if user is authenticated
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      console.log('User not authenticated, returning empty events array');
+      return [];
+    }
+    
     // Fetch events from database
     const { data: eventsData, error: eventsError } = await supabase
       .from('events')
@@ -72,7 +83,8 @@ export const fetchEvents = async () => {
         location,
         is_recurring,
         event_type_id,
-        calendar_id
+        calendar_id,
+        created_by
       `);
 
     if (eventsError) {
@@ -82,21 +94,38 @@ export const fetchEvents = async () => {
 
     if (eventsData && eventsData.length > 0) {
       console.log('Found events in DB:', eventsData.length);
-      console.log('Sample event from DB:', eventsData[0]);
+      
+      // Fetch event types to get colors
+      const { data: eventTypes } = await supabase
+        .from('event_types')
+        .select('*');
+      
+      const eventTypeMap = eventTypes ? eventTypes.reduce((acc, type) => {
+        acc[type.id] = { name: type.name, color: type.color };
+        return acc;
+      }, {}) : {};
       
       const convertedEvents = eventsData.map(dbEvent => {
-        // Map event_type_id to the type field expected by our app
-        return convertDbEventToEvent({
-          ...dbEvent,
-          type: dbEvent.event_type_id ? 'client-meeting' : 'internal-meeting' // Default mapping
-        });
+        // Get event type information
+        const eventTypeInfo = dbEvent.event_type_id ? eventTypeMap[dbEvent.event_type_id] : null;
+        
+        return {
+          id: dbEvent.id,
+          title: dbEvent.title,
+          description: dbEvent.description || '',
+          start: new Date(dbEvent.start_time),
+          end: new Date(dbEvent.end_time),
+          type: eventTypeInfo ? eventTypeInfo.name : 'client-meeting',
+          color: eventTypeInfo ? eventTypeInfo.color : null,
+          calendar: dbEvent.calendar_id,
+          location: dbEvent.location || '',
+          isRecurring: dbEvent.is_recurring || false,
+          createdBy: dbEvent.created_by,
+          isAllDay: false, // You might want to add this to your database
+        };
       });
       
       console.log('Converted events:', convertedEvents.length);
-      if (convertedEvents.length > 0) {
-        console.log('Sample converted event:', convertedEvents[0]);
-      }
-      
       return convertedEvents;
     }
     console.log('No events found in database');
@@ -139,12 +168,18 @@ export const updateCalendarInDb = async (calendar: Calendar) => {
 // Create calendar in Supabase
 export const createCalendarInDb = async (calendar: Omit<Calendar, 'id'>) => {
   try {
+    // Get current user ID
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('User must be authenticated to create a calendar');
+    }
+    
     const { data, error } = await supabase
       .from('calendars')
       .insert({
         name: calendar.name,
         color: calendar.color,
-        user_id: (await supabase.auth.getUser()).data.user?.id || '',
+        user_id: user.id,
         is_firm: calendar.is_firm || false,
         is_statute: calendar.is_statute || false,
         is_public: calendar.is_public || false
@@ -155,6 +190,8 @@ export const createCalendarInDb = async (calendar: Omit<Calendar, 'id'>) => {
       console.error('Error creating calendar in DB:', error);
       throw error;
     }
+    
+    console.log('Calendar created in DB:', data);
     
     // Return new calendar with generated ID
     return {
@@ -167,55 +204,10 @@ export const createCalendarInDb = async (calendar: Omit<Calendar, 'id'>) => {
   }
 };
 
-// Convert local Event to database format
-export const convertEventToDbEvent = (eventObj: Event | Omit<Event, 'id'>) => {
-  // Log the input for debugging
-  console.log('Converting app event to DB event, input:', eventObj);
-  
-  // Validate calendar ID
-  if (!eventObj.calendar) {
-    console.error('Missing calendar ID in event:', eventObj);
-    throw new Error('Missing calendar ID for database operation');
-  }
-  
-  if (!isValidUUID(eventObj.calendar)) {
-    console.error('Invalid calendar ID format in event:', eventObj);
-    throw new Error(`Invalid calendar ID format: ${eventObj.calendar}`);
-  }
-  
-  // Get current user ID
-  const userId = supabase.auth.getUser().then(({ data }) => data.user?.id);
-  
-  // Create a clean database event object with only the fields we need to store
-  const dbEvent = {
-    title: eventObj.title,
-    description: eventObj.description,
-    start_time: eventObj.start.toISOString(),
-    end_time: eventObj.end.toISOString(),
-    location: eventObj.location,
-    is_recurring: eventObj.isRecurring || false,
-    // Map the type to event_type_id (this would normally be a lookup)
-    // For now we're just setting it to null and the type will be handled elsewhere
-    event_type_id: null,
-    calendar_id: eventObj.calendar,
-    updated_at: new Date().toISOString(),
-    created_by: '', // This will be replaced with actual user ID before database operation
-    // Only include ID if it exists in the event object (for updates)
-    ...('id' in eventObj ? { id: eventObj.id } : {})
-  };
-  
-  console.log('Converted to DB event:', dbEvent);
-  console.log('Calendar ID being used:', dbEvent.calendar_id);
-  return dbEvent;
-};
-
 // Create event in Supabase
 export const createEventInDb = async (event: Omit<Event, 'id'>) => {
   try {
     console.log('API: Creating event in DB:', event);
-    console.log('API: Calendar ID:', event.calendar);
-    console.log('API: Calendar ID type:', typeof event.calendar);
-    console.log('API: Calendar ID is valid UUID:', isValidUUID(event.calendar));
     
     // Comprehensive validation for create
     if (!event.calendar) {
@@ -248,14 +240,34 @@ export const createEventInDb = async (event: Omit<Event, 'id'>) => {
       throw new Error('User must be logged in to create an event');
     }
     
-    // Convert to database format
-    const dbEvent = convertEventToDbEvent(event);
+    // Find event type id if needed
+    let eventTypeId = null;
+    if (event.type) {
+      const { data: eventTypes } = await supabase
+        .from('event_types')
+        .select('*')
+        .eq('name', event.type)
+        .limit(1);
+      
+      if (eventTypes && eventTypes.length > 0) {
+        eventTypeId = eventTypes[0].id;
+      }
+    }
     
-    // Add the created_by field
-    dbEvent.created_by = user.id;
+    // Create database event object
+    const dbEvent = {
+      title: event.title,
+      description: event.description || null,
+      start_time: event.start.toISOString(),
+      end_time: event.end.toISOString(),
+      location: event.location || null,
+      is_recurring: event.isRecurring || false,
+      event_type_id: eventTypeId,
+      calendar_id: event.calendar,
+      created_by: user.id
+    };
     
     console.log('API: Formatted DB event for create:', dbEvent);
-    console.log('API: Calendar ID being used:', dbEvent.calendar_id);
     
     const { data, error } = await supabase
       .from('events')
@@ -275,7 +287,20 @@ export const createEventInDb = async (event: Omit<Event, 'id'>) => {
     }
     
     // Return new event with generated ID
-    const newEvent = convertDbEventToEvent(data[0]);
+    const newEvent = {
+      id: data[0].id,
+      title: data[0].title,
+      description: data[0].description || '',
+      start: new Date(data[0].start_time),
+      end: new Date(data[0].end_time),
+      type: event.type || 'client-meeting',
+      calendar: data[0].calendar_id,
+      location: data[0].location || '',
+      isRecurring: data[0].is_recurring || false,
+      createdBy: data[0].created_by,
+      isAllDay: event.isAllDay || false
+    };
+    
     console.log('API: Converted new event:', newEvent);
     return newEvent;
   } catch (err) {
@@ -288,16 +313,10 @@ export const createEventInDb = async (event: Omit<Event, 'id'>) => {
 export const updateEventInDb = async (event: Event) => {
   try {
     console.log('API: Updating event in DB:', event);
-    console.log('API: Event ID:', event.id);
-    console.log('API: Calendar ID:', event.calendar);
     
     // Thorough UUID validation for update
     if (!event.id) {
       throw new Error('Event ID cannot be empty for update operation');
-    }
-    
-    if (typeof event.id !== 'string') {
-      throw new Error(`Invalid event ID type: ${typeof event.id}, expected string`);
     }
     
     if (!isValidUUID(event.id)) {
@@ -313,17 +332,32 @@ export const updateEventInDb = async (event: Event) => {
       throw new Error(`Invalid UUID format for calendar ID: ${event.calendar}`);
     }
     
-    // Convert to database format
-    const dbEvent = convertEventToDbEvent(event);
-    
-    // Get current user ID
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      throw new Error('User must be logged in to update an event');
+    // Get event type id
+    let eventTypeId = null;
+    if (event.type) {
+      const { data: eventTypes } = await supabase
+        .from('event_types')
+        .select('*')
+        .eq('name', event.type)
+        .limit(1);
+      
+      if (eventTypes && eventTypes.length > 0) {
+        eventTypeId = eventTypes[0].id;
+      }
     }
     
-    // Add the created_by field for update
-    dbEvent.created_by = user.id;
+    // Create database event object for update
+    const dbEvent = {
+      title: event.title,
+      description: event.description || null,
+      start_time: event.start.toISOString(),
+      end_time: event.end.toISOString(),
+      location: event.location || null,
+      is_recurring: event.isRecurring || false,
+      event_type_id: eventTypeId,
+      calendar_id: event.calendar,
+      updated_at: new Date().toISOString()
+    };
     
     console.log('API: Formatted DB event for update:', dbEvent);
     
@@ -345,8 +379,22 @@ export const updateEventInDb = async (event: Event) => {
       return event;
     }
     
-    // Return the updated event from the database
-    return convertDbEventToEvent(data[0]);
+    // Return the updated event
+    const updatedEvent = {
+      id: data[0].id,
+      title: data[0].title,
+      description: data[0].description || '',
+      start: new Date(data[0].start_time),
+      end: new Date(data[0].end_time),
+      type: event.type || 'client-meeting',
+      calendar: data[0].calendar_id,
+      location: data[0].location || '',
+      isRecurring: data[0].is_recurring || false,
+      createdBy: data[0].created_by,
+      isAllDay: event.isAllDay || false
+    };
+    
+    return updatedEvent;
   } catch (err) {
     console.error('Error updating event:', err);
     throw err;
