@@ -19,7 +19,7 @@ interface CalendarMainProps {
   showFullDay: boolean;
   myCalendars?: any[];
   otherCalendars?: any[];
-  onCalendarToggle?: (id: string, checked: boolean) => void;
+  onCalendarToggle?: (id: string, category: 'my' | 'other') => void;
   onEditCalendar?: (calendar: any) => void;
 }
 

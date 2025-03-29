@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { CalendarHeader } from '@/components/calendar/CalendarHeader';
 import { CalendarSidebar } from '@/components/calendar/CalendarSidebar';
@@ -48,10 +47,8 @@ export default function Calendar() {
     handleDeleteCalendar,
   } = useCalendarPage();
   
-  // Function to handle creating an event from time slot selection
   const handleTimeSlotSelect = (start: Date, end: Date) => {
     console.log("Time slot selected:", start, end);
-    // Create default event from selected time slot
     const defaultCalendarId = myCalendars.length > 0 ? myCalendars[0].id : '';
     
     if (!defaultCalendarId) {
@@ -68,21 +65,18 @@ export default function Calendar() {
       isAllDay: false,
       description: '',
       location: '',
-    } as any; // Type cast to avoid missing property errors
+    } as any;
     
-    // Set selected event and open modal in create mode
     setSelectedEvent(defaultEvent);
     setModalMode('create');
     setModalOpen(true);
   };
   
-  // Check for authentication
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
       
-      // Set up auth state change subscription
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
         (event, newSession) => {
           setSession(newSession);
@@ -140,7 +134,6 @@ export default function Calendar() {
     }
   };
   
-  // If not authenticated, show login form
   if (!session) {
     return (
       <div className="flex items-center justify-center h-full">

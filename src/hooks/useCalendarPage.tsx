@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { CalendarViewType } from '@/types/calendar';
 import { Calendar, Event } from '@/utils/calendarUtils';
@@ -29,8 +30,8 @@ export function useCalendarPage() {
     return calendar && calendar.checked;
   });
   
-  const handleCalendarToggle = (id: string) => {
-    const calendarList = [...(myCalendars || []), ...(otherCalendars || [])];
+  const handleCalendarToggle = (id: string, category: 'my' | 'other') => {
+    const calendarList = category === 'my' ? myCalendars : otherCalendars;
     const calendar = calendarList.find(cal => cal.id === id);
     
     if (calendar) {
