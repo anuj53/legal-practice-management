@@ -27,9 +27,11 @@ export default function Calendar() {
     currentView,
     setCurrentView,
     selectedEvent,
+    setSelectedEvent, // Added missing state setter function
     modalOpen,
     setModalOpen,
     modalMode,
+    setModalMode, // Added missing state setter function
     myCalendars,
     otherCalendars,
     events,
