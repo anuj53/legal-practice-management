@@ -4,16 +4,15 @@ import { DayView } from '@/components/calendar/DayView';
 import { WeekView } from '@/components/calendar/WeekView';
 import { MonthView } from '@/components/calendar/MonthView';
 import { AgendaView } from '@/components/calendar/AgendaView';
-import { CalendarViewType } from '@/types/calendar';
-import { CalendarEvent } from '@/types/calendar';
+import { CalendarViewType, Event } from '@/types/calendar';
 import { addDays, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 
 interface CalendarMainProps {
   view: CalendarViewType;
   date: Date;
-  events: CalendarEvent[];
-  onEventClick: (event: CalendarEvent) => void;
-  onTimeSlotClick: (date: Date) => void;
+  events: Event[];
+  onEventClick: (event: Event) => void;
+  onTimeSlotClick: (date: Date) => void; // Ensure this prop is defined correctly
 }
 
 export function CalendarMain({ view, date, events, onEventClick, onTimeSlotClick }: CalendarMainProps) {

@@ -1,102 +1,96 @@
+import { Event } from '@/types/calendar';
 
-import { CalendarEvent as Event, RecurrencePattern } from '@/types/calendar';
-
-// Convert database event to app event
+// Convert DB event object to UI Event object
 export const convertDbEventToEvent = (dbEvent: any): Event => {
+  // Console log for debugging
   console.log('Converting DB event to Event:', dbEvent);
   
-  const event: Event = {
-    id: dbEvent.id,
-    title: dbEvent.title,
-    start: new Date(dbEvent.start_time),
-    end: new Date(dbEvent.end_time),
-    description: dbEvent.description || '',
-    location: dbEvent.location || '',
-    type: dbEvent.type || 'client-meeting',
-    calendar: dbEvent.calendar_id,
-    isAllDay: dbEvent.is_all_day || false,
-    isRecurring: dbEvent.is_recurring || false,
-    recurrenceId: dbEvent.recurrence_id,
+  try {
+    let recurrencePattern = null;
+    if (dbEvent.recurrence_pattern) {
+      try {
+        // If it's a string, parse it
+        if (typeof dbEvent.recurrence_pattern === 'string') {
+          recurrencePattern = JSON.parse(dbEvent.recurrence_pattern);
+        } else {
+          // Otherwise assume it's already a JSON object
+          recurrencePattern = dbEvent.recurrence_pattern;
+        }
+      } catch (e) {
+        console.error('Error parsing recurrence pattern:', e);
+      }
+    }
     
-    // Legal case fields
-    caseId: dbEvent.case_id,
-    clientName: dbEvent.client_name,
-    assignedLawyer: dbEvent.assigned_lawyer,
-    
-    // Court information
-    courtInfo: dbEvent.court_info ? {
-      courtName: dbEvent.court_info.court_name,
-      judgeDetails: dbEvent.court_info.judge_details,
-      docketNumber: dbEvent.court_info.docket_number
-    } : undefined,
-    
-    // Reminder
-    reminder: dbEvent.reminder || 'none',
-  };
-  
-  // Handle recurrence pattern if present
-  if (dbEvent.recurrence_pattern && typeof dbEvent.recurrence_pattern === 'object') {
-    event.recurrencePattern = dbEvent.recurrence_pattern as RecurrencePattern;
+    return {
+      id: dbEvent.id,
+      title: dbEvent.title,
+      description: dbEvent.description || '',
+      start: new Date(dbEvent.start_time),
+      end: new Date(dbEvent.end_time),
+      location: dbEvent.location || '',
+      type: dbEvent.type || 'client-meeting',
+      calendar: dbEvent.calendar_id,
+      isRecurring: dbEvent.is_recurring || false,
+      recurrencePattern: recurrencePattern,
+      recurrenceId: dbEvent.recurrence_id,
+    };
+  } catch (error) {
+    console.error('Error converting DB event to Event:', error);
+    throw error;
   }
-  
-  console.log('Converted event:', event);
-  return event;
 };
 
-// Convert app event to database event
+// Convert UI Event object to DB event object
 export const convertEventToDbEvent = (event: Event): any => {
-  console.log('Converting event to DB event:', event);
+  // Console log for debugging
+  console.log('Converting Event to DB event:', event);
   
-  const dbEvent: any = {
-    id: event.id,
-    title: event.title,
-    description: event.description || '',
-    start_time: event.start.toISOString(),
-    end_time: event.end.toISOString(),
-    location: event.location || '',
-    type: event.type || 'client-meeting',
-    calendar_id: event.calendar,
-    is_all_day: event.isAllDay || false,
-    is_recurring: event.isRecurring || false,
-    recurrence_id: event.recurrenceId || null,
-    
-    // Legal case fields
-    case_id: event.caseId,
-    client_name: event.clientName,
-    assigned_lawyer: event.assignedLawyer,
-    
-    // Court information
-    court_info: event.courtInfo ? {
-      court_name: event.courtInfo.courtName,
-      judge_details: event.courtInfo.judgeDetails,
-      docket_number: event.courtInfo.docketNumber
-    } : null,
-    
-    // Reminder
-    reminder: event.reminder || 'none',
-    
-    updated_at: new Date().toISOString()
-  };
-  
-  // Add recurrence pattern as JSON
-  if (event.recurrencePattern) {
-    // Convert RecurrencePattern to a plain object if it's not already
-    dbEvent.recurrence_pattern = JSON.parse(JSON.stringify(event.recurrencePattern));
+  try {
+    return {
+      id: event.id,
+      title: event.title,
+      description: event.description || '',
+      start_time: event.start.toISOString(),
+      end_time: event.end.toISOString(),
+      location: event.location || '',
+      type: event.type || 'client-meeting',
+      calendar_id: event.calendar,
+      is_recurring: event.isRecurring || false,
+      recurrence_pattern: event.recurrencePattern ? JSON.parse(JSON.stringify(event.recurrencePattern)) : null,
+      recurrence_id: event.recurrenceId || null,
+    };
+  } catch (error) {
+    console.error('Error converting Event to DB event:', error);
+    throw error;
   }
-  
-  console.log('Converted DB event:', dbEvent);
-  return dbEvent;
 };
 
-// Convert event to a recurrence rule db object
-export const createRecurrenceRule = (pattern: RecurrencePattern): any => {
-  // Ensure we're returning a plain JSON object
-  return JSON.parse(JSON.stringify({
-    frequency: pattern.frequency,
-    interval: pattern.interval || 1,
-    week_days: pattern.weekDays || [],
-    month_days: pattern.monthDays || [],
-    ends_on: pattern.endsOn ? pattern.endsOn.toISOString() : null,
-    ends_after: pattern.endsAfter || null
-  }));
+// Create a recurrence rule string
+export const createRecurrenceRule = (pattern: any): string => {
+  if (!pattern || !pattern.frequency) {
+    return '';
+  }
+  
+  try {
+    let rule = `FREQ=${pattern.frequency.toUpperCase()};INTERVAL=${pattern.interval || 1}`;
+    
+    if (pattern.weekDays && pattern.weekDays.length > 0) {
+      rule += `;BYDAY=${pattern.weekDays.join(',')}`;
+    }
+    
+    if (pattern.monthDays && pattern.monthDays.length > 0) {
+      rule += `;BYMONTHDAY=${pattern.monthDays.join(',')}`;
+    }
+    
+    if (pattern.endsOn) {
+      rule += `;UNTIL=${pattern.endsOn}`;
+    } else if (pattern.endsAfter) {
+      rule += `;COUNT=${pattern.endsAfter}`;
+    }
+    
+    return rule;
+  } catch (error) {
+    console.error('Error creating recurrence rule:', error);
+    return '';
+  }
 };

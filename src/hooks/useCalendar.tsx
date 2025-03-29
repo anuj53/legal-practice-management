@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { 
   Calendar, 
   Event,
-  isValidUUID
-} from '@/utils/calendarUtils';
+} from '@/types/calendar';
+import { isValidUUID } from '@/utils/calendarUtils';
 import {
   fetchCalendars,
   fetchEvents,
@@ -16,8 +15,6 @@ import {
   deleteEventFromDb,
   deleteCalendarFromDb
 } from '@/api/calendarAPI';
-
-export type { Calendar, Event } from '@/utils/calendarUtils';
 
 export const useCalendar = () => {
   const [myCalendars, setMyCalendars] = useState<Calendar[]>([]);

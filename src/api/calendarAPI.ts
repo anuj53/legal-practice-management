@@ -233,6 +233,11 @@ export const createEventInDb = async (event) => {
       throw new Error(errorMsg);
     }
     
+    // Convert RecurrencePattern to a plain object if it exists
+    const recurrencePatternValue = event.recurrencePattern 
+      ? JSON.parse(JSON.stringify(event.recurrencePattern)) 
+      : null;
+    
     const dbEvent = {
       title: event.title,
       description: event.description || '',
@@ -242,7 +247,7 @@ export const createEventInDb = async (event) => {
       type: event.type || 'client-meeting',
       calendar_id: event.calendar,
       is_recurring: event.isRecurring || false,
-      recurrence_pattern: event.recurrencePattern ? JSON.parse(JSON.stringify(event.recurrencePattern)) : null,
+      recurrence_pattern: recurrencePatternValue,
       recurrence_id: event.recurrenceId || null,
       updated_at: new Date().toISOString()
     };
@@ -303,6 +308,11 @@ export const updateEventInDb = async (event) => {
       throw new Error(`Invalid UUID format for calendar ID: ${event.calendar}`);
     }
     
+    // Convert RecurrencePattern to a plain object if it exists
+    const recurrencePatternValue = event.recurrencePattern 
+      ? JSON.parse(JSON.stringify(event.recurrencePattern)) 
+      : null;
+    
     const dbEvent = {
       title: event.title,
       description: event.description || '',
@@ -312,7 +322,7 @@ export const updateEventInDb = async (event) => {
       type: event.type || 'client-meeting',
       calendar_id: event.calendar,
       is_recurring: event.isRecurring || false,
-      recurrence_pattern: event.recurrencePattern ? JSON.parse(JSON.stringify(event.recurrencePattern)) : null,
+      recurrence_pattern: recurrencePatternValue,
       recurrence_id: event.recurrenceId || null,
       updated_at: new Date().toISOString()
     };
