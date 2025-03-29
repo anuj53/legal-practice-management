@@ -46,6 +46,34 @@ export default function Calendar() {
   } = useCalendarPage();
   console.log('After calling useCalendarPage hook', { myCalendars, otherCalendars, loading });
   
+  // Function to handle creating an event from time slot selection
+  const handleTimeSlotSelect = (start: Date, end: Date) => {
+    console.log("Time slot selected:", start, end);
+    // Create default event from selected time slot
+    const defaultCalendarId = myCalendars.length > 0 ? myCalendars[0].id : '';
+    
+    if (!defaultCalendarId) {
+      toast.error("Cannot create event: No calendars available");
+      return;
+    }
+    
+    const defaultEvent = {
+      title: '',
+      start: start,
+      end: end,
+      type: 'client-meeting',
+      calendar: defaultCalendarId,
+      isAllDay: false,
+      description: '',
+      location: '',
+    } as any; // Type cast to avoid missing property errors
+    
+    // Set selected event and open modal in create mode
+    setSelectedEvent(defaultEvent);
+    setModalMode('create');
+    setModalOpen(true);
+  };
+  
   // Check for authentication
   useEffect(() => {
     const checkAuth = async () => {
@@ -159,6 +187,7 @@ export default function Calendar() {
             events={events}
             onEventClick={handleEventClick}
             onDayClick={handleDayClick}
+            onCreateEvent={handleTimeSlotSelect}
           />
         </div>
         

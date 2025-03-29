@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -17,6 +16,7 @@ interface FullCalendarViewProps {
   onEventClick: (event: Event) => void;
   onDateClick?: (date: Date) => void;
   onDateSelect?: (start: Date, end: Date) => void;
+  onCreateEvent?: (start: Date, end: Date) => void;
 }
 
 export function FullCalendarView({
@@ -25,11 +25,11 @@ export function FullCalendarView({
   events,
   onEventClick,
   onDateClick,
-  onDateSelect
+  onDateSelect,
+  onCreateEvent
 }: FullCalendarViewProps) {
   const calendarRef = useRef<FullCalendar | null>(null);
 
-  // Define getDefaultColor function before it's used
   const getDefaultColor = (type: string): string => {
     switch (type) {
       case 'client-meeting':
@@ -85,12 +85,14 @@ export function FullCalendarView({
   };
 
   const handleDateSelect = (selectInfo: DateSelectArg) => {
-    if (onDateSelect) {
+    if (onCreateEvent) {
+      onCreateEvent(selectInfo.start, selectInfo.end);
+    } 
+    else if (onDateSelect) {
       onDateSelect(selectInfo.start, selectInfo.end);
     }
   };
 
-  // Transform our events to FullCalendar format
   const calendarEvents = events.map(event => ({
     id: event.id,
     title: event.title,
