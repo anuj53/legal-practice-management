@@ -53,7 +53,10 @@ const generateSampleCalendars = (): Calendar[] => {
       color: '#ff9800',
       checked: true,
       isSelected: true,
-      isUserCalendar: true
+      is_firm: false,
+      is_statute: false,
+      is_public: false,
+      sharedWith: []
     },
     {
       id: '2',
@@ -61,7 +64,10 @@ const generateSampleCalendars = (): Calendar[] => {
       color: '#4caf50',
       checked: true,
       isSelected: true,
-      isUserCalendar: true
+      is_firm: true,
+      is_statute: false,
+      is_public: false,
+      sharedWith: []
     },
     {
       id: '3',
@@ -69,7 +75,9 @@ const generateSampleCalendars = (): Calendar[] => {
       color: '#2196f3',
       checked: true,
       isSelected: false,
-      isUserCalendar: false,
+      is_firm: false,
+      is_statute: false,
+      is_public: true,
       sharedWith: [
         { user_email: 'colleague@example.com', permission: 'view' }
       ]
@@ -83,6 +91,11 @@ export const useCalendar = () => {
   const [view, setView] = useState<CalendarViewType>('week');
   const [calendars, setCalendars] = useState<Calendar[]>(generateSampleCalendars());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  
+  // Split calendars into my and other categories
+  const myCalendars = calendars.filter(cal => cal.isSelected !== false);
+  const otherCalendars = calendars.filter(cal => cal.isSelected === false);
   
   useEffect(() => {
     // In a real app, you would fetch events from an API
@@ -166,6 +179,17 @@ export const useCalendar = () => {
     setCalendars([...calendars, newCalendar]);
     return newCalendar;
   };
+
+  const updateCalendar = (updatedCalendar: Calendar) => {
+    setCalendars(calendars.map(calendar =>
+      calendar.id === updatedCalendar.id ? updatedCalendar : calendar
+    ));
+    return updatedCalendar;
+  };
+
+  const deleteCalendar = (calendarId: string) => {
+    setCalendars(calendars.filter(calendar => calendar.id !== calendarId));
+  };
   
   return {
     currentDate,
@@ -173,6 +197,9 @@ export const useCalendar = () => {
     view,
     calendars,
     events: visibleEvents,
+    myCalendars,
+    otherCalendars,
+    loading,
     setCurrentDate,
     setSelectedDate,
     setView,
@@ -187,6 +214,8 @@ export const useCalendar = () => {
     createEvent,
     updateEvent,
     deleteEvent,
-    createCalendar
+    createCalendar,
+    updateCalendar,
+    deleteCalendar
   };
 };

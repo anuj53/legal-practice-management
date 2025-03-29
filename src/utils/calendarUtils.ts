@@ -13,6 +13,7 @@ export interface Calendar {
   is_statute?: boolean;
   is_public?: boolean;
   sharedWith?: CalendarShare[];
+  isSelected?: boolean; // Add this property
 }
 
 export interface Event {

@@ -8,7 +8,7 @@ import listPlugin from '@fullcalendar/list';
 import { formatISO } from 'date-fns';
 import { Event } from '@/utils/calendarUtils';
 import { CalendarViewType } from '@/types/calendar';
-import { DateSelectArg, EventClickArg, DateInput } from '@fullcalendar/core';
+import { DateSelectArg, EventClickArg } from '@fullcalendar/core';
 
 interface FullCalendarViewProps {
   view: CalendarViewType;
