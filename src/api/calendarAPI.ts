@@ -326,17 +326,19 @@ export const createEventInDb = async (event) => {
       }
     }
     
+    const { data: { user } } = await supabase.auth.getUser();
+    const currentUserId = user?.id || 'anonymous';
+    
     const dbEvent = {
       title: event.title,
       description: event.description || '',
       start_time: startDate.toISOString(),
       end_time: endDate.toISOString(),
       location: event.location || '',
-      type: event.type || 'client-meeting',
       calendar_id: event.calendar,
       is_recurring: event.isRecurring || false,
       recurrence_pattern: recurrencePatternValue,
-      recurrence_id: event.recurrenceId || null,
+      created_by: currentUserId,
       updated_at: new Date().toISOString()
     };
     
@@ -414,11 +416,9 @@ export const updateEventInDb = async (event) => {
       start_time: event.start.toISOString(),
       end_time: event.end.toISOString(),
       location: event.location || '',
-      type: event.type || 'client-meeting',
       calendar_id: event.calendar,
       is_recurring: event.isRecurring || false,
       recurrence_pattern: recurrencePatternValue,
-      recurrence_id: event.recurrenceId || null,
       updated_at: new Date().toISOString()
     };
     

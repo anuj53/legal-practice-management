@@ -1,5 +1,6 @@
 
 import React, { useMemo } from 'react';
+import { FullCalendarComponent } from '@/components/calendar/FullCalendarComponent';
 import { DayView } from '@/components/calendar/DayView';
 import { WeekView } from '@/components/calendar/WeekView';
 import { MonthView } from '@/components/calendar/MonthView';
@@ -55,39 +56,16 @@ export function CalendarMain({ view, date, events, onEventClick, onTimeSlotClick
     events: events
   });
 
+  // Use the FullCalendarComponent instead of the separate view components
   return (
     <div className="h-full overflow-hidden">
-      {view === 'day' && (
-        <DayView
-          currentDate={date}
-          events={events}
-          onEventClick={onEventClick}
-          onTimeSlotClick={onTimeSlotClick}
-        />
-      )}
-      {view === 'week' && (
-        <WeekView
-          currentDate={date}
-          events={events}
-          onEventClick={onEventClick}
-          onTimeSlotClick={onTimeSlotClick}
-        />
-      )}
-      {view === 'month' && (
-        <MonthView
-          currentDate={date}
-          events={events}
-          onSelectDate={onTimeSlotClick}
-          onEventClick={onEventClick}
-        />
-      )}
-      {view === 'agenda' && (
-        <AgendaView
-          currentDate={date}
-          events={events}
-          onEventClick={onEventClick}
-        />
-      )}
+      <FullCalendarComponent
+        view={view}
+        date={date}
+        events={events}
+        onEventClick={onEventClick}
+        onTimeSlotClick={onTimeSlotClick}
+      />
     </div>
   );
 }
