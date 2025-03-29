@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { CalendarViewType } from '@/types/calendar';
 import { Calendar, Event } from '@/utils/calendarUtils';
@@ -11,11 +12,12 @@ export function useCalendarPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('view');
 
+  // Use the correct useCalendar hook and destruct the needed properties
   const {
-    myCalendars,
-    otherCalendars,
-    events,
-    loading,
+    myCalendars = [],
+    otherCalendars = [],
+    events = [],
+    loading = false,
     createEvent,
     updateEvent,
     deleteEvent,
@@ -24,14 +26,14 @@ export function useCalendarPage() {
     deleteCalendar
   } = useCalendar();
   
-  // Get only events from selected calendars
+  // Get only events from selected calendars - safeguard for undefined myCalendars or otherCalendars
   const filteredEvents = events.filter(event => {
-    const calendar = [...myCalendars, ...otherCalendars].find(cal => cal.id === event.calendar);
+    const calendar = [...(myCalendars || []), ...(otherCalendars || [])].find(cal => cal.id === event.calendar);
     return calendar && calendar.checked;
   });
   
   const handleCalendarToggle = (id: string) => {
-    const calendarList = [...myCalendars, ...otherCalendars];
+    const calendarList = [...(myCalendars || []), ...(otherCalendars || [])];
     const calendar = calendarList.find(cal => cal.id === id);
     
     if (calendar) {

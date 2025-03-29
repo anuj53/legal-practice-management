@@ -29,6 +29,24 @@ export function FullCalendarView({
 }: FullCalendarViewProps) {
   const calendarRef = useRef<FullCalendar | null>(null);
 
+  // Define getDefaultColor function before it's used
+  const getDefaultColor = (type: string): string => {
+    switch (type) {
+      case 'client-meeting':
+        return '#22C55E';
+      case 'internal-meeting':
+        return '#3B82F6';
+      case 'court':
+        return '#A855F7';
+      case 'deadline':
+        return '#EF4444';
+      case 'personal':
+        return '#F59E0B';
+      default:
+        return '#6B7280';
+    }
+  };
+
   useEffect(() => {
     if (calendarRef.current) {
       const api = calendarRef.current.getApi();
@@ -82,23 +100,6 @@ export function FullCalendarView({
     backgroundColor: event.color || getDefaultColor(event.type),
     borderColor: event.color || getDefaultColor(event.type),
   }));
-
-  const getDefaultColor = (type: string): string => {
-    switch (type) {
-      case 'client-meeting':
-        return '#22C55E';
-      case 'internal-meeting':
-        return '#3B82F6';
-      case 'court':
-        return '#A855F7';
-      case 'deadline':
-        return '#EF4444';
-      case 'personal':
-        return '#F59E0B';
-      default:
-        return '#6B7280';
-    }
-  };
 
   return (
     <div className="h-full">

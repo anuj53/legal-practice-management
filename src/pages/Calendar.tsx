@@ -14,11 +14,13 @@ import { AuthForm } from '@/components/auth/AuthForm';
 import { supabase } from '@/integrations/supabase/client';
 
 export default function Calendar() {
+  console.log('Calendar page initializing');
   const [calendarDialogOpen, setCalendarDialogOpen] = useState(false);
   const [calendarDialogMode, setCalendarDialogMode] = useState<'create' | 'edit'>('create');
   const [selectedCalendar, setSelectedCalendar] = useState<CalendarType | null>(null);
   const [session, setSession] = useState(null);
   
+  console.log('Before calling useCalendarPage hook');
   const {
     currentDate,
     setCurrentDate,
@@ -42,16 +44,20 @@ export default function Calendar() {
     handleUpdateCalendar,
     handleDeleteCalendar,
   } = useCalendarPage();
+  console.log('After calling useCalendarPage hook', { myCalendars, otherCalendars, loading });
   
   // Check for authentication
   useEffect(() => {
     const checkAuth = async () => {
+      console.log('Checking authentication');
       const { data: { session } } = await supabase.auth.getSession();
+      console.log('Auth session:', session ? 'Authenticated' : 'Not authenticated');
       setSession(session);
       
       // Set up auth state change subscription
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
         (event, newSession) => {
+          console.log('Auth state changed:', event);
           setSession(newSession);
         }
       );
@@ -109,6 +115,7 @@ export default function Calendar() {
   
   // If not authenticated, show login form
   if (!session) {
+    console.log('Not authenticated, showing login form');
     return (
       <div className="flex items-center justify-center h-full">
         <AuthForm />
@@ -117,12 +124,19 @@ export default function Calendar() {
   }
   
   if (loading) {
+    console.log('Loading calendar data...');
     return (
       <div className="flex items-center justify-center h-full">
         <p>Loading calendar data...</p>
       </div>
     );
   }
+  
+  console.log('Rendering calendar with data:', { 
+    events: events?.length, 
+    myCalendars: myCalendars?.length,
+    otherCalendars: otherCalendars?.length
+  });
   
   return (
     <div className="flex h-full flex-col overflow-hidden">
@@ -150,8 +164,8 @@ export default function Calendar() {
         
         <div className="w-64 border-l border-gray-200 flex-shrink-0 bg-white overflow-hidden">
           <CalendarSidebar
-            myCalendars={myCalendars}
-            otherCalendars={otherCalendars}
+            myCalendars={myCalendars || []}
+            otherCalendars={otherCalendars || []}
             onCalendarToggle={handleCalendarToggle}
             onEditCalendar={editCalendarWrapper}
           />
@@ -172,8 +186,8 @@ export default function Calendar() {
       <Dialog open={calendarDialogOpen} onOpenChange={setCalendarDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <CalendarManagement
-            myCalendars={myCalendars}
-            otherCalendars={otherCalendars}
+            myCalendars={myCalendars || []}
+            otherCalendars={otherCalendars || []}
             onCalendarToggle={handleCalendarToggle}
             onCreateCalendar={onCreateCalendar}
             onUpdateCalendar={onUpdateCalendar}
