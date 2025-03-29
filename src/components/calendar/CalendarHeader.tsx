@@ -9,7 +9,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ChevronLeft, ChevronRight, Plus, Calendar, Clock } from 'lucide-react';
+import { 
+  ChevronLeft, 
+  ChevronRight, 
+  Plus, 
+  Calendar as CalendarIcon, 
+  Clock, 
+  CalendarRange,
+  CalendarDays,
+  CalendarCheck,
+  Sparkles
+} from 'lucide-react';
 import { CalendarViewType } from '@/types/calendar';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -82,11 +92,26 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
     onDateChange(new Date());
   };
 
+  const getViewIcon = () => {
+    switch (view) {
+      case 'day':
+        return <CalendarCheck className="h-4 w-4 mr-2" />;
+      case 'week':
+        return <CalendarRange className="h-4 w-4 mr-2" />;
+      case 'month':
+        return <CalendarDays className="h-4 w-4 mr-2" />;
+      case 'agenda':
+        return <CalendarIcon className="h-4 w-4 mr-2" />;
+      default:
+        return <CalendarIcon className="h-4 w-4 mr-2" />;
+    }
+  };
+
   return (
-    <div className="flex justify-between items-center mb-4">
-      <div className="flex items-center space-x-2">
+    <div className="flex flex-col px-1 py-3 md:flex-row md:justify-between md:items-center mb-2 bg-gradient-to-r from-yorpro-50 to-white rounded-lg shadow-sm">
+      <div className="flex items-center space-x-2 mb-2 md:mb-0 px-2">
         {onToggleFullDay && (
-          <div className="flex items-center px-2 mr-2 border rounded-md border-input h-9">
+          <div className="flex items-center mr-2 bg-white border rounded-md border-input h-9 px-2 shadow-sm">
             <Switch
               id="show-full-day"
               checked={showFullDay}
@@ -94,46 +119,77 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
               className="mr-2"
             />
             <Label htmlFor="show-full-day" className="text-xs font-medium flex items-center">
-              <Clock className="h-3 w-3 mr-1" />
+              <Clock className="h-3 w-3 mr-1 text-yorpro-600" />
               {showFullDay ? "24h" : "8-18h"}
             </Label>
           </div>
         )}
         
-        <Button variant="outline" size="sm" onClick={handleToday}>
+        <Button variant="default" size="sm" onClick={handleToday} 
+                className="bg-yorpro-600 hover:bg-yorpro-700 text-white font-medium">
           Today
         </Button>
-        <Button variant="ghost" size="icon" onClick={handlePrevious}>
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <span className="text-lg font-medium px-2 min-w-[180px] text-center">
-          {formatDateRange()}
-        </span>
-        <Button variant="ghost" size="icon" onClick={handleNext}>
-          <ChevronRight className="h-4 w-4" />
-        </Button>
+        
+        <div className="flex items-center bg-white rounded-md shadow-sm border border-gray-200">
+          <Button variant="ghost" size="icon" onClick={handlePrevious} className="text-yorpro-600 hover:text-yorpro-700 hover:bg-yorpro-50">
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          
+          <span className="text-lg font-bold px-3 text-yorpro-800">
+            {formatDateRange()}
+          </span>
+          
+          <Button variant="ghost" size="icon" onClick={handleNext} className="text-yorpro-600 hover:text-yorpro-700 hover:bg-yorpro-50">
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
       
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-2 px-2">
         <Select
           value={view}
           onValueChange={(value) => onViewChange(value as CalendarViewType)}
         >
-          <SelectTrigger className="w-[120px]">
-            <SelectValue placeholder="View" />
+          <SelectTrigger className="w-[130px] bg-white border-gray-200 shadow-sm">
+            <SelectValue placeholder="View">
+              <div className="flex items-center">
+                {getViewIcon()}
+                <span>{view.charAt(0).toUpperCase() + view.slice(1)} View</span>
+              </div>
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="month">Month</SelectItem>
-            <SelectItem value="week">Week</SelectItem>
-            <SelectItem value="day">Day</SelectItem>
-            <SelectItem value="agenda">Agenda</SelectItem>
+            <SelectItem value="day" className="flex items-center">
+              <div className="flex items-center">
+                <CalendarCheck className="h-4 w-4 mr-2 text-yorpro-600" />
+                Day
+              </div>
+            </SelectItem>
+            <SelectItem value="week" className="flex items-center">
+              <div className="flex items-center">
+                <CalendarRange className="h-4 w-4 mr-2 text-yorpro-600" />
+                Week
+              </div>
+            </SelectItem>
+            <SelectItem value="month" className="flex items-center">
+              <div className="flex items-center">
+                <CalendarDays className="h-4 w-4 mr-2 text-yorpro-600" />
+                Month
+              </div>
+            </SelectItem>
+            <SelectItem value="agenda" className="flex items-center">
+              <div className="flex items-center">
+                <CalendarIcon className="h-4 w-4 mr-2 text-yorpro-600" />
+                Agenda
+              </div>
+            </SelectItem>
           </SelectContent>
         </Select>
 
         <Button 
-          variant="outline" 
+          variant="default" 
           size="sm" 
-          className="gap-1" 
+          className="gap-1 bg-gradient-to-r from-legal-blue to-legal-teal text-white shadow-md hover:shadow-lg transition-all" 
           onClick={onCreateEvent}
         >
           <Plus className="h-4 w-4" />
@@ -144,10 +200,10 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
           <Button 
             variant="outline" 
             size="sm" 
-            className="gap-1" 
+            className="gap-1 border-yorpro-300 hover:bg-yorpro-50 shadow-sm" 
             onClick={onCreateCalendar}
           >
-            <Calendar className="h-4 w-4" />
+            <Sparkles className="h-4 w-4 text-yorpro-600" />
             New Calendar
           </Button>
         )}

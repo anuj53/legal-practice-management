@@ -5,6 +5,7 @@ import { CalendarEvent } from '@/types/calendar';
 import { cn } from '@/lib/utils';
 import { getHours } from '@/utils/dateUtils';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { CalendarDays, MapPin, Clock } from 'lucide-react';
 
 interface DayViewProps {
   currentDate: Date;
@@ -71,11 +72,11 @@ export const DayView: React.FC<DayViewProps> = ({
     'event': 'bg-orange-500 text-white',
     'client': 'bg-green-500 text-white',
     'plan': 'bg-orange-500 text-white',
-    'client-meeting': 'bg-green-500 text-white',
-    'internal-meeting': 'bg-blue-500 text-white',
-    'court': 'bg-purple-500 text-white',
-    'deadline': 'bg-red-500 text-white',
-    'personal': 'bg-yellow-500 text-black',
+    'client-meeting': 'bg-green-500 text-white border-l-4 border-green-600',
+    'internal-meeting': 'bg-blue-500 text-white border-l-4 border-blue-600',
+    'court': 'bg-purple-500 text-white border-l-4 border-purple-600',
+    'deadline': 'bg-red-500 text-white border-l-4 border-red-600',
+    'personal': 'bg-yellow-500 text-black border-l-4 border-yellow-600',
   };
 
   // Check if it's today to show the current time indicator
@@ -83,8 +84,11 @@ export const DayView: React.FC<DayViewProps> = ({
 
   return (
     <div className="day-view h-full flex flex-col">
-      <div className="text-center py-4 sticky top-0 bg-background z-10 border-b">
-        <h2 className="text-xl font-bold">{format(currentDate, 'EEEE, MMMM d, yyyy')}</h2>
+      <div className="text-center py-4 sticky top-0 bg-background z-10 border-b border-gray-200 bg-gradient-to-r from-yorpro-50 to-white">
+        <h2 className="text-xl font-bold flex items-center justify-center text-yorpro-800">
+          <CalendarDays className="h-5 w-5 mr-2 text-yorpro-600" />
+          {format(currentDate, 'EEEE, MMMM d, yyyy')}
+        </h2>
       </div>
       
       <ScrollArea className="flex-1">
@@ -99,14 +103,20 @@ export const DayView: React.FC<DayViewProps> = ({
             return (
               <div 
                 key={hourIndex}
-                className="grid grid-cols-6 border-b border-gray-200 h-[60px]"
+                className={cn(
+                  "grid grid-cols-6 border-b border-gray-200 h-[60px]",
+                  hour >= 8 && hour < 18 && "bg-gray-50/50"
+                )}
               >
-                <div className="col-span-1 border-r border-gray-200 p-2 text-center sticky left-0 bg-background">
-                  {hourLabel}
+                <div className="col-span-1 border-r border-gray-200 p-2 text-center sticky left-0 bg-background flex items-center justify-center">
+                  <div className="text-xs font-medium text-gray-600 flex flex-col items-center">
+                    <Clock className="h-3 w-3 mb-1 text-yorpro-500" />
+                    {hourLabel}
+                  </div>
                 </div>
                 
                 <div
-                  className="col-span-5 p-1 relative"
+                  className="col-span-5 p-1 relative hover:bg-yorpro-50 transition-colors cursor-pointer"
                   onClick={() => {
                     const newDate = new Date(currentDate);
                     newDate.setHours(hour);
@@ -117,7 +127,7 @@ export const DayView: React.FC<DayViewProps> = ({
                     <div
                       key={event.id}
                       className={cn(
-                        "p-2 rounded my-1 cursor-pointer",
+                        "p-2 rounded-md my-1 cursor-pointer shadow-sm hover:shadow-md transition-shadow",
                         eventColors[event.type] || "bg-gray-500 text-white"
                       )}
                       onClick={(e) => {
@@ -125,7 +135,18 @@ export const DayView: React.FC<DayViewProps> = ({
                         onEventClick(event);
                       }}
                     >
-                      {format(event.start, 'h:mm a')} - {event.title}
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">{event.title}</span>
+                        <span className="text-xs opacity-80">
+                          {format(event.start, 'h:mm a')}
+                        </span>
+                      </div>
+                      {event.location && (
+                        <div className="mt-1 text-xs flex items-center opacity-90">
+                          <MapPin className="h-3 w-3 mr-1" />
+                          {event.location}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

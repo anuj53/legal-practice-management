@@ -19,7 +19,7 @@ export default function Calendar() {
   const [calendarDialogMode, setCalendarDialogMode] = useState<'create' | 'edit'>('create');
   const [selectedCalendar, setSelectedCalendar] = useState<CalendarType | null>(null);
   const [session, setSession] = useState(null);
-  const [showFullDay, setShowFullDay] = useState(true); // Add state for full day toggle
+  const [showFullDay, setShowFullDay] = useState(true);
   
   console.log('Before calling useCalendarPage hook');
   const {
@@ -158,7 +158,12 @@ export default function Calendar() {
     console.log('Loading calendar data...');
     return (
       <div className="flex items-center justify-center h-full">
-        <p>Loading calendar data...</p>
+        <div className="p-8 rounded-lg bg-white shadow-lg border border-yorpro-100">
+          <div className="flex flex-col items-center">
+            <div className="w-12 h-12 rounded-full border-4 border-t-yorpro-600 border-yorpro-100 animate-spin mb-4"></div>
+            <p className="text-yorpro-700 font-medium">Loading calendar data...</p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -170,8 +175,8 @@ export default function Calendar() {
   });
   
   return (
-    <div className="flex h-full flex-col overflow-hidden">
-      <div className="flex-shrink-0">
+    <div className="flex h-full flex-col overflow-hidden bg-gradient-to-br from-gray-50 to-white">
+      <div className="flex-shrink-0 px-4 pt-4">
         <CalendarHeader
           currentDate={currentDate}
           view={currentView}
@@ -184,8 +189,8 @@ export default function Calendar() {
         />
       </div>
       
-      <div className="flex flex-1 overflow-hidden">
-        <div className="flex-1 overflow-hidden relative">
+      <div className="flex flex-1 overflow-hidden px-4 pb-4">
+        <div className="flex-1 overflow-hidden relative bg-white rounded-lg shadow-md border border-gray-100">
           <CalendarMain
             view={currentView}
             date={currentDate}
@@ -197,7 +202,7 @@ export default function Calendar() {
           />
         </div>
         
-        <div className="w-64 border-l border-gray-200 flex-shrink-0 bg-white overflow-hidden">
+        <div className="w-72 ml-4 flex-shrink-0 bg-white overflow-hidden rounded-lg shadow-md border border-gray-100">
           <CalendarSidebar
             myCalendars={myCalendars || []}
             otherCalendars={otherCalendars || []}

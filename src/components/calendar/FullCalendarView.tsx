@@ -36,17 +36,17 @@ export function FullCalendarView({
   const getDefaultColor = (type: string): string => {
     switch (type) {
       case 'client-meeting':
-        return '#22C55E';
+        return '#F97316'; // Bright Orange
       case 'internal-meeting':
-        return '#3B82F6';
+        return '#0EA5E9'; // Ocean Blue
       case 'court':
-        return '#A855F7';
+        return '#8B5CF6'; // Vivid Purple
       case 'deadline':
-        return '#EF4444';
+        return '#EF4444'; // Bright Red
       case 'personal':
-        return '#F59E0B';
+        return '#10B981'; // Vibrant Green
       default:
-        return '#6B7280';
+        return '#6B7280'; // Default Gray
     }
   };
 
@@ -130,6 +130,7 @@ export function FullCalendarView({
     allDay: event.isAllDay,
     backgroundColor: event.color || getDefaultColor(event.type),
     borderColor: event.color || getDefaultColor(event.type),
+    textColor: 'white',
     // Add extendedProps to support additional metadata
     extendedProps: {
       isRecurring: event.isRecurring,
@@ -140,7 +141,7 @@ export function FullCalendarView({
   }));
 
   return (
-    <div className="h-full">
+    <div className="h-full rounded-lg overflow-hidden shadow-md">
       <FullCalendar
         ref={calendarRef}
         plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
@@ -154,17 +155,34 @@ export function FullCalendarView({
         select={handleDateSelect}
         dayMaxEvents={true}
         nowIndicator={true}
-        slotMinTime={showFullDay ? "00:00:00" : "08:00:00"}  // Dynamically set based on showFullDay prop
-        slotMaxTime={showFullDay ? "24:00:00" : "18:00:00"}  // Dynamically set based on showFullDay prop
+        slotMinTime={showFullDay ? "00:00:00" : "08:00:00"}
+        slotMaxTime={showFullDay ? "24:00:00" : "18:00:00"}
         height="100%"
         expandRows={true}
         stickyHeaderDates={true}
         allDaySlot={true}
         slotDuration="00:30:00"
+        eventTimeFormat={{
+          hour: '2-digit',
+          minute: '2-digit',
+          meridiem: 'short'
+        }}
         businessHours={{
           daysOfWeek: [1, 2, 3, 4, 5],
           startTime: '08:00',
           endTime: '18:00',
+        }}
+        // Custom styling
+        eventBorderRadius={4}
+        eventMinHeight={24}
+        dayHeaderFormat={{
+          weekday: 'short',
+          day: 'numeric'
+        }}
+        slotLabelFormat={{
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
         }}
       />
     </div>
