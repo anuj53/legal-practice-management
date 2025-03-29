@@ -12,16 +12,16 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Calendar as CalendarType } from '@/types/calendar';
 import { AuthForm } from '@/components/auth/AuthForm';
 import { supabase } from '@/integrations/supabase/client';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export default function Calendar() {
-  console.log('Calendar page initializing');
   const [calendarDialogOpen, setCalendarDialogOpen] = useState(false);
   const [calendarDialogMode, setCalendarDialogMode] = useState<'create' | 'edit'>('create');
   const [selectedCalendar, setSelectedCalendar] = useState<CalendarType | null>(null);
   const [session, setSession] = useState(null);
   const [showFullDay, setShowFullDay] = useState(true);
+  const isMobile = useIsMobile();
   
-  console.log('Before calling useCalendarPage hook');
   const {
     currentDate,
     setCurrentDate,
@@ -47,7 +47,6 @@ export default function Calendar() {
     handleUpdateCalendar,
     handleDeleteCalendar,
   } = useCalendarPage();
-  console.log('After calling useCalendarPage hook', { myCalendars, otherCalendars, loading });
   
   // Function to handle creating an event from time slot selection
   const handleTimeSlotSelect = (start: Date, end: Date) => {
@@ -80,15 +79,12 @@ export default function Calendar() {
   // Check for authentication
   useEffect(() => {
     const checkAuth = async () => {
-      console.log('Checking authentication');
       const { data: { session } } = await supabase.auth.getSession();
-      console.log('Auth session:', session ? 'Authenticated' : 'Not authenticated');
       setSession(session);
       
       // Set up auth state change subscription
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
         (event, newSession) => {
-          console.log('Auth state changed:', event);
           setSession(newSession);
         }
       );
@@ -146,7 +142,6 @@ export default function Calendar() {
   
   // If not authenticated, show login form
   if (!session) {
-    console.log('Not authenticated, showing login form');
     return (
       <div className="flex items-center justify-center h-full">
         <AuthForm />
@@ -155,7 +150,6 @@ export default function Calendar() {
   }
   
   if (loading) {
-    console.log('Loading calendar data...');
     return (
       <div className="flex items-center justify-center h-full">
         <div className="p-8 rounded-lg bg-white shadow-lg border border-yorpro-100">
@@ -168,15 +162,9 @@ export default function Calendar() {
     );
   }
   
-  console.log('Rendering calendar with data:', { 
-    events: events?.length, 
-    myCalendars: myCalendars?.length,
-    otherCalendars: otherCalendars?.length
-  });
-  
   return (
     <div className="flex h-full flex-col overflow-hidden bg-gradient-to-br from-gray-50 to-white">
-      <div className="flex-shrink-0 px-4 pt-4">
+      <div className="flex-shrink-0 px-2 sm:px-4 pt-2 sm:pt-4">
         <CalendarHeader
           currentDate={currentDate}
           view={currentView}
@@ -189,7 +177,7 @@ export default function Calendar() {
         />
       </div>
       
-      <div className="flex flex-1 overflow-hidden px-4 pb-4">
+      <div className="flex flex-1 overflow-hidden px-2 sm:px-4 pb-2 sm:pb-4">
         <div className="flex-1 overflow-hidden relative bg-white rounded-lg shadow-md border border-gray-100">
           <CalendarMain
             view={currentView}
@@ -199,17 +187,23 @@ export default function Calendar() {
             onDayClick={handleDayClick}
             onCreateEvent={handleTimeSlotSelect}
             showFullDay={showFullDay}
-          />
-        </div>
-        
-        <div className="w-72 ml-4 flex-shrink-0 bg-white overflow-hidden rounded-lg shadow-md border border-gray-100">
-          <CalendarSidebar
             myCalendars={myCalendars || []}
             otherCalendars={otherCalendars || []}
             onCalendarToggle={handleCalendarToggle}
             onEditCalendar={editCalendarWrapper}
           />
         </div>
+        
+        {!isMobile && (
+          <div className="w-72 ml-4 flex-shrink-0 bg-white overflow-hidden rounded-lg shadow-md border border-gray-100 hidden md:block">
+            <CalendarSidebar
+              myCalendars={myCalendars || []}
+              otherCalendars={otherCalendars || []}
+              onCalendarToggle={handleCalendarToggle}
+              onEditCalendar={editCalendarWrapper}
+            />
+          </div>
+        )}
       </div>
       
       <MobileActionButton onClick={handleCreateEvent} />

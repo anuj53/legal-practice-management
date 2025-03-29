@@ -9,6 +9,7 @@ import { formatISO } from 'date-fns';
 import { Event, expandRecurringEvents } from '@/utils/calendarUtils';
 import { CalendarViewType } from '@/types/calendar';
 import { DateSelectArg, EventClickArg } from '@fullcalendar/core';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface FullCalendarViewProps {
   view: CalendarViewType;
@@ -18,7 +19,7 @@ interface FullCalendarViewProps {
   onDateClick?: ((date: Date) => void) | null;
   onDateSelect?: (start: Date, end: Date) => void;
   onCreateEvent?: (start: Date, end: Date) => void;
-  showFullDay?: boolean; // New prop to control time range
+  showFullDay?: boolean;
 }
 
 export function FullCalendarView({
@@ -29,9 +30,10 @@ export function FullCalendarView({
   onDateClick,
   onDateSelect,
   onCreateEvent,
-  showFullDay = true // Default to showing full day
+  showFullDay = true
 }: FullCalendarViewProps) {
   const calendarRef = useRef<FullCalendar | null>(null);
+  const isMobile = useIsMobile();
 
   const getDefaultColor = (type: string): string => {
     switch (type) {
@@ -59,17 +61,34 @@ export function FullCalendarView({
   }, [view, date]);
 
   const getViewType = (view: CalendarViewType): string => {
-    switch (view) {
-      case 'day':
-        return 'timeGridDay';
-      case 'week':
-        return 'timeGridWeek';
-      case 'month':
-        return 'dayGridMonth';
-      case 'agenda':
-        return 'listWeek';
-      default:
-        return 'timeGridWeek';
+    // If on mobile, adapt certain views to be more mobile-friendly
+    if (isMobile) {
+      switch (view) {
+        case 'week':
+          return 'listWeek'; // Use list view instead of grid for week on mobile
+        case 'day':
+          return 'timeGridDay';
+        case 'month':
+          return 'dayGridMonth';
+        case 'agenda':
+          return 'listWeek';
+        default:
+          return 'listWeek';
+      }
+    } else {
+      // Desktop views
+      switch (view) {
+        case 'day':
+          return 'timeGridDay';
+        case 'week':
+          return 'timeGridWeek';
+        case 'month':
+          return 'dayGridMonth';
+        case 'agenda':
+          return 'listWeek';
+        default:
+          return 'timeGridWeek';
+      }
     }
   };
 
@@ -112,8 +131,6 @@ export function FullCalendarView({
   // Expand recurring events before rendering
   const expandedEvents = expandRecurringEvents(events);
   
-  console.log('Expanding events:', events.length, 'to', expandedEvents.length, 'occurrences');
-  
   // Debug log for recurring events
   events.filter(e => e.isRecurring).forEach(e => {
     console.log('Recurring event:', e.title, 
@@ -153,7 +170,7 @@ export function FullCalendarView({
         dateClick={onDateClick !== null ? handleDateClick : undefined}
         selectable={true}
         select={handleDateSelect}
-        dayMaxEvents={true}
+        dayMaxEvents={isMobile ? 2 : true}
         nowIndicator={true}
         slotMinTime={showFullDay ? "00:00:00" : "08:00:00"}
         slotMaxTime={showFullDay ? "24:00:00" : "18:00:00"}
@@ -176,7 +193,7 @@ export function FullCalendarView({
         eventClassNames="rounded-md shadow-sm hover:shadow-md transition-shadow"
         eventMinHeight={24}
         dayHeaderFormat={{
-          weekday: 'short',
+          weekday: isMobile ? 'narrow' : 'short',
           day: 'numeric'
         }}
         slotLabelFormat={{
