@@ -9,8 +9,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ChevronLeft, ChevronRight, Plus, Calendar } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Calendar, Clock } from 'lucide-react';
 import { CalendarViewType } from '@/types/calendar';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 export interface CalendarHeaderProps {
   currentDate: Date;
@@ -18,7 +20,9 @@ export interface CalendarHeaderProps {
   onViewChange: (view: CalendarViewType) => void;
   onDateChange: (date: Date) => void;
   onCreateEvent: () => void;
-  onCreateCalendar?: () => void; // Changed to match expected function signature
+  onCreateCalendar?: () => void;
+  showFullDay?: boolean;
+  onToggleFullDay?: (value: boolean) => void;
 }
 
 export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
@@ -27,7 +31,9 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
   onViewChange,
   onDateChange,
   onCreateEvent,
-  onCreateCalendar
+  onCreateCalendar,
+  showFullDay = true,
+  onToggleFullDay
 }) => {
   const formatDateRange = () => {
     if (view === 'month') {
@@ -79,6 +85,21 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
   return (
     <div className="flex justify-between items-center mb-4">
       <div className="flex items-center space-x-2">
+        {onToggleFullDay && (
+          <div className="flex items-center px-2 mr-2 border rounded-md border-input h-9">
+            <Switch
+              id="show-full-day"
+              checked={showFullDay}
+              onCheckedChange={onToggleFullDay}
+              className="mr-2"
+            />
+            <Label htmlFor="show-full-day" className="text-xs font-medium flex items-center">
+              <Clock className="h-3 w-3 mr-1" />
+              {showFullDay ? "24h" : "8-18h"}
+            </Label>
+          </div>
+        )}
+        
         <Button variant="outline" size="sm" onClick={handleToday}>
           Today
         </Button>

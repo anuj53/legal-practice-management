@@ -12,8 +12,6 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Calendar as CalendarType } from '@/types/calendar';
 import { AuthForm } from '@/components/auth/AuthForm';
 import { supabase } from '@/integrations/supabase/client';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 
 export default function Calendar() {
   console.log('Calendar page initializing');
@@ -181,6 +179,8 @@ export default function Calendar() {
           onDateChange={setCurrentDate}
           onCreateEvent={handleCreateEvent}
           onCreateCalendar={createCalendarWrapper}
+          showFullDay={showFullDay}
+          onToggleFullDay={setShowFullDay}
         />
       </div>
       
@@ -195,20 +195,6 @@ export default function Calendar() {
             onCreateEvent={handleTimeSlotSelect}
             showFullDay={showFullDay}
           />
-          
-          {/* Positioned toggle switch in the bottom-left corner */}
-          <div className="absolute bottom-4 left-4 bg-white/80 backdrop-blur-sm p-2 rounded-md shadow-sm z-10">
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="show-full-day"
-                checked={showFullDay}
-                onCheckedChange={setShowFullDay}
-              />
-              <Label htmlFor="show-full-day" className="text-sm font-medium">
-                {showFullDay ? "Full Day View" : "Business Hours"}
-              </Label>
-            </div>
-          </div>
         </div>
         
         <div className="w-64 border-l border-gray-200 flex-shrink-0 bg-white overflow-hidden">
