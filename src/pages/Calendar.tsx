@@ -182,24 +182,10 @@ export default function Calendar() {
           onCreateEvent={handleCreateEvent}
           onCreateCalendar={createCalendarWrapper}
         />
-        
-        {/* Add the business hours toggle switch */}
-        <div className="flex items-center justify-end mb-2 mr-4">
-          <div className="flex items-center space-x-2">
-            <Label htmlFor="show-full-day" className="text-sm font-medium">
-              {showFullDay ? "Full Day View" : "Business Hours Only"}
-            </Label>
-            <Switch
-              id="show-full-day"
-              checked={showFullDay}
-              onCheckedChange={setShowFullDay}
-            />
-          </div>
-        </div>
       </div>
       
       <div className="flex flex-1 overflow-hidden">
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden relative">
           <CalendarMain
             view={currentView}
             date={currentDate}
@@ -207,8 +193,22 @@ export default function Calendar() {
             onEventClick={handleEventClick}
             onDayClick={handleDayClick}
             onCreateEvent={handleTimeSlotSelect}
-            showFullDay={showFullDay} // Pass the state to CalendarMain
+            showFullDay={showFullDay}
           />
+          
+          {/* Positioned toggle switch in the bottom-left corner */}
+          <div className="absolute bottom-4 left-4 bg-white/80 backdrop-blur-sm p-2 rounded-md shadow-sm z-10">
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="show-full-day"
+                checked={showFullDay}
+                onCheckedChange={setShowFullDay}
+              />
+              <Label htmlFor="show-full-day" className="text-sm font-medium">
+                {showFullDay ? "Full Day View" : "Business Hours"}
+              </Label>
+            </div>
+          </div>
         </div>
         
         <div className="w-64 border-l border-gray-200 flex-shrink-0 bg-white overflow-hidden">
