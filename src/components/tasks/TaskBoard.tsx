@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -29,8 +30,8 @@ export function TaskBoard({ tasks: initialTasks }: TaskBoardProps) {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
-  // Extract unique task types from tasks
-  const taskTypes = Array.from(new Set(tasks.map(task => task.taskType)));
+  // Define all task types that should always be displayed
+  const allTaskTypes = ['Onboarding', 'Documentation', 'Follow Up', 'Meeting', 'Invoicing'];
 
   // Group tasks by task type
   const tasksByType = tasks.reduce((acc: Record<string, Task[]>, task) => {
@@ -119,7 +120,7 @@ export function TaskBoard({ tasks: initialTasks }: TaskBoardProps) {
     <>
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          {taskTypes.map((taskType) => (
+          {allTaskTypes.map((taskType) => (
             <div key={taskType} className="flex flex-col">
               <div className="flex items-center mb-3 pl-2">
                 <div className={`h-3 w-3 rounded-full ${getTaskTypeColor(taskType)} mr-2`}></div>
