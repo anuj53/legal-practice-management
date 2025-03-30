@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -81,7 +82,7 @@ export function WorkflowTemplateDetailView({
         .single();
       
       if (templateError) throw templateError;
-      setTemplate(templateData);
+      setTemplate(templateData as WorkflowTemplate);
       
       const { data: tasksData, error: tasksError } = await supabase
         .from('task_templates')
@@ -105,7 +106,9 @@ export function WorkflowTemplateDetailView({
         .order('position', { ascending: true });
       
       if (tasksError) throw tasksError;
-      setTasks(tasksData || []);
+      
+      // Cast the data to match the TaskTemplate interface
+      setTasks((tasksData || []) as TaskTemplate[]);
     } catch (error) {
       console.error('Error fetching template details:', error);
       toast({

@@ -42,7 +42,7 @@ interface TaskTemplateDialogProps {
   onOpenChange: (open: boolean) => void;
   workflowId: string;
   existingTaskTemplates: TaskTemplate[];
-  editTask?: TaskTemplate;
+  editTask?: TaskTemplate | null;
   onSuccess?: () => void;
 }
 
@@ -101,7 +101,9 @@ export function TaskTemplateDialog({
           .order('first_name', { ascending: true });
         
         if (error) throw error;
-        setUsers(data || []);
+        
+        // Cast the data to match the Profile interface
+        setUsers((data || []) as Profile[]);
       } catch (error) {
         console.error('Error fetching users:', error);
       }

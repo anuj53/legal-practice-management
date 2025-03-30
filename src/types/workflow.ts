@@ -15,12 +15,12 @@ export interface TaskTemplate {
   workflow_id: string;
   name: string;
   description: string | null;
-  priority: 'High' | 'Normal' | 'Low';
+  priority: 'High' | 'Normal' | 'Low' | string;
   is_private: boolean;
   task_type: string | null;
   time_estimate: string | null;
   default_assignee: string | null;
-  due_date_type: 'trigger_date' | 'after_task' | 'specific_date';
+  due_date_type: 'trigger_date' | 'after_task' | 'specific_date' | string;
   due_date_offset: number;
   depends_on_task_id: string | null;
   position: number;
@@ -36,6 +36,6 @@ export interface Profile {
   id: string;
   first_name: string | null;
   last_name: string | null;
-  email_alias: string | null;
+  email_alias?: string | null;  // Make email_alias optional
   created_at?: string;
 }

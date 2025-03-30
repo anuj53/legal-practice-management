@@ -106,7 +106,9 @@ export function AssignWorkflowDialog({
           .order('first_name', { ascending: true });
         
         if (error) throw error;
-        setUsers(data || []);
+        
+        // Cast the data to match the Profile interface
+        setUsers((data || []) as Profile[]);
       } catch (error) {
         console.error('Error fetching users:', error);
       }
