@@ -40,13 +40,6 @@ export function CalendarSidebar({
         </Button>
       )}
       
-      <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-yorpro-50 to-white">
-        <h3 className="text-base font-semibold text-gray-800 flex items-center gap-2">
-          <ListFilter className="h-4 w-4 text-yorpro-600" />
-          {!collapsed && "Calendar Filters"}
-        </h3>
-      </div>
-      
       {collapsed ? (
         <div className="flex-1 p-2 flex flex-col items-center gap-2">
           {myCalendars.map(calendar => (
