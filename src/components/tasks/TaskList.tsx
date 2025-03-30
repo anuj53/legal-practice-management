@@ -158,7 +158,7 @@ export function TaskList({ tasks: initialTasks, onCloseTask }: TaskListProps) {
       });
     } else {
       const updatedTasks = tasks.map(task => 
-        task.id === taskId ? { ...task, status: 'Completed' } : task
+        task.id === taskId ? { ...task, status: 'Completed' as const } : task
       );
       setTasks(updatedTasks);
       toast({

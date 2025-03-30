@@ -42,10 +42,10 @@ export function TaskBoard({ tasks: initialTasks, onCloseTask }: TaskBoardProps) 
     .filter(type => type.active)
     .map(type => type.name);
 
-  const statusList = ['Pending', 'In Progress', 'In Review', 'Completed'];
+  const statusList = ['Pending', 'In Progress', 'In Review', 'Completed'] as const;
   
   const tasksByStatus = tasks.reduce((acc: Record<string, Task[]>, task) => {
-    const status = statusList.includes(task.status) ? task.status : 'Pending';
+    const status = statusList.includes(task.status as any) ? task.status : 'Pending';
     if (!acc[status]) {
       acc[status] = [];
     }
@@ -94,11 +94,11 @@ export function TaskBoard({ tasks: initialTasks, onCloseTask }: TaskBoardProps) 
     const draggedTask = updatedTasks.find(task => task.id === draggableId);
     
     if (draggedTask) {
-      const newStatus = destination.droppableId;
+      const newStatus = destination.droppableId as Task['status'];
       const oldStatus = draggedTask.status;
       
       if (oldStatus !== newStatus) {
-        draggedTask.status = newStatus as Task['status'];
+        draggedTask.status = newStatus;
         toast({
           title: "Task Updated",
           description: `Task moved to ${newStatus}`,
@@ -127,7 +127,7 @@ export function TaskBoard({ tasks: initialTasks, onCloseTask }: TaskBoardProps) 
     } else {
       setTasks(currentTasks => 
         currentTasks.map(task => 
-          task.id === taskId ? { ...task, status: 'Completed' } : task
+          task.id === taskId ? { ...task, status: 'Completed' as const } : task
         )
       );
     }

@@ -112,7 +112,7 @@ export default function Tasks() {
   const handleCloseTask = (taskId: string) => {
     setTasks(currentTasks => currentTasks.map(task => 
       task.id === taskId 
-        ? { ...task, status: 'Completed' } 
+        ? { ...task, status: 'Completed' as const } 
         : task
     ));
   };
