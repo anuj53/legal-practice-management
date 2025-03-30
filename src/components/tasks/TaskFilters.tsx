@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -150,7 +151,7 @@ export function TaskFilters({ onSearch, onFilterChange, onSort }: TaskFiltersPro
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-80 p-4" align="end">
+          <PopoverContent className="w-72 p-4 max-h-[90vh] overflow-y-auto" align="start" side="bottom" sideOffset={5}>
             <div className="flex items-center justify-between mb-4">
               <h4 className="font-medium">Filters</h4>
               {filtersActive && (
@@ -291,7 +292,7 @@ export function TaskFilters({ onSearch, onFilterChange, onSort }: TaskFiltersPro
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-56 p-2" align="end">
+          <PopoverContent className="w-56 p-2" align="end" side="bottom" sideOffset={5}>
             <div className="space-y-1">
               <Button 
                 variant={sortConfig.field === 'name' ? "default" : "ghost"} 
