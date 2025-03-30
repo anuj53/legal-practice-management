@@ -1,5 +1,5 @@
 
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -20,7 +20,6 @@ interface FullCalendarViewProps {
   onDateSelect?: (start: Date, end: Date) => void;
   onCreateEvent?: (start: Date, end: Date) => void;
   showFullDay?: boolean;
-  sidebarCollapsed?: boolean;
 }
 
 export function FullCalendarView({
@@ -31,13 +30,10 @@ export function FullCalendarView({
   onDateClick,
   onDateSelect,
   onCreateEvent,
-  showFullDay = true,
-  sidebarCollapsed
+  showFullDay = true
 }: FullCalendarViewProps) {
   const calendarRef = useRef<FullCalendar | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
   const isMobile = useIsMobile();
-  const [prevCollapsed, setPrevCollapsed] = useState(sidebarCollapsed);
 
   const getDefaultColor = (type: string): string => {
     switch (type) {
@@ -56,7 +52,6 @@ export function FullCalendarView({
     }
   };
 
-  // Update view and date when they change
   useEffect(() => {
     if (calendarRef.current) {
       const api = calendarRef.current.getApi();
@@ -64,32 +59,6 @@ export function FullCalendarView({
       api.gotoDate(date);
     }
   }, [view, date]);
-
-  // Handle sidebar collapse state changes
-  useEffect(() => {
-    if (sidebarCollapsed !== prevCollapsed) {
-      setPrevCollapsed(sidebarCollapsed);
-      
-      // Let the DOM update first
-      setTimeout(() => {
-        if (calendarRef.current) {
-          const api = calendarRef.current.getApi();
-          
-          // Trigger multiple resize events to ensure FullCalendar updates
-          window.dispatchEvent(new Event('resize'));
-          requestAnimationFrame(() => {
-            api.updateSize();
-            window.dispatchEvent(new Event('resize'));
-            
-            // One more update for good measure
-            setTimeout(() => {
-              api.updateSize();
-            }, 100);
-          });
-        }
-      }, 50);
-    }
-  }, [sidebarCollapsed, prevCollapsed]);
 
   const getViewType = (view: CalendarViewType): string => {
     if (isMobile) {
@@ -180,10 +149,7 @@ export function FullCalendarView({
   }));
 
   return (
-    <div 
-      ref={containerRef} 
-      className="h-full w-full rounded-lg overflow-hidden transition-all duration-300"
-    >
+    <div className="h-full w-full rounded-lg overflow-hidden">
       <FullCalendar
         ref={calendarRef}
         plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}

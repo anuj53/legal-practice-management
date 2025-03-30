@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { CalendarHeader } from '@/components/calendar/CalendarHeader';
 import { CalendarSidebar } from '@/components/calendar/CalendarSidebar';
@@ -90,23 +89,6 @@ export default function Calendar() {
     
     checkAuth();
   }, []);
-
-  const toggleSidebar = () => {
-    setSidebarCollapsed(prev => {
-      // Trigger a resize event to make sure the calendar updates correctly
-      setTimeout(() => {
-        window.dispatchEvent(new Event('resize'));
-        // Trigger multiple resize events with small delays for better rendering
-        requestAnimationFrame(() => {
-          window.dispatchEvent(new Event('resize'));
-          setTimeout(() => {
-            window.dispatchEvent(new Event('resize'));
-          }, 100);
-        });
-      }, 50);
-      return !prev;
-    });
-  };
   
   const createCalendarWrapper = () => {
     setCalendarDialogMode('create');
@@ -153,6 +135,10 @@ export default function Calendar() {
     }
   };
   
+  const toggleSidebar = () => {
+    setSidebarCollapsed(!sidebarCollapsed);
+  };
+  
   if (!session) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -190,7 +176,7 @@ export default function Calendar() {
       </div>
       
       <div className="flex flex-1 overflow-hidden px-2 sm:px-4 pb-2 sm:pb-4 h-[calc(100vh-6rem)]">
-        <div className="flex-1 overflow-hidden relative bg-white rounded-lg shadow-md border border-gray-100 transition-all duration-300">
+        <div className="flex-1 overflow-hidden relative bg-white rounded-lg shadow-md border border-gray-100">
           <CalendarMain
             view={currentView}
             date={currentDate}
@@ -203,7 +189,6 @@ export default function Calendar() {
             otherCalendars={otherCalendars || []}
             onCalendarToggle={handleCalendarToggle}
             onEditCalendar={editCalendarWrapper}
-            sidebarCollapsed={sidebarCollapsed}
           />
         </div>
         
