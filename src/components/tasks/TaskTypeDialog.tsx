@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,7 +11,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { ArrowUp, ArrowDown, Edit, Plus, Trash2 } from 'lucide-react';
+import { ArrowUp, ArrowDown, Edit, ListChecks, Plus, Trash2 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -135,37 +134,44 @@ export function TaskTypeDialog({ open, onOpenChange }: TaskTypeDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Manage Task Types</DialogTitle>
-          <DialogDescription>
+        <DialogHeader className="pb-4 mb-4 border-b">
+          <DialogTitle className="text-xl">Manage Task Types</DialogTitle>
+          <DialogDescription className="mt-1.5 text-sm text-muted-foreground">
             Create, manage, and reorder types of tasks for better organization.
           </DialogDescription>
         </DialogHeader>
         
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-sm font-medium">Task Types</h3>
+          <h3 className="text-sm font-medium text-gray-700">Task Types</h3>
           <Button 
             onClick={() => setShowAddForm(true)} 
             size="sm"
             variant="default"
+            className="transition-all hover:shadow-md"
+            disabled={showAddForm}
           >
-            <Plus className="h-4 w-4 mr-1" />
+            <Plus className="h-4 w-4 mr-1.5" />
             Add Task Type
           </Button>
         </div>
 
         {showAddForm && (
-          <div className="border rounded-md p-4 mb-4">
-            <Label htmlFor="new-task-type">New Task Type</Label>
+          <div className="border rounded-lg p-4 mb-6 bg-gray-50/50 shadow-sm">
+            <Label htmlFor="new-task-type" className="text-sm font-medium text-gray-700">New Task Type</Label>
             <div className="flex gap-2 mt-2">
               <Input
                 id="new-task-type"
                 value={newTaskType}
                 onChange={(e) => setNewTaskType(e.target.value)}
                 placeholder="Enter task type name"
+                className="focus:border-yorpro-500 focus:ring-1 focus:ring-yorpro-500"
+                autoFocus
               />
-              <Button onClick={handleAddType}>Save</Button>
-              <Button variant="outline" onClick={() => setShowAddForm(false)}>
+              <Button onClick={handleAddType} variant="default">Save</Button>
+              <Button variant="outline" onClick={() => {
+                setShowAddForm(false);
+                setNewTaskType('');
+              }}>
                 Cancel
               </Button>
             </div>
@@ -173,16 +179,18 @@ export function TaskTypeDialog({ open, onOpenChange }: TaskTypeDialogProps) {
         )}
 
         {editingType && (
-          <div className="border rounded-md p-4 mb-4">
-            <Label htmlFor="edit-task-type">Edit Task Type</Label>
+          <div className="border rounded-lg p-4 mb-6 bg-gray-50/50 shadow-sm">
+            <Label htmlFor="edit-task-type" className="text-sm font-medium text-gray-700">Edit Task Type</Label>
             <div className="flex gap-2 mt-2">
               <Input
                 id="edit-task-type"
                 value={editingType.name}
                 onChange={(e) => setEditingType({ ...editingType, name: e.target.value })}
                 placeholder="Enter task type name"
+                className="focus:border-yorpro-500 focus:ring-1 focus:ring-yorpro-500"
+                autoFocus
               />
-              <Button onClick={handleUpdateType}>Save</Button>
+              <Button onClick={handleUpdateType} variant="default">Save</Button>
               <Button variant="outline" onClick={() => setEditingType(null)}>
                 Cancel
               </Button>
@@ -190,35 +198,40 @@ export function TaskTypeDialog({ open, onOpenChange }: TaskTypeDialogProps) {
           </div>
         )}
 
-        <div className="border rounded-md overflow-hidden">
-          <div className="grid grid-cols-14 bg-gray-100 p-3 border-b">
-            <div className="col-span-8 font-medium text-sm">Name</div>
-            <div className="col-span-2 font-medium text-sm text-center">Status</div>
-            <div className="col-span-4 font-medium text-sm text-center">Actions</div>
+        <div className="border rounded-lg overflow-hidden shadow-sm">
+          <div className="grid grid-cols-14 bg-gradient-to-r from-yorpro-50 to-gray-50 p-3 border-b">
+            <div className="col-span-8 font-medium text-sm text-gray-700">Name</div>
+            <div className="col-span-2 font-medium text-sm text-center text-gray-700">Status</div>
+            <div className="col-span-4 font-medium text-sm text-center text-gray-700">Actions</div>
           </div>
           
-          <div className="divide-y">
+          <div className="divide-y bg-white">
             {taskTypes.length === 0 ? (
-              <div className="py-4 px-3 text-center text-gray-500">
-                No task types found. Add a new type to get started.
+              <div className="py-6 px-3 text-center text-gray-500 bg-gray-50/30">
+                <div className="flex flex-col items-center gap-2">
+                  <ListChecks className="h-8 w-8 text-gray-400" />
+                  <p>No task types found. Add a new type to get started.</p>
+                </div>
               </div>
             ) : (
               taskTypes.map((type, index) => (
-                <div key={type.id} className="grid grid-cols-14 p-3 items-center">
-                  <div className="col-span-8">{type.name}</div>
+                <div key={type.id} className="grid grid-cols-14 p-3 items-center hover:bg-gray-50 transition-colors">
+                  <div className="col-span-8 pl-2 font-medium">{type.name}</div>
                   <div className="col-span-2 flex justify-center">
                     <Switch
                       checked={type.active}
                       onCheckedChange={() => setToggleConfirm({ id: type.id, active: !type.active })}
+                      className="data-[state=checked]:bg-yorpro-600"
                     />
                   </div>
-                  <div className="col-span-4 flex justify-center space-x-1">
+                  <div className="col-span-4 flex justify-center gap-1">
                     <Button 
                       variant="ghost" 
                       size="icon"
                       onClick={() => moveTypeUp(index)}
                       disabled={index === 0}
                       title="Move Up"
+                      className="h-8 w-8 text-gray-600 hover:bg-gray-100"
                     >
                       <ArrowUp className="h-4 w-4" />
                     </Button>
@@ -228,6 +241,7 @@ export function TaskTypeDialog({ open, onOpenChange }: TaskTypeDialogProps) {
                       onClick={() => moveTypeDown(index)}
                       disabled={index === taskTypes.length - 1}
                       title="Move Down"
+                      className="h-8 w-8 text-gray-600 hover:bg-gray-100"
                     >
                       <ArrowDown className="h-4 w-4" />
                     </Button>
@@ -236,6 +250,7 @@ export function TaskTypeDialog({ open, onOpenChange }: TaskTypeDialogProps) {
                       size="icon"
                       onClick={() => setEditingType(type)}
                       title="Edit"
+                      className="h-8 w-8 text-blue-600 hover:bg-blue-50"
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
@@ -244,6 +259,7 @@ export function TaskTypeDialog({ open, onOpenChange }: TaskTypeDialogProps) {
                       size="icon"
                       onClick={() => setDeleteConfirm(type.id)}
                       title="Delete"
+                      className="h-8 w-8 text-red-600 hover:bg-red-50"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -254,8 +270,10 @@ export function TaskTypeDialog({ open, onOpenChange }: TaskTypeDialogProps) {
           </div>
         </div>
 
-        <DialogFooter>
-          <Button onClick={() => onOpenChange(false)}>Close</Button>
+        <DialogFooter className="mt-6 pt-4 border-t">
+          <Button onClick={() => onOpenChange(false)} variant="outline" className="w-full sm:w-auto">
+            Close
+          </Button>
         </DialogFooter>
       </DialogContent>
       
