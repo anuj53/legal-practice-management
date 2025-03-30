@@ -11,9 +11,11 @@ import Tasks from '@/pages/Tasks';
 import { AuthRoute } from './components/auth/AuthRoute';
 
 function App() {
-  // Check for a development bypass of authentication (remove in production)
+  // Development bypass option - remove in production
   const bypassAuth = new URLSearchParams(window.location.search).get('bypass') === 'true';
-  const AuthWrapper = bypassAuth ? ({ children }: { children: React.ReactNode }) => <>{children}</> : AuthRoute;
+  const AuthWrapper = bypassAuth 
+    ? ({ children }: { children: React.ReactNode }) => <>{children}</> 
+    : AuthRoute;
 
   return (
     <ThemeProvider defaultTheme="light" storageKey="yorpro-theme">

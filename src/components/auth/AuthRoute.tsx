@@ -8,9 +8,8 @@ interface AuthRouteProps {
 }
 
 export const AuthRoute = ({ children }: AuthRouteProps) => {
-  const { session, loading } = useAuth();
+  const { session, user, loading } = useAuth();
   const location = useLocation();
-  // Add timeout state to handle potential auth hanging
   const [showTimeout, setShowTimeout] = useState(false);
 
   useEffect(() => {
@@ -29,15 +28,24 @@ export const AuthRoute = ({ children }: AuthRouteProps) => {
     return () => clearTimeout(timeoutId);
   }, [session, loading]);
 
+  // Debug log for troubleshooting
+  console.log('AuthRoute state:', { hasUser: !!user, hasSession: !!session, loading, pathname: location.pathname });
+
   // If still loading but timeout reached
   if (loading && showTimeout) {
     return (
       <div className="flex flex-col items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yorpro-600 mb-4"></div>
         <p className="text-gray-700">Still loading authentication...</p>
-        <a href="/auth" className="text-yorpro-600 hover:underline mt-2">
-          Click here to go to login page
-        </a>
+        <p className="text-sm text-gray-500 mb-2">This may be due to a session issue.</p>
+        <div className="flex space-x-4">
+          <a href="/auth" className="text-yorpro-600 hover:underline">
+            Go to login page
+          </a>
+          <a href="/?bypass=true" className="text-gray-600 hover:underline">
+            Bypass auth (dev only)
+          </a>
+        </div>
       </div>
     );
   }
