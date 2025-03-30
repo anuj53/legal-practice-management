@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { CalendarViewType } from '@/types/calendar';
 import { Calendar, Event } from '@/utils/calendarUtils';
@@ -40,6 +41,7 @@ export function useCalendarPage() {
       id: e.id,
       title: e.title,
       type: e.type,
+      event_type_id: e.event_type_id,
       calendarId: e.calendar,
       calendar: [...(myCalendars || []), ...(otherCalendars || [])].find(cal => cal.id === e.calendar)?.name
     })));
@@ -141,6 +143,7 @@ export function useCalendarPage() {
     console.log("handleSaveEvent called with event:", event);
     console.log("Current modal mode:", modalMode);
     console.log("Event type:", event.type);
+    console.log("Event type_id:", event.event_type_id);
     
     if (event.isRecurring && event.recurrencePattern) {
       console.log("Recurrence pattern:", {
@@ -178,6 +181,7 @@ export function useCalendarPage() {
         console.log("Updating existing event with ID:", event.id);
         console.log("Event calendar ID:", event.calendar);
         console.log("Event type for update:", event.type);
+        console.log("Event type_id for update:", event.event_type_id);
         
         if (!event.id) {
           console.error("Missing event ID for update");
