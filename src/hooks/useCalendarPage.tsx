@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { CalendarViewType } from '@/types/calendar';
 import { Calendar, Event } from '@/utils/calendarUtils';
@@ -56,6 +55,16 @@ export function useCalendarPage() {
         ...calendar,
         checked: !calendar.checked
       };
+      
+      if (category === 'my') {
+        setMyCalendars(calendarList.map(cal => 
+          cal.id === id ? updatedCalendar : cal
+        ));
+      } else {
+        setOtherCalendars(calendarList.map(cal => 
+          cal.id === id ? updatedCalendar : cal
+        ));
+      }
       
       updateCalendar(updatedCalendar);
     }

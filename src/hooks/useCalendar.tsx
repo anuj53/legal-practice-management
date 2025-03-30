@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Calendar, Event, isValidUUID } from '@/utils/calendarUtils';
@@ -64,15 +65,26 @@ export const useCalendar = () => {
       if (calendarsResult) {
         console.log('Loaded calendars from DB:', calendarsResult);
         
-        // Ensure all calendars have the 'checked' property set to true
+        // Get existing calendar checked state to preserve it
+        const existingMyCalendars = myCalendars.reduce((acc, cal) => {
+          acc[cal.id] = cal.checked;
+          return acc;
+        }, {} as Record<string, boolean>);
+        
+        const existingOtherCalendars = otherCalendars.reduce((acc, cal) => {
+          acc[cal.id] = cal.checked;
+          return acc;
+        }, {} as Record<string, boolean>);
+        
+        // Apply existing checked state or default to true
         const processedMyCalendars = calendarsResult.myCalendars.map(cal => ({
           ...cal,
-          checked: true
+          checked: existingMyCalendars[cal.id] !== undefined ? existingMyCalendars[cal.id] : true
         }));
         
         const processedOtherCalendars = calendarsResult.otherCalendars.map(cal => ({
           ...cal,
-          checked: true
+          checked: existingOtherCalendars[cal.id] !== undefined ? existingOtherCalendars[cal.id] : true
         }));
         
         setMyCalendars(processedMyCalendars);
@@ -165,7 +177,10 @@ export const useCalendar = () => {
         );
       }
       
-      setDataUpdated(prev => prev + 1);
+      // Don't trigger a full data reload when just toggling visibility
+      if (!('checked' in calendar)) {
+        setDataUpdated(prev => prev + 1);
+      }
       
       toast.success(`Updated calendar: ${calendar.name}`);
     } catch (err) {

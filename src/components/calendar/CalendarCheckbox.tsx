@@ -22,22 +22,23 @@ export function CalendarCheckbox({
   onClick, 
   onEdit 
 }: CalendarCheckboxProps) {
-  const handleCheckboxChange = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent default form behavior
+  const handleCheckboxChange = () => {
     onClick(id, category);
   };
 
   return (
     <div className="flex items-center space-x-2 py-1.5 px-2 hover:bg-gray-100 rounded">
-      <div 
-        className="flex items-center"
-        onClick={handleCheckboxChange}
-      >
+      <div className="flex items-center">
         <div 
-          className="h-4 w-4 rounded-sm border cursor-pointer flex items-center justify-center"
+          className="h-4 w-4 rounded-sm cursor-pointer flex items-center justify-center"
           style={{ 
             backgroundColor: checked ? color : 'transparent',
             borderColor: color 
+          }}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleCheckboxChange();
           }}
         >
           {checked && (
@@ -47,12 +48,23 @@ export function CalendarCheckbox({
           )}
         </div>
       </div>
-      <span className="text-sm flex-1 truncate">{name}</span>
+      
+      <span 
+        className="text-sm flex-1 truncate cursor-pointer" 
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          handleCheckboxChange();
+        }}
+      >
+        {name}
+      </span>
+      
       {onEdit && (
         <button 
           onClick={(e) => {
-            e.stopPropagation();
             e.preventDefault();
+            e.stopPropagation();
             onEdit();
           }}
           className="p-1 rounded-full hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition-colors"
