@@ -118,43 +118,46 @@ export function Sidebar({ collapsed = false, onToggleCollapse }: SidebarProps) {
         
         <Separator className="bg-white/10 mx-4 my-2" />
         
-        <ScrollArea className="flex-1 px-4 py-2">
-          <div className="space-y-1">
-            <SidebarItem icon={BarChart} label="Dashboard" to="/" collapsed={collapsed} />
-            <SidebarItem icon={Calendar} label="Calendar" to="/calendar" collapsed={collapsed} />
-            <SidebarItem icon={CheckSquare} label="Tasks" to="/tasks" collapsed={collapsed} />
-            <SidebarItem icon={FileText} label="Matter" to="/matter" collapsed={collapsed} />
-            <SidebarItem icon={Users} label="Contacts" to="/contacts" collapsed={collapsed} />
-            <SidebarItem icon={Activity} label="Activities" to="/activities" collapsed={collapsed} />
-            <SidebarItem icon={File} label="Documents" to="/documents" collapsed={collapsed} />
-            <SidebarItem icon={MessageCircle} label="Interactions" to="/interactions" collapsed={collapsed} />
-            <SidebarItem icon={DollarSign} label="Billings" to="/billings" collapsed={collapsed} />
-            <SidebarItem icon={BarChart2} label="Reports" to="/reports" collapsed={collapsed} />
-          </div>
-          
-          {!collapsed && (
-            <div className="mt-8 mb-2">
-              <p className="text-xs uppercase font-semibold text-white/40 tracking-widest">Business</p>
+        {/* Make sure ScrollArea has proper height to scroll */}
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <ScrollArea className="h-full px-4 py-2">
+            <div className="space-y-1">
+              <SidebarItem icon={BarChart} label="Dashboard" to="/" collapsed={collapsed} />
+              <SidebarItem icon={Calendar} label="Calendar" to="/calendar" collapsed={collapsed} />
+              <SidebarItem icon={CheckSquare} label="Tasks" to="/tasks" collapsed={collapsed} />
+              <SidebarItem icon={FileText} label="Matter" to="/matter" collapsed={collapsed} />
+              <SidebarItem icon={Users} label="Contacts" to="/contacts" collapsed={collapsed} />
+              <SidebarItem icon={Activity} label="Activities" to="/activities" collapsed={collapsed} />
+              <SidebarItem icon={File} label="Documents" to="/documents" collapsed={collapsed} />
+              <SidebarItem icon={MessageCircle} label="Interactions" to="/interactions" collapsed={collapsed} />
+              <SidebarItem icon={DollarSign} label="Billings" to="/billings" collapsed={collapsed} />
+              <SidebarItem icon={BarChart2} label="Reports" to="/reports" collapsed={collapsed} />
             </div>
-          )}
-          
-          <div className="space-y-1 mt-4">
-            <SidebarItem icon={UserPlus} label="Leads" to="/leads" collapsed={collapsed} />
-            <SidebarItem icon={ClipboardList} label="Intake Form" to="/intake-form" collapsed={collapsed} />
-            <SidebarItem icon={GitBranch} label="Workflows" to="/workflows" collapsed={collapsed} />
-          </div>
-          
-          {!collapsed && (
-            <div className="mt-8 mb-2">
-              <p className="text-xs uppercase font-semibold text-white/40 tracking-widest">System</p>
+            
+            {!collapsed && (
+              <div className="mt-8 mb-2">
+                <p className="text-xs uppercase font-semibold text-white/40 tracking-widest">Business</p>
+              </div>
+            )}
+            
+            <div className="space-y-1 mt-4">
+              <SidebarItem icon={UserPlus} label="Leads" to="/leads" collapsed={collapsed} />
+              <SidebarItem icon={ClipboardList} label="Intake Form" to="/intake-form" collapsed={collapsed} />
+              <SidebarItem icon={GitBranch} label="Workflows" to="/workflows" collapsed={collapsed} />
             </div>
-          )}
-          
-          <div className="space-y-1 mt-4">
-            <SidebarItem icon={Settings} label="Settings" to="/settings" collapsed={collapsed} />
-            <SidebarItem icon={Palette} label="Appearance" to="/appearance" collapsed={collapsed} />
-          </div>
-        </ScrollArea>
+            
+            {!collapsed && (
+              <div className="mt-8 mb-2">
+                <p className="text-xs uppercase font-semibold text-white/40 tracking-widest">System</p>
+              </div>
+            )}
+            
+            <div className="space-y-1 mt-4">
+              <SidebarItem icon={Settings} label="Settings" to="/settings" collapsed={collapsed} />
+              <SidebarItem icon={Palette} label="Appearance" to="/appearance" collapsed={collapsed} />
+            </div>
+          </ScrollArea>
+        </div>
         
         <div className="p-4 mt-auto relative z-10">
           <div className="rounded-xl bg-gradient-to-r from-yorpro-700/30 to-yorpro-800/30 backdrop-blur-md p-4 border border-white/10 shadow-lg hover:shadow-xl transition-all duration-300 group">
