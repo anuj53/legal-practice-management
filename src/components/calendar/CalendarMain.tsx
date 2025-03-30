@@ -44,13 +44,22 @@ export function CalendarMain({
   // Force calendar to update its layout when sidebar is collapsed/expanded
   useEffect(() => {
     if (calendarContainerRef.current) {
-      // Trigger a resize event to make FullCalendar recalculate dimensions
-      window.dispatchEvent(new Event('resize'));
+      // Add a small delay to ensure DOM has updated before triggering resize
+      const timer = setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+        console.log('Calendar resize triggered due to sidebar state change');
+      }, 150);
+      
+      return () => clearTimeout(timer);
     }
   }, [sidebarCollapsed]);
 
   return (
-    <div className="h-full overflow-hidden relative" ref={calendarContainerRef}>
+    <div 
+      className="h-full overflow-hidden relative" 
+      ref={calendarContainerRef}
+      key={`calendar-container-${sidebarCollapsed ? 'collapsed' : 'expanded'}-${view}`}
+    >
       {isMobile && (
         <Sheet>
           <SheetTrigger asChild>
@@ -81,7 +90,7 @@ export function CalendarMain({
         onDateClick={null}
         onCreateEvent={onCreateEvent}
         showFullDay={showFullDay}
-        key={`calendar-view-${sidebarCollapsed ? 'collapsed' : 'expanded'}`} // This key forces a complete re-render
+        key={`calendar-view-${sidebarCollapsed ? 'collapsed' : 'expanded'}-${view}-${date.toISOString().substring(0, 10)}`} 
         onDateSelect={(start, end) => {
           if (!onCreateEvent) {
             onDayClick(start);

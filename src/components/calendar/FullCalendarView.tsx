@@ -52,6 +52,7 @@ export function FullCalendarView({
     }
   };
 
+  // Update calendar view and date when props change
   useEffect(() => {
     if (calendarRef.current) {
       const api = calendarRef.current.getApi();
@@ -59,6 +60,26 @@ export function FullCalendarView({
       api.gotoDate(date);
     }
   }, [view, date]);
+  
+  // Force calendar to rerender properly when it becomes visible
+  useEffect(() => {
+    const handleResize = () => {
+      if (calendarRef.current) {
+        console.log("Calendar resize event received, updating calendar layout");
+        const api = calendarRef.current.getApi();
+        api.updateSize();
+      }
+    };
+    
+    window.addEventListener('resize', handleResize);
+    
+    // Invoke resize once on mount to ensure proper initial size
+    setTimeout(handleResize, 100);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
 
   const getViewType = (view: CalendarViewType): string => {
     if (isMobile) {
@@ -124,6 +145,7 @@ export function FullCalendarView({
 
   const expandedEvents = expandRecurringEvents(events);
   
+  // Debug recurring events
   events.filter(e => e.isRecurring).forEach(e => {
     console.log('Recurring event:', e.title, 
       'pattern:', e.recurrencePattern?.frequency, 
