@@ -10,7 +10,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
@@ -37,13 +36,15 @@ import { cn } from '@/lib/utils';
 import { useTaskTypes } from '@/contexts/TaskTypeContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { createTask } from './TaskService';
 
 interface NewTaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onTaskCreated?: () => void;
 }
 
-export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
+export function NewTaskDialog({ open, onOpenChange, onTaskCreated }: NewTaskDialogProps) {
   const { taskTypes } = useTaskTypes();
   const { toast } = useToast();
   const [users, setUsers] = useState<{ id: string; first_name: string; last_name: string }[]>([]);
@@ -114,19 +115,10 @@ export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
         time_estimate: data.timeEstimate || null,
         matter_id: data.matter || null,
         due_date: data.dueDate ? new Date(data.dueDate).toISOString() : null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
       };
       
-      // Insert the task into the tasks table
-      // Note: You'll need to create this table in your Supabase project
-      const { data: insertedTask, error } = await supabase
-        .from('tasks')
-        .insert(taskData)
-        .select('*')
-        .single();
-      
-      if (error) throw error;
+      // Use the task service to create the task
+      await createTask(taskData);
       
       toast({
         title: "Task Created",
@@ -134,6 +126,12 @@ export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
       });
       
       form.reset();
+      
+      // Notify parent component that a task was created (if callback provided)
+      if (onTaskCreated) {
+        onTaskCreated();
+      }
+      
       onOpenChange(false);
     } catch (error) {
       console.error('Error creating task:', error);
@@ -357,7 +355,7 @@ export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
                           selected={field.value}
                           onSelect={field.onChange}
                           initialFocus
-                          className={cn("p-3 pointer-events-auto")}
+                          className="p-3 pointer-events-auto"
                         />
                       </PopoverContent>
                     </Popover>
@@ -408,7 +406,7 @@ export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
                 {isSubmitting ? 'Saving...' : 'Save Task'}
               </Button>
               <Button 
-                type="submit" 
+                type="button" 
                 variant="secondary" 
                 disabled={isSubmitting}
                 onClick={() => {
@@ -417,7 +415,6 @@ export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
                     // Don't close the dialog, just reset the form
                     form.reset();
                   })();
-                  return false;
                 }}
               >
                 Save and Create Another

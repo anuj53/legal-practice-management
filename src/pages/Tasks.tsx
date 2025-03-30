@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
   Tabs, 
@@ -21,6 +21,7 @@ import { NewWorkflowTemplateDialog } from '@/components/tasks/NewWorkflowTemplat
 import { WorkflowTemplatesView } from '@/components/tasks/WorkflowTemplatesView';
 import { TaskTypeProvider } from '@/contexts/TaskTypeContext';
 import { TaskFilters, TaskFilters as TaskFiltersType, SortConfig } from '@/components/tasks/TaskFilters';
+import { fetchTasks } from '@/components/tasks/TaskService';
 
 export default function Tasks() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -40,73 +41,106 @@ export default function Tasks() {
     direction: 'asc'
   });
   
-  const [tasks, setTasks] = useState<Task[]>([
-    {
-      id: '1',
-      name: 'Send monthly invoice to client',
-      description: 'Download the invoice from the client\'s profile, verify, and send.',
-      priority: 'High',
-      assignee: 'John Doe',
-      dueDate: '2025-01-02',
-      taskType: 'Invoicing',
-      timeEstimate: '15m',
-      matter: 'A vs B client matter',
-      isPrivate: true,
-      status: 'Pending'
-    },
-    {
-      id: '2',
-      name: 'Review contract draft',
-      description: 'Check the updated contract and provide feedback',
-      priority: 'Normal',
-      assignee: 'John Doe',
-      dueDate: '2025-01-05',
-      taskType: 'Documentation',
-      timeEstimate: '45m',
-      matter: 'Smith Contract',
-      isPrivate: false,
-      status: 'In Progress'
-    },
-    {
-      id: '3',
-      name: 'Schedule client meeting',
-      description: 'Arrange for a follow-up meeting with the Johnson family',
-      priority: 'Low',
-      assignee: 'Sarah Lee',
-      dueDate: '2024-12-28',
-      taskType: 'Meeting',
-      timeEstimate: '10m',
-      matter: 'Johnson Estate',
-      isPrivate: false,
-      status: 'In Review'
-    },
-    {
-      id: '4',
-      name: 'File court documents',
-      description: 'Submit the prepared documents to the county court',
-      priority: 'High',
-      assignee: 'John Doe',
-      dueDate: '2024-12-30',
-      taskType: 'Documentation',
-      timeEstimate: '30m',
-      matter: 'Williams v. City',
-      isPrivate: false,
-      status: 'Overdue'
-    },
-    {
-      id: '5',
-      name: 'Client onboarding',
-      description: 'Complete onboarding process for new client',
-      priority: 'Normal',
-      assignee: 'Sarah Lee',
-      dueDate: '2025-01-10',
-      taskType: 'Onboarding',
-      timeEstimate: '60m',
-      matter: 'New Corp. LLC',
-      isPrivate: false,
-      status: 'Completed'
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const loadTasks = async () => {
+    setIsLoading(true);
+    try {
+      const data = await fetchTasks();
+      
+      const transformedTasks = data.map(task => ({
+        id: task.id,
+        name: task.name,
+        description: task.description || '',
+        priority: task.priority,
+        assignee: task.assigned_to || '',
+        dueDate: task.due_date || '',
+        taskType: task.task_type || '',
+        timeEstimate: task.time_estimate || '',
+        matter: task.matter_id || '',
+        isPrivate: task.is_private,
+        status: task.status
+      }));
+      
+      setTasks(transformedTasks);
+    } catch (error) {
+      console.error('Error loading tasks:', error);
+      setTasks([
+        {
+          id: '1',
+          name: 'Send monthly invoice to client',
+          description: 'Download the invoice from the client\'s profile, verify, and send.',
+          priority: 'High',
+          assignee: 'John Doe',
+          dueDate: '2025-01-02',
+          taskType: 'Invoicing',
+          timeEstimate: '15m',
+          matter: 'A vs B client matter',
+          isPrivate: true,
+          status: 'Pending'
+        },
+        {
+          id: '2',
+          name: 'Review contract draft',
+          description: 'Check the updated contract and provide feedback',
+          priority: 'Normal',
+          assignee: 'John Doe',
+          dueDate: '2025-01-05',
+          taskType: 'Documentation',
+          timeEstimate: '45m',
+          matter: 'Smith Contract',
+          isPrivate: false,
+          status: 'In Progress'
+        },
+        {
+          id: '3',
+          name: 'Schedule client meeting',
+          description: 'Arrange for a follow-up meeting with the Johnson family',
+          priority: 'Low',
+          assignee: 'Sarah Lee',
+          dueDate: '2024-12-28',
+          taskType: 'Meeting',
+          timeEstimate: '10m',
+          matter: 'Johnson Estate',
+          isPrivate: false,
+          status: 'In Review'
+        },
+        {
+          id: '4',
+          name: 'File court documents',
+          description: 'Submit the prepared documents to the county court',
+          priority: 'High',
+          assignee: 'John Doe',
+          dueDate: '2024-12-30',
+          taskType: 'Documentation',
+          timeEstimate: '30m',
+          matter: 'Williams v. City',
+          isPrivate: false,
+          status: 'Overdue'
+        },
+        {
+          id: '5',
+          name: 'Client onboarding',
+          description: 'Complete onboarding process for new client',
+          priority: 'Normal',
+          assignee: 'Sarah Lee',
+          dueDate: '2025-01-10',
+          taskType: 'Onboarding',
+          timeEstimate: '60m',
+          matter: 'New Corp. LLC',
+          isPrivate: false,
+          status: 'Completed'
+        }
+      ]);
+    } finally {
+      setIsLoading(false);
     }
-  ]);
+  };
+
+  useEffect(() => {
+    loadTasks();
+  }, []);
 
   const handleCloseTask = (taskId: string) => {
     setTasks(currentTasks => currentTasks.map(task => 
@@ -168,6 +202,10 @@ export default function Tasks() {
 
   const handleSort = (newSortConfig: SortConfig) => {
     setSortConfig(newSortConfig);
+  };
+
+  const handleTaskCreated = () => {
+    loadTasks();
   };
 
   return (
@@ -236,7 +274,11 @@ export default function Tasks() {
             </TabsList>
             
             <TabsContent value="my-tasks" className="mt-4">
-              {viewMode === 'list' ? (
+              {isLoading ? (
+                <div className="flex justify-center py-10">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                </div>
+              ) : viewMode === 'list' ? (
                 <TaskList tasks={filteredTasks} onCloseTask={handleCloseTask} />
               ) : (
                 <TaskBoard tasks={filteredTasks} onCloseTask={handleCloseTask} />
@@ -244,7 +286,11 @@ export default function Tasks() {
             </TabsContent>
             
             <TabsContent value="all-tasks" className="mt-4">
-              {viewMode === 'list' ? (
+              {isLoading ? (
+                <div className="flex justify-center py-10">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                </div>
+              ) : viewMode === 'list' ? (
                 <TaskList tasks={filteredTasks} onCloseTask={handleCloseTask} />
               ) : (
                 <TaskBoard tasks={filteredTasks} onCloseTask={handleCloseTask} />
@@ -256,7 +302,11 @@ export default function Tasks() {
             </TabsContent>
           </Tabs>
 
-          <NewTaskDialog open={isNewTaskOpen} onOpenChange={setIsNewTaskOpen} />
+          <NewTaskDialog 
+            open={isNewTaskOpen} 
+            onOpenChange={setIsNewTaskOpen} 
+            onTaskCreated={handleTaskCreated} 
+          />
           <TaskTypeDialog open={isTaskTypeOpen} onOpenChange={setIsTaskTypeOpen} />
           <NewWorkflowTemplateDialog open={isNewTemplateOpen} onOpenChange={setIsNewTemplateOpen} />
         </div>

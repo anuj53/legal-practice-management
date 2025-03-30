@@ -360,6 +360,54 @@ export type Database = {
           },
         ]
       }
+      tasks: {
+        Row: {
+          assigned_to: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          is_private: boolean
+          matter_id: string | null
+          name: string
+          priority: string
+          status: string
+          task_type: string | null
+          time_estimate: string | null
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          is_private?: boolean
+          matter_id?: string | null
+          name: string
+          priority?: string
+          status?: string
+          task_type?: string | null
+          time_estimate?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          is_private?: boolean
+          matter_id?: string | null
+          name?: string
+          priority?: string
+          status?: string
+          task_type?: string | null
+          time_estimate?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       workflow_templates: {
         Row: {
           created_at: string | null
