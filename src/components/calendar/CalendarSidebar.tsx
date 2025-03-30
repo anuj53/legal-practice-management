@@ -41,7 +41,7 @@ export function CalendarSidebar({
   });
 
   return (
-    <div className={`h-full bg-white/80 backdrop-blur-sm shadow-lg overflow-hidden flex flex-col rounded-xl border border-gray-200 relative ${collapsed ? 'w-16' : 'w-auto'} transition-all duration-300`}>
+    <div className={`h-full bg-white/80 backdrop-blur-sm shadow-lg flex flex-col rounded-xl border border-gray-200 relative ${collapsed ? 'w-16' : 'w-auto'} transition-all duration-300`}>
       {/* Toggle collapse button */}
       {onToggleCollapse && (
         <Button 
@@ -67,7 +67,7 @@ export function CalendarSidebar({
       </div>
       
       {collapsed ? (
-        <div className="flex-1 p-2 flex flex-col items-center gap-2 overflow-y-auto min-h-0">
+        <div className="flex-1 p-2 flex flex-col items-center gap-2 overflow-y-auto">
           {myCalendars.map(calendar => (
             <div 
               key={calendar.id} 
@@ -92,8 +92,8 @@ export function CalendarSidebar({
           )}
         </div>
       ) : (
-        <div className="flex-1 overflow-hidden min-h-0">
-          <ScrollArea className="h-full">
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <ScrollArea className="flex-1">
             <div className="p-4">
               <CalendarList
                 title="My Calendars"

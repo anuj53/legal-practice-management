@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -150,7 +149,7 @@ export function FullCalendarView({
   }));
 
   return (
-    <div className="h-full w-full rounded-lg overflow-hidden">
+    <div className="h-full w-full flex">
       <FullCalendar
         ref={calendarRef}
         plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}

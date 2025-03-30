@@ -39,7 +39,7 @@ export function CalendarMain({
   const isMobile = useIsMobile();
 
   return (
-    <div className="h-full overflow-hidden relative">
+    <div className="h-full w-full overflow-hidden relative flex flex-col">
       {isMobile && (
         <Sheet>
           <SheetTrigger asChild>
@@ -62,20 +62,22 @@ export function CalendarMain({
         </Sheet>
       )}
       
-      <FullCalendarView
-        view={view}
-        date={date}
-        events={events}
-        onEventClick={onEventClick}
-        onDateClick={null}
-        onCreateEvent={onCreateEvent}
-        showFullDay={showFullDay}
-        onDateSelect={(start, end) => {
-          if (!onCreateEvent) {
-            onDayClick(start);
-          }
-        }}
-      />
+      <div className="flex-1 h-full">
+        <FullCalendarView
+          view={view}
+          date={date}
+          events={events}
+          onEventClick={onEventClick}
+          onDateClick={null}
+          onCreateEvent={onCreateEvent}
+          showFullDay={showFullDay}
+          onDateSelect={(start, end) => {
+            if (!onCreateEvent) {
+              onDayClick(start);
+            }
+          }}
+        />
+      </div>
     </div>
   );
 }
