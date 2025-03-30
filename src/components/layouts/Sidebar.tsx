@@ -67,7 +67,7 @@ const LPMLogo = ({ collapsed }: { collapsed?: boolean }) => (
     {!collapsed && (
       <div className="flex flex-col">
         <span className="font-bold text-white text-2xl tracking-tight">LPM</span>
-        <span className="text-xs text-white/70 tracking-wide uppercase">Legal Management</span>
+        <span className="text-xs text-white/70 tracking-wide uppercase">Legal Practice Management</span>
       </div>
     )}
   </div>
