@@ -16,7 +16,7 @@ interface RecurrenceDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (pattern: RecurrencePattern) => void;
-  initialPattern?: RecurrencePattern;
+  initialPattern?: RecurrencePattern | null;
 }
 
 export function RecurrenceDialog({

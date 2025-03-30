@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -15,7 +16,7 @@ import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RecurrenceDialog } from '@/components/calendar/RecurrenceDialog';
 import { RecurrencePattern } from '@/types/calendar';
-import { useEventTypes } from '@/hooks/useEventTypes';
+import { useEventTypes, EventType } from '@/hooks/useEventTypes';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
@@ -360,7 +361,7 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
                   <Checkbox
                     id="allDay"
                     checked={isAllDay}
-                    onCheckedChange={setIsAllDay}
+                    onCheckedChange={(checked) => setIsAllDay(checked === true)}
                   />
                 </div>
               </div>
@@ -444,7 +445,7 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
                   <Checkbox
                     id="recurrence"
                     checked={isRecurring}
-                    onCheckedChange={setIsRecurring}
+                    onCheckedChange={(checked) => setIsRecurring(checked === true)}
                   />
                 </div>
               </div>
@@ -463,7 +464,7 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
       <RecurrenceDialog
         isOpen={recurrenceDialogOpen}
         onClose={handleCloseRecurrenceDialog}
-        onConfirm={handleRecurrenceChange}
+        onSave={handleRecurrenceChange}
         initialPattern={recurrencePattern}
       />
       
