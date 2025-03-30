@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Plus, Settings, Edit2, ListFilter } from 'lucide-react';
+import { Plus, Settings, ListFilter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/types/calendar';
 import { CalendarList } from './CalendarList';
@@ -20,8 +20,8 @@ export function CalendarSidebar({
   onEditCalendar
 }: CalendarSidebarProps) {
   return (
-    <div className="h-full bg-white shadow-sm overflow-hidden flex flex-col rounded-lg border border-gray-100">
-      <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+    <div className="h-full bg-white/80 backdrop-blur-sm shadow-lg overflow-hidden flex flex-col rounded-xl border border-gray-200">
+      <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-yorpro-50 to-white">
         <h3 className="text-base font-semibold text-gray-800 flex items-center gap-2">
           <ListFilter className="h-4 w-4 text-yorpro-600" />
           Calendar Filters
@@ -46,11 +46,11 @@ export function CalendarSidebar({
         )}
       </ScrollArea>
       
-      <div className="p-3 border-t border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+      <div className="p-3 border-t border-gray-100 bg-gradient-to-r from-yorpro-50 to-white">
         <Button 
           variant="gradient" 
           size="sm" 
-          className="w-full justify-center gap-1 font-medium"
+          className="w-full justify-center gap-1 font-medium shadow-md hover:shadow-lg transition-all duration-300"
           onClick={() => onEditCalendar && myCalendars.length > 0 ? onEditCalendar(myCalendars[0]) : null}
         >
           <Settings className="h-3.5 w-3.5" />

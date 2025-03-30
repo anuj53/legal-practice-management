@@ -82,17 +82,17 @@ export function MainLayout() {
       ) : (
         // Desktop version with collapsible sidebar
         <>
-          <div className={`${sidebarCollapsed ? 'w-16' : 'w-64'} transition-all duration-300 ease-in-out relative`}>
+          <div className={`${sidebarCollapsed ? 'w-24' : 'w-72'} transition-all duration-300 ease-in-out relative`}>
             <Sidebar collapsed={sidebarCollapsed} />
             <Button 
-              variant="gradient"
+              variant="glass" 
               size="icon" 
-              className="absolute top-1/2 -right-3 h-6 w-6 rounded-full"
+              className="absolute top-1/2 -right-3 h-8 w-8 rounded-full shadow-lg border border-white/20"
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
             >
               {sidebarCollapsed ? 
-                <ChevronRight className="h-3 w-3" /> : 
-                <ChevronLeft className="h-3 w-3" />
+                <ChevronRight className="h-4 w-4" /> : 
+                <ChevronLeft className="h-4 w-4" />
               }
             </Button>
           </div>
