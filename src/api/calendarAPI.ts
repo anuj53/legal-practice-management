@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Calendar, Event, isValidUUID, convertDbEventToEvent, convertEventToDbEvent } from '@/utils/calendarUtils';
@@ -177,15 +178,24 @@ export const fetchEvents = async () => {
           else if (reminderTime === 60) reminder = '1hour';
           else if (reminderTime === 1440) reminder = '1day';
         }
+
+        // Get documents for the event
+        const { data: documentsData } = await supabase
+          .from('event_documents')
+          .select('id, name, url')
+          .eq('event_id', dbEvent.id);
+        
+        const documents = documentsData || [];
         
         // Convert the base event
         const event = convertDbEventToEvent(dbEvent, eventTypeMap, calendars);
         
-        // Add attendees and reminder
+        // Add attendees, reminder and documents
         return {
           ...event,
           attendees,
-          reminder
+          reminder,
+          documents
         };
       }));
       
@@ -437,12 +447,31 @@ export const createEventInDb = async (event: Omit<Event, 'id'>) => {
       }
     }
     
+    // Save documents if provided
+    if (event.documents && event.documents.length > 0) {
+      const documentsToInsert = event.documents.map(doc => ({
+        event_id: data[0].id,
+        name: doc.name,
+        url: doc.url
+      }));
+      
+      const { error: documentsError } = await supabase
+        .from('event_documents')
+        .insert(documentsToInsert);
+      
+      if (documentsError) {
+        console.error('Error saving event documents:', documentsError);
+        // Don't throw here, we want to continue even if documents fail
+      }
+    }
+    
     // Return new event with generated ID
     const newEvent = convertDbEventToEvent(data[0]);
     
-    // Add the attendees and reminder to returned event
+    // Add the attendees, reminder and documents to returned event
     newEvent.attendees = event.attendees || [];
     newEvent.reminder = event.reminder || 'none';
+    newEvent.documents = event.documents || [];
     
     console.log('API: Converted new event:', newEvent);
     return newEvent;
@@ -624,6 +653,29 @@ export const updateEventInDb = async (event: Event) => {
       }
     }
     
+    // Update documents (remove all existing and add new ones)
+    await supabase
+      .from('event_documents')
+      .delete()
+      .eq('event_id', event.id);
+    
+    if (event.documents && event.documents.length > 0) {
+      const documentsToInsert = event.documents.map(doc => ({
+        event_id: event.id,
+        name: doc.name,
+        url: doc.url
+      }));
+      
+      const { error: documentsError } = await supabase
+        .from('event_documents')
+        .insert(documentsToInsert);
+      
+      if (documentsError) {
+        console.error('Error updating event documents:', documentsError);
+        // Don't throw here, we want to continue even if documents fail
+      }
+    }
+    
     if (!data || data.length === 0) {
       console.warn('Update succeeded but no data returned from database. Returning original event.');
       return event;
@@ -632,9 +684,10 @@ export const updateEventInDb = async (event: Event) => {
     // Return the updated event
     const updatedEvent = convertDbEventToEvent(data[0]);
     
-    // Add the attendees and reminder to returned event
+    // Add the attendees, reminder and documents to returned event
     updatedEvent.attendees = event.attendees || [];
     updatedEvent.reminder = event.reminder || 'none';
+    updatedEvent.documents = event.documents || [];
     // Preserve the event_type_id for future updates
     updatedEvent.event_type_id = eventTypeId;
     

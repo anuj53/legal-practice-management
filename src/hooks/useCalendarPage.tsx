@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { CalendarViewType } from '@/types/calendar';
 import { Calendar, Event } from '@/utils/calendarUtils';
@@ -107,6 +106,7 @@ export function useCalendarPage() {
       isAllDay: false,
       description: '',
       location: '',
+      documents: [], // Initialize empty documents array
     };
     
     setSelectedEvent(defaultEvent as Event);
@@ -158,6 +158,10 @@ export function useCalendarPage() {
     console.log("Current modal mode:", modalMode);
     console.log("Event type:", event.type);
     console.log("Event type_id:", event.event_type_id);
+    
+    if (event.documents && event.documents.length > 0) {
+      console.log("Event documents:", event.documents);
+    }
     
     if (event.isRecurring && event.recurrencePattern) {
       console.log("Recurrence pattern:", {

@@ -1,4 +1,3 @@
-
 import { v4 as uuidv4 } from 'uuid';
 
 export interface Event {
@@ -126,6 +125,8 @@ export const convertDbEventToEvent = (dbEvent: any, eventTypeMap?: Record<string
     clientName: dbEvent.client_name || undefined,
     assignedLawyer: dbEvent.assigned_lawyer || undefined,
     courtInfo: courtInfo,
+    // Documents will be added separately in the fetchEvents function
+    documents: [],
     // Store the original event_type_id to help with updates
     event_type_id: dbEvent.event_type_id || undefined
   };
