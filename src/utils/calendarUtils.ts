@@ -52,58 +52,77 @@ export interface Event {
 }
 
 // Helper function to validate UUID format
-export const isValidUUID = (id: string): boolean => {
-  if (!id || typeof id !== 'string') {
-    console.log(`UUID validation failed: ${id} is not a valid string`);
-    return false;
-  }
-  
+export function isValidUUID(uuid: string): boolean {
+  if (!uuid) return false;
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  const isValid = uuidRegex.test(id);
-  console.log(`UUID validation for "${id}": ${isValid}`);
-  return isValid;
-};
+  return uuidRegex.test(uuid);
+}
 
 // Converter functions for database interactions
-export const convertEventToDbEvent = (event: Omit<Event, 'id'> | Event) => {
+export const convertEventToDbEvent = (event: Event) => {
   return {
+    id: event.id,
     title: event.title,
     description: event.description || null,
     start_time: event.start.toISOString(),
     end_time: event.end.toISOString(),
     location: event.location || null,
     is_recurring: event.isRecurring || false,
-    calendar_id: event.calendar,
     recurrence_pattern: event.recurrencePattern ? JSON.stringify(event.recurrencePattern) : null,
-    // ID is included only if present
-    ...(('id' in event) ? { id: event.id } : {})
+    calendar_id: event.calendar,
+    // Other properties will be handled by the API
   };
 };
 
-export const convertDbEventToEvent = (dbEvent: any, eventTypeMap: Record<string, any> = {}): Event => {
-  console.log('Converting DB event to Event object:', dbEvent);
-
-  // Get event type information
-  const eventTypeInfo = dbEvent.event_type_id ? eventTypeMap[dbEvent.event_type_id] : null;
+export const convertDbEventToEvent = (dbEvent: any, eventTypeMap: any = {}): Event => {
+  console.log('Converting DB event to Event:', dbEvent);
   
-  const event = {
+  // Handle possible missing data
+  if (!dbEvent) {
+    console.error('Empty DB event object provided to converter');
+    throw new Error('Cannot convert null or undefined DB event');
+  }
+  
+  if (!dbEvent.start_time || !dbEvent.end_time) {
+    console.error('DB event missing required time fields:', dbEvent);
+  }
+  
+  // Get event type info
+  let eventType = 'default';
+  let eventColor = null;
+  
+  if (dbEvent.event_type_id && eventTypeMap && eventTypeMap[dbEvent.event_type_id]) {
+    eventType = eventTypeMap[dbEvent.event_type_id].name;
+    eventColor = eventTypeMap[dbEvent.event_type_id].color;
+  }
+  
+  // Parse recurrence pattern
+  let recurrencePattern = null;
+  if (dbEvent.is_recurring && dbEvent.recurrence_pattern) {
+    try {
+      recurrencePattern = typeof dbEvent.recurrence_pattern === 'string' 
+        ? JSON.parse(dbEvent.recurrence_pattern) 
+        : dbEvent.recurrence_pattern;
+    } catch (e) {
+      console.error('Error parsing recurrence pattern:', e);
+    }
+  }
+  
+  // Create event object
+  return {
     id: dbEvent.id,
     title: dbEvent.title,
     description: dbEvent.description || '',
     start: new Date(dbEvent.start_time),
     end: new Date(dbEvent.end_time),
-    type: eventTypeInfo ? eventTypeInfo.name : 'client-meeting',
-    color: eventTypeInfo ? eventTypeInfo.color : null,
-    calendar: dbEvent.calendar_id,
     location: dbEvent.location || '',
+    isAllDay: false, // Determine if it's an all-day event based on time range
     isRecurring: dbEvent.is_recurring || false,
-    createdBy: dbEvent.created_by,
-    isAllDay: false,
-    recurrencePattern: dbEvent.recurrence_pattern ? JSON.parse(dbEvent.recurrence_pattern) : undefined
+    type: eventType,
+    color: eventColor,
+    calendar: dbEvent.calendar_id,
+    recurrencePattern: recurrencePattern
   };
-
-  console.log('Converted event:', event);
-  return event;
 };
 
 // This function expands recurring events based on their recurrence pattern

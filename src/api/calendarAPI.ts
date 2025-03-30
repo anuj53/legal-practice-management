@@ -245,6 +245,22 @@ export const createEventInDb = async (event: Omit<Event, 'id'>) => {
       
       if (eventTypes && eventTypes.length > 0) {
         eventTypeId = eventTypes[0].id;
+      } else {
+        // If no matching event type found, create one
+        const { data: newEventType, error: createError } = await supabase
+          .from('event_types')
+          .insert({
+            name: event.type,
+            color: event.color || '#6B7280' // Use provided color or default
+          })
+          .select();
+          
+        if (createError) {
+          console.error('Error creating event type:', createError);
+        } else if (newEventType && newEventType.length > 0) {
+          eventTypeId = newEventType[0].id;
+          console.log('Created new event type:', newEventType[0]);
+        }
       }
     }
     

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { CalendarHeader } from '@/components/calendar/CalendarHeader';
 import { CalendarSidebar } from '@/components/calendar/CalendarSidebar';
@@ -46,6 +47,7 @@ export default function Calendar() {
     handleCreateCalendar,
     handleUpdateCalendar,
     handleDeleteCalendar,
+    refreshCalendarData
   } = useCalendarPage();
   
   const handleTimeSlotSelect = (start: Date, end: Date) => {
@@ -81,6 +83,10 @@ export default function Calendar() {
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
         (event, newSession) => {
           setSession(newSession);
+          if (event === 'SIGNED_IN') {
+            // After signing in, refresh calendar data
+            refreshCalendarData();
+          }
         }
       );
       
@@ -89,6 +95,13 @@ export default function Calendar() {
     
     checkAuth();
   }, []);
+  
+  // Add a refresh when the component mounts
+  useEffect(() => {
+    if (session) {
+      refreshCalendarData();
+    }
+  }, [session]);
   
   const createCalendarWrapper = () => {
     setCalendarDialogMode('create');
@@ -150,10 +163,10 @@ export default function Calendar() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="p-8 rounded-lg bg-white shadow-lg border border-lpm-100">
+        <div className="p-8 rounded-lg bg-white shadow-lg border border-gray-100">
           <div className="flex flex-col items-center">
-            <div className="w-12 h-12 rounded-full border-4 border-t-lpm-600 border-lpm-100 animate-spin mb-4"></div>
-            <p className="text-lpm-700 font-medium">Loading calendar data...</p>
+            <div className="w-12 h-12 rounded-full border-4 border-t-blue-600 border-blue-100 animate-spin mb-4"></div>
+            <p className="text-gray-700 font-medium">Loading calendar data...</p>
           </div>
         </div>
       </div>
