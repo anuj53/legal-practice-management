@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { CalendarHeader } from '@/components/calendar/CalendarHeader';
 import { CalendarSidebar } from '@/components/calendar/CalendarSidebar';
@@ -198,8 +197,10 @@ export default function Calendar() {
             <CalendarSidebar
               myCalendars={myCalendars || []}
               otherCalendars={otherCalendars || []}
+              events={events}
               onCalendarToggle={handleCalendarToggle}
               onEditCalendar={editCalendarWrapper}
+              onEventClick={handleEventClick}
               collapsed={sidebarCollapsed}
               onToggleCollapse={toggleSidebar}
             />

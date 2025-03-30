@@ -1,0 +1,74 @@
+
+import React from 'react';
+import { format } from 'date-fns';
+import { Calendar as CalendarIcon, Clock, MapPin } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Event } from '@/utils/calendarUtils';
+
+interface TodaysEventsListProps {
+  events: Event[];
+  collapsed?: boolean;
+  onEventClick?: (event: Event) => void;
+}
+
+export function TodaysEventsList({ events, collapsed = false, onEventClick }: TodaysEventsListProps) {
+  // Sort events by start time
+  const sortedEvents = [...events].sort((a, b) => 
+    new Date(a.start).getTime() - new Date(b.start).getTime()
+  );
+
+  if (collapsed) {
+    return (
+      <div className="px-2 py-3 border-b border-gray-200">
+        <div className="bg-gray-100 h-10 w-10 rounded-full mx-auto flex items-center justify-center">
+          <CalendarIcon className="h-5 w-5 text-yorpro-600" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="px-4 py-3 border-b border-gray-200 bg-white/90">
+      <h3 className="text-sm font-semibold text-yorpro-800 mb-2 flex items-center gap-1.5">
+        <CalendarIcon className="h-4 w-4 text-yorpro-600" />
+        Today's Events
+      </h3>
+      
+      {sortedEvents.length === 0 ? (
+        <div className="text-xs text-gray-500 italic p-2 rounded-lg bg-gray-50">
+          No events scheduled for today
+        </div>
+      ) : (
+        <ScrollArea className="h-48 pr-3 -mr-3">
+          <div className="space-y-2">
+            {sortedEvents.map((event) => (
+              <div 
+                key={event.id} 
+                className="p-2 rounded-lg bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors border border-gray-200/50 shadow-sm"
+                onClick={() => onEventClick && onEventClick(event)}
+              >
+                <div className="text-sm font-medium text-gray-800 line-clamp-1">{event.title}</div>
+                <div className="flex items-center text-xs text-gray-500 mt-1 gap-1">
+                  <Clock className="h-3 w-3" />
+                  <span>{format(new Date(event.start), 'h:mm a')}</span>
+                  {event.end && (
+                    <>
+                      <span>-</span>
+                      <span>{format(new Date(event.end), 'h:mm a')}</span>
+                    </>
+                  )}
+                </div>
+                {event.location && (
+                  <div className="flex items-center text-xs text-gray-500 mt-1 gap-1">
+                    <MapPin className="h-3 w-3" />
+                    <span className="line-clamp-1">{event.location}</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
+      )}
+    </div>
+  );
+}

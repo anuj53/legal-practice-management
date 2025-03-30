@@ -5,12 +5,16 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/types/calendar';
 import { CalendarList } from './CalendarList';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { TodaysEventsList } from './TodaysEventsList';
+import { Event } from '@/utils/calendarUtils';
 
 interface CalendarSidebarProps {
   myCalendars: Calendar[];
   otherCalendars: Calendar[];
+  events: Event[];
   onCalendarToggle: (id: string, category: 'my' | 'other') => void;
   onEditCalendar?: (calendar: Calendar) => void;
+  onEventClick?: (event: Event) => void;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
 }
@@ -18,11 +22,24 @@ interface CalendarSidebarProps {
 export function CalendarSidebar({
   myCalendars,
   otherCalendars,
+  events,
   onCalendarToggle,
   onEditCalendar,
+  onEventClick,
   collapsed = false,
   onToggleCollapse
 }: CalendarSidebarProps) {
+  // Filter for today's events
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  
+  const todaysEvents = events.filter(event => {
+    const eventDate = new Date(event.start);
+    return eventDate >= today && eventDate < tomorrow;
+  });
+
   return (
     <div className={`h-full bg-white/80 backdrop-blur-sm shadow-lg overflow-hidden flex flex-col rounded-xl border border-gray-200 relative ${collapsed ? 'w-16' : 'w-auto'} transition-all duration-300`}>
       {/* Toggle collapse button */}
@@ -39,6 +56,13 @@ export function CalendarSidebar({
           }
         </Button>
       )}
+      
+      {/* Today's Events List */}
+      <TodaysEventsList 
+        events={todaysEvents} 
+        collapsed={collapsed} 
+        onEventClick={onEventClick}
+      />
       
       {collapsed ? (
         <div className="flex-1 p-2 flex flex-col items-center gap-2">
