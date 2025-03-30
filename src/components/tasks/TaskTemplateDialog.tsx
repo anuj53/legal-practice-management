@@ -304,7 +304,7 @@ export function TaskTemplateDialog({
                     <FormLabel>Default Assignee</FormLabel>
                     <Select 
                       onValueChange={field.onChange} 
-                      defaultValue={field.value || ''}
+                      defaultValue={field.value || "use_workflow_assignee"}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -312,7 +312,7 @@ export function TaskTemplateDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">Use workflow assignee</SelectItem>
+                        <SelectItem value="use_workflow_assignee">Use workflow assignee</SelectItem>
                         {users.map(user => (
                           <SelectItem key={user.id} value={user.id}>
                             {user.first_name} {user.last_name}
@@ -354,7 +354,7 @@ export function TaskTemplateDialog({
                     <FormLabel>Task Type</FormLabel>
                     <Select 
                       onValueChange={field.onChange} 
-                      defaultValue={field.value || ''}
+                      defaultValue={field.value || "none"}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -362,7 +362,7 @@ export function TaskTemplateDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">None</SelectItem>
+                        <SelectItem value="none">None</SelectItem>
                         {activeTaskTypes.map(type => (
                           <SelectItem key={type.id} value={type.name}>
                             {type.name}
@@ -444,7 +444,7 @@ export function TaskTemplateDialog({
                         <FormLabel>Depends on Task</FormLabel>
                         <Select 
                           onValueChange={field.onChange} 
-                          defaultValue={field.value || ''}
+                          defaultValue={field.value || "no_dependency"}
                           disabled={existingTaskTemplates.length === 0}
                         >
                           <FormControl>
@@ -454,15 +454,19 @@ export function TaskTemplateDialog({
                           </FormControl>
                           <SelectContent>
                             {existingTaskTemplates.length === 0 ? (
-                              <SelectItem value="" disabled>No tasks available</SelectItem>
+                              <SelectItem value="no_dependency">No tasks available</SelectItem>
                             ) : (
-                              existingTaskTemplates
-                                .filter(task => !editTask || task.id !== editTask.id)
-                                .map(task => (
-                                  <SelectItem key={task.id} value={task.id}>
-                                    {task.name}
-                                  </SelectItem>
-                                ))
+                              <>
+                                <SelectItem value="no_dependency">No dependency</SelectItem>
+                                {existingTaskTemplates
+                                  .filter(task => !editTask || task.id !== editTask.id)
+                                  .map(task => (
+                                    <SelectItem key={task.id} value={task.id}>
+                                      {task.name}
+                                    </SelectItem>
+                                  ))
+                                }
+                              </>
                             )}
                           </SelectContent>
                         </Select>
