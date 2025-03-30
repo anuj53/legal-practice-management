@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -106,27 +105,22 @@ export default function Tasks() {
 
   const filteredTasks = useMemo(() => {
     return tasks.filter(task => {
-      // Filter by search query
       const matchesSearch = searchQuery ? 
         task.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         task.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
         task.matter.toLowerCase().includes(searchQuery.toLowerCase()) :
         true;
       
-      // Filter by tab (my tasks vs all tasks)
       const matchesTab = 
         (activeTab === 'my-tasks' && task.assignee === 'John Doe') ||
         (activeTab === 'all-tasks');
       
-      // Filter by priority
       const matchesPriority = filters.priority.length === 0 || 
         filters.priority.includes(task.priority);
       
-      // Filter by task type
       const matchesTaskType = filters.taskType.length === 0 || 
         filters.taskType.includes(task.taskType);
       
-      // Filter by due date
       const matchesDueDate = !filters.dueDate || 
         new Date(task.dueDate).toDateString() === filters.dueDate.toDateString();
       
@@ -189,13 +183,13 @@ export default function Tasks() {
           </div>
 
           <div className="bg-white border rounded-lg p-4 shadow-sm">
-            <TaskFilters 
-              onSearch={handleSearch}
-              onFilterChange={handleFilterChange}
-              onSort={handleSort}
-            />
-            <div className="flex justify-end mt-4">
-              <div className="border rounded-md flex">
+            <div className="flex justify-between items-center">
+              <TaskFilters 
+                onSearch={handleSearch}
+                onFilterChange={handleFilterChange}
+                onSort={handleSort}
+              />
+              <div className="border rounded-md flex ml-2">
                 <Button
                   variant={viewMode === 'list' ? 'default' : 'ghost'}
                   size="sm"

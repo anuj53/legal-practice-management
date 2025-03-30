@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -57,23 +56,19 @@ export function TaskFilters({ onSearch, onFilterChange, onSort }: TaskFiltersPro
   
   const { taskTypes } = useTaskTypes();
   
-  // Priority options
   const priorities = ['High', 'Normal', 'Low'];
   
-  // Handle search input change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
     onSearch(query);
   };
   
-  // Handle filter changes
   const handleFilterChange = (filterType: keyof TaskFilters, value: any) => {
     const updatedFilters = { ...filters, [filterType]: value };
     setFilters(updatedFilters);
     onFilterChange(updatedFilters);
     
-    // Count active filters for badge
     const count = 
       (updatedFilters.priority.length > 0 ? 1 : 0) +
       (updatedFilters.taskType.length > 0 ? 1 : 0) +
@@ -84,7 +79,6 @@ export function TaskFilters({ onSearch, onFilterChange, onSort }: TaskFiltersPro
     setFiltersActive(count > 0);
   };
   
-  // Toggle a filter value
   const toggleFilter = (filterType: 'priority' | 'taskType' | 'assignee', value: string) => {
     const currentValues = filters[filterType];
     const newValues = currentValues.includes(value)
@@ -94,7 +88,6 @@ export function TaskFilters({ onSearch, onFilterChange, onSort }: TaskFiltersPro
     handleFilterChange(filterType, newValues);
   };
   
-  // Handle sort changes
   const handleSortChange = (field: keyof Task) => {
     const direction: 'asc' | 'desc' = 
       sortConfig.field === field && sortConfig.direction === 'asc' 
@@ -106,7 +99,6 @@ export function TaskFilters({ onSearch, onFilterChange, onSort }: TaskFiltersPro
     onSort(newSortConfig);
   };
   
-  // Reset all filters
   const resetFilters = () => {
     const resetedFilters = {
       priority: [],
@@ -121,8 +113,8 @@ export function TaskFilters({ onSearch, onFilterChange, onSort }: TaskFiltersPro
   };
   
   return (
-    <div className="flex flex-wrap items-center gap-4">
-      <div className="relative min-w-[200px] max-w-full flex-1 shrink basis-0">
+    <div className="flex items-center space-x-2">
+      <div className="relative w-[180px] md:w-[220px] lg:w-[280px] xl:w-[320px]">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
         <Input
           placeholder="Search tasks..."
@@ -145,10 +137,10 @@ export function TaskFilters({ onSearch, onFilterChange, onSort }: TaskFiltersPro
         )}
       </div>
       
-      <div className="flex gap-2 flex-none">
+      <div className="flex items-center space-x-2">
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="relative whitespace-nowrap">
+            <Button variant="outline" size="sm" className="relative whitespace-nowrap h-10">
               <Filter className="mr-2 h-4 w-4" />
               Filter
               {activeFilterCount > 0 && (
@@ -169,7 +161,6 @@ export function TaskFilters({ onSearch, onFilterChange, onSort }: TaskFiltersPro
             </div>
             
             <div className="space-y-4">
-              {/* Priority filter */}
               <div>
                 <h5 className="text-sm font-medium mb-2">Priority</h5>
                 <div className="flex flex-wrap gap-1">
@@ -188,7 +179,6 @@ export function TaskFilters({ onSearch, onFilterChange, onSort }: TaskFiltersPro
               
               <Separator />
               
-              {/* Task type filter */}
               <div>
                 <h5 className="text-sm font-medium mb-2">Task Type</h5>
                 <div className="flex flex-wrap gap-1">
@@ -209,7 +199,6 @@ export function TaskFilters({ onSearch, onFilterChange, onSort }: TaskFiltersPro
               
               <Separator />
               
-              {/* Due date filter */}
               <div>
                 <h5 className="text-sm font-medium mb-2">Due Date</h5>
                 <div className="flex flex-col gap-2">
@@ -292,7 +281,7 @@ export function TaskFilters({ onSearch, onFilterChange, onSort }: TaskFiltersPro
         
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="whitespace-nowrap">
+            <Button variant="outline" size="sm" className="whitespace-nowrap h-10">
               <ArrowUpDown className="mr-2 h-4 w-4" />
               Sort
               {sortConfig.field && (
