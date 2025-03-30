@@ -1,8 +1,8 @@
 
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import { FullCalendarView } from '@/components/calendar/FullCalendarView';
 import { CalendarViewType } from '@/types/calendar';
-import type { Event } from '@/utils/calendarUtils';
+import { Event } from '@/utils/calendarUtils';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { CalendarSidebar } from '@/components/calendar/CalendarSidebar';
@@ -21,7 +21,6 @@ interface CalendarMainProps {
   otherCalendars?: any[];
   onCalendarToggle?: (id: string, category: 'my' | 'other') => void;
   onEditCalendar?: (calendar: any) => void;
-  sidebarCollapsed?: boolean;
 }
 
 export function CalendarMain({ 
@@ -35,39 +34,12 @@ export function CalendarMain({
   myCalendars = [],
   otherCalendars = [],
   onCalendarToggle,
-  onEditCalendar,
-  sidebarCollapsed
+  onEditCalendar
 }: CalendarMainProps) {
   const isMobile = useIsMobile();
-  const calendarContainerRef = useRef<HTMLDivElement>(null);
-  const [forceRerender, setForceRerender] = useState(0);
-  
-  // Force calendar to update its layout when sidebar is collapsed/expanded
-  useEffect(() => {
-    // Trigger multiple resize events when sidebar changes
-    const triggerResizeEvents = () => {
-      [0, 50, 150, 300, 500].forEach(delay => {
-        setTimeout(() => {
-          window.dispatchEvent(new Event('resize'));
-        }, delay);
-      });
-    };
-    
-    if (calendarContainerRef.current) {
-      // Force a complete re-render by incrementing the state
-      setForceRerender(prev => prev + 1);
-      console.log('Calendar force rerender triggered due to sidebar state change', forceRerender + 1);
-      
-      // Additional resize events for more reliability
-      triggerResizeEvents();
-    }
-  }, [sidebarCollapsed]);
 
   return (
-    <div 
-      className="h-full overflow-hidden relative" 
-      ref={calendarContainerRef}
-    >
+    <div className="h-full overflow-hidden relative">
       {isMobile && (
         <Sheet>
           <SheetTrigger asChild>
@@ -98,8 +70,6 @@ export function CalendarMain({
         onDateClick={null}
         onCreateEvent={onCreateEvent}
         showFullDay={showFullDay}
-        forceRerender={forceRerender}
-        key={`calendar-view-${sidebarCollapsed ? 'collapsed' : 'expanded'}-${view}-${date.toISOString().substring(0, 10)}-${forceRerender}`} 
         onDateSelect={(start, end) => {
           if (!onCreateEvent) {
             onDayClick(start);

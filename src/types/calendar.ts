@@ -1,8 +1,8 @@
 
-import type { Event as CalendarEvent, Calendar } from '@/utils/calendarUtils';
+import { Event, Calendar } from '@/utils/calendarUtils';
 
 // Re-export the types from calendarUtils
-export type { CalendarEvent, Calendar };
+export type { Event as CalendarEvent, Calendar };
 
 export interface CalendarShare {
   id?: string;

@@ -20,7 +20,6 @@ interface FullCalendarViewProps {
   onDateSelect?: (start: Date, end: Date) => void;
   onCreateEvent?: (start: Date, end: Date) => void;
   showFullDay?: boolean;
-  forceRerender?: number;
 }
 
 export function FullCalendarView({
@@ -31,85 +30,35 @@ export function FullCalendarView({
   onDateClick,
   onDateSelect,
   onCreateEvent,
-  showFullDay = true,
-  forceRerender = 0
+  showFullDay = true
 }: FullCalendarViewProps) {
   const calendarRef = useRef<FullCalendar | null>(null);
   const isMobile = useIsMobile();
-  const prevSizeRef = useRef<{ width: number; height: number } | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
 
   const getDefaultColor = (type: string): string => {
     switch (type) {
       case 'client-meeting':
-        return '#F97316';
+        return '#F97316'; // Bright Orange
       case 'internal-meeting':
-        return '#0EA5E9';
+        return '#0EA5E9'; // Ocean Blue
       case 'court':
-        return '#8B5CF6';
+        return '#8B5CF6'; // Vivid Purple
       case 'deadline':
-        return '#EF4444';
+        return '#EF4444'; // Bright Red
       case 'personal':
-        return '#10B981';
+        return '#10B981'; // Vibrant Green
       default:
-        return '#6B7280';
+        return '#6B7280'; // Default Gray
     }
   };
 
-  // This effect handles forced rerenders triggered by sidebar collapses
   useEffect(() => {
-    if (!calendarRef.current) return;
-    
-    console.log("Calendar component received forceRerender signal:", forceRerender);
-    
-    const api = calendarRef.current.getApi();
-    
-    // Completely reinitialize the calendar with the current view and date
-    setTimeout(() => {
-      if (calendarRef.current) {
-        const api = calendarRef.current.getApi();
-        const currentViewType = getViewType(view);
-        
-        console.log("Reinitializing calendar with view:", currentViewType);
-        
-        // Force the view to change even if it's the same view
-        api.changeView('dayGridMonth');
-        setTimeout(() => {
-          api.changeView(currentViewType);
-          api.gotoDate(date);
-          api.updateSize();
-        }, 0);
-      }
-    }, 10);
-  }, [forceRerender, view, date]);
-  
-  // This effect handles window resize events
-  useEffect(() => {
-    const handleResize = () => {
-      if (calendarRef.current && containerRef.current) {
-        const { width, height } = containerRef.current.getBoundingClientRect();
-        const prevSize = prevSizeRef.current;
-        
-        // Only update if dimensions have actually changed
-        if (!prevSize || prevSize.width !== width || prevSize.height !== height) {
-          console.log("Calendar size changed, updating layout:", { width, height });
-          prevSizeRef.current = { width, height };
-          
-          const api = calendarRef.current.getApi();
-          api.updateSize();
-        }
-      }
-    };
-    
-    window.addEventListener('resize', handleResize);
-    
-    // Initial size update with delay to ensure DOM is ready
-    setTimeout(handleResize, 100);
-    
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
+    if (calendarRef.current) {
+      const api = calendarRef.current.getApi();
+      api.changeView(getViewType(view));
+      api.gotoDate(date);
+    }
+  }, [view, date]);
 
   const getViewType = (view: CalendarViewType): string => {
     if (isMobile) {
@@ -200,7 +149,7 @@ export function FullCalendarView({
   }));
 
   return (
-    <div className="h-full w-full rounded-lg overflow-hidden" ref={containerRef}>
+    <div className="h-full w-full rounded-lg overflow-hidden">
       <FullCalendar
         ref={calendarRef}
         plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}

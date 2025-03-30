@@ -136,24 +136,7 @@ export default function Calendar() {
   };
   
   const toggleSidebar = () => {
-    setSidebarCollapsed(prevState => !prevState);
-    
-    console.log(`Sidebar toggled to ${!sidebarCollapsed ? 'collapsed' : 'expanded'}`);
-    
-    if (document.querySelector('.fc')) {
-      document.querySelector('.fc')?.classList.add('force-reflow');
-      document.querySelector('.fc')?.getBoundingClientRect();
-      setTimeout(() => {
-        document.querySelector('.fc')?.classList.remove('force-reflow');
-      }, 10);
-    }
-    
-    [10, 50, 100, 300, 500, 800].forEach(delay => {
-      setTimeout(() => {
-        window.dispatchEvent(new Event('resize'));
-        console.log(`Resize event triggered after ${delay}ms`);
-      }, delay);
-    });
+    setSidebarCollapsed(!sidebarCollapsed);
   };
   
   if (!session) {
@@ -193,9 +176,7 @@ export default function Calendar() {
       </div>
       
       <div className="flex flex-1 overflow-hidden px-2 sm:px-4 pb-2 sm:pb-4 h-[calc(100vh-6rem)]">
-        <div 
-          className="flex-1 overflow-hidden relative bg-white rounded-lg shadow-md border border-gray-100"
-        >
+        <div className="flex-1 overflow-hidden relative bg-white rounded-lg shadow-md border border-gray-100">
           <CalendarMain
             view={currentView}
             date={currentDate}
@@ -208,7 +189,6 @@ export default function Calendar() {
             otherCalendars={otherCalendars || []}
             onCalendarToggle={handleCalendarToggle}
             onEditCalendar={editCalendarWrapper}
-            sidebarCollapsed={sidebarCollapsed}
           />
         </div>
         
