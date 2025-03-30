@@ -93,20 +93,6 @@ export function CalendarSidebar({
           )}
         </ScrollArea>
       )}
-      
-      {!collapsed && (
-        <div className="p-3 border-t border-gray-100 bg-gradient-to-r from-yorpro-50 to-white">
-          <Button 
-            variant="gradient" 
-            size="sm" 
-            className="w-full justify-center gap-1 font-medium shadow-md hover:shadow-lg transition-all duration-300"
-            onClick={() => onEditCalendar && myCalendars.length > 0 ? onEditCalendar(myCalendars[0]) : null}
-          >
-            <Settings className="h-3.5 w-3.5" />
-            Manage Calendars
-          </Button>
-        </div>
-      )}
     </div>
   );
 }
