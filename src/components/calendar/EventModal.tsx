@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { format, addDays } from 'date-fns';
 import { X, Users, MapPin, Clock, CalendarClock, Bell, FileText, Briefcase, Scale, Plus, Trash2 } from 'lucide-react';
@@ -328,7 +329,7 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
               </div>
               
               <div className="flex-1 overflow-y-auto p-6">
-                <TabsContent value="general" className="space-y-4 mt-0 h-full">
+                <TabsContent value="general" className="space-y-4 mt-0 h-full outline-none">
                   <div>
                     <Label htmlFor="title">Title</Label>
                     <Input
@@ -486,7 +487,7 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
                   </div>
                 </TabsContent>
 
-                <TabsContent value="legal" className="space-y-4 mt-0 h-full">
+                <TabsContent value="legal" className="space-y-4 mt-0 h-full outline-none">
                   <div>
                     <Label htmlFor="caseId">Case ID</Label>
                     <Input
@@ -563,7 +564,7 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
                   </div>
                 </TabsContent>
                 
-                <TabsContent value="recurrence" className="space-y-4 mt-0 h-full">
+                <TabsContent value="recurrence" className="space-y-4 mt-0 h-full outline-none">
                   <div className="border p-4 rounded-md">
                     <h3 className="font-medium mb-3">Recurrence Pattern</h3>
                     
@@ -680,7 +681,7 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
                   </div>
                 </TabsContent>
                 
-                <TabsContent value="documents" className="space-y-4 mt-0 h-full">
+                <TabsContent value="documents" className="space-y-4 mt-0 h-full outline-none">
                   <div>
                     <h3 className="font-medium mb-3">Linked Documents</h3>
                     
@@ -778,138 +779,212 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
               </DialogFooter>
             </Tabs>
           ) : (
-            <>
-              <div className="flex-1 overflow-y-auto p-6">
-                <div className="flex flex-col space-y-8">
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="flex flex-col space-y-8">
+                <div className="flex items-start gap-4">
+                  <Clock className="h-5 w-5 text-gray-500 mt-0.5" />
+                  <div>
+                    <div className="font-medium">Time</div>
+                    <div className="text-gray-700">
+                      {formData.isAllDay ? "All day event" : 
+                        `${format(formData.start, 'h:mm a')} - ${format(formData.end, 'h:mm a')}`}
+                    </div>
+                  </div>
+                </div>
+                
+                {formData.location && (
                   <div className="flex items-start gap-4">
-                    <Clock className="h-5 w-5 text-gray-500 mt-0.5" />
+                    <MapPin className="h-5 w-5 text-gray-500 mt-0.5" />
                     <div>
-                      <div className="font-medium">Time</div>
-                      <div className="text-gray-700">
-                        {formData.isAllDay ? "All day event" : 
-                          `${format(formData.start, 'h:mm a')} - ${format(formData.end, 'h:mm a')}`}
+                      <div className="font-medium">Location</div>
+                      <div className="text-gray-700">{formData.location}</div>
+                    </div>
+                  </div>
+                )}
+                
+                {formData.description && (
+                  <div className="border-t border-gray-200 pt-4">
+                    <div className="font-medium mb-2">Description</div>
+                    <div className="text-gray-700 whitespace-pre-line">{formData.description}</div>
+                  </div>
+                )}
+                
+                <div className="flex items-start gap-4">
+                  <CalendarClock className="h-5 w-5 text-gray-500 mt-0.5" />
+                  <div>
+                    <div className="font-medium">Calendar</div>
+                    <div className="text-gray-700">
+                      {getCalendarNameById(formData.calendar)}
+                    </div>
+                  </div>
+                </div>
+                
+                {formData.attendees && formData.attendees.length > 0 && (
+                  <div className="flex items-start gap-4">
+                    <Users className="h-5 w-5 text-gray-500 mt-0.5" />
+                    <div>
+                      <div className="font-medium">Attendees</div>
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {formData.attendees.map((attendee, idx) => (
+                          <Badge key={idx} variant="outline">
+                            {attendee}
+                          </Badge>
+                        ))}
                       </div>
                     </div>
                   </div>
-                  
-                  {formData.location && (
-                    <div className="flex items-start gap-4">
-                      <MapPin className="h-5 w-5 text-gray-500 mt-0.5" />
-                      <div>
-                        <div className="font-medium">Location</div>
-                        <div className="text-gray-700">{formData.location}</div>
+                )}
+                
+                {formData.reminder && formData.reminder !== 'none' && (
+                  <div className="flex items-start gap-4">
+                    <Bell className="h-5 w-5 text-gray-500 mt-0.5" />
+                    <div>
+                      <div className="font-medium">Reminder</div>
+                      <div className="text-gray-700">
+                        {formData.reminder === '5min' ? '5 minutes before' :
+                         formData.reminder === '15min' ? '15 minutes before' :
+                         formData.reminder === '30min' ? '30 minutes before' :
+                         formData.reminder === '1hour' ? '1 hour before' :
+                         '1 day before'}
                       </div>
                     </div>
-                  )}
-                  
-                  {formData.description && (
-                    <div className="border-t border-gray-200 pt-4">
-                      <div className="font-medium mb-2">Description</div>
-                      <div className="text-gray-700 whitespace-pre-line">{formData.description}</div>
-                    </div>
-                  )}
-                  
+                  </div>
+                )}
+                
+                {formData.isRecurring && formData.recurrencePattern && (
                   <div className="flex items-start gap-4">
                     <CalendarClock className="h-5 w-5 text-gray-500 mt-0.5" />
                     <div>
-                      <div className="font-medium">Calendar</div>
+                      <div className="font-medium">Recurring Event</div>
                       <div className="text-gray-700">
-                        {getCalendarNameById(formData.calendar)}
+                        Repeats every {formData.recurrencePattern.interval || 1} {
+                          formData.recurrencePattern.frequency === 'daily' ? 'day(s)' : 
+                          formData.recurrencePattern.frequency === 'weekly' ? 'week(s)' :
+                          formData.recurrencePattern.frequency === 'monthly' ? 'month(s)' : 
+                          formData.recurrencePattern.frequency === 'yearly' ? 'year(s)' : ''
+                        }
+                        {formData.recurrencePattern.endDate && 
+                          ` until ${format(new Date(formData.recurrencePattern.endDate), 'MMMM d, yyyy')}`}
+                        {formData.recurrencePattern.occurrences &&
+                          ` for ${formData.recurrencePattern.occurrences} occurrences`}
+                        {!formData.recurrencePattern.endDate && !formData.recurrencePattern.occurrences &&
+                          ` (no end date)`}
                       </div>
                     </div>
                   </div>
-                  
-                  {formData.attendees && formData.attendees.length > 0 && (
-                    <div className="flex items-start gap-4">
-                      <Users className="h-5 w-5 text-gray-500 mt-0.5" />
-                      <div>
-                        <div className="font-medium">Attendees</div>
-                        <div className="flex flex-wrap gap-2 mt-1">
-                          {formData.attendees.map((attendee, idx) => (
-                            <Badge key={idx} variant="outline">
-                              {attendee}
-                            </Badge>
-                          ))}
+                )}
+                
+                {(formData.caseId || formData.clientName || formData.assignedLawyer) && (
+                  <div className="border-t border-gray-200 pt-4">
+                    <h3 className="font-medium mb-3">Legal Details</h3>
+                    
+                    <div className="space-y-4">
+                      {formData.caseId && (
+                        <div className="flex items-start gap-4">
+                          <Briefcase className="h-5 w-5 text-gray-500 mt-0.5" />
+                          <div>
+                            <div className="font-medium">Case ID</div>
+                            <div className="text-gray-700">{formData.caseId}</div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {formData.reminder && formData.reminder !== 'none' && (
-                    <div className="flex items-start gap-4">
-                      <Bell className="h-5 w-5 text-gray-500 mt-0.5" />
-                      <div>
-                        <div className="font-medium">Reminder</div>
-                        <div className="text-gray-700">
-                          {formData.reminder === '5min' ? '5 minutes before' :
-                           formData.reminder === '15min' ? '15 minutes before' :
-                           formData.reminder === '30min' ? '30 minutes before' :
-                           formData.reminder === '1hour' ? '1 hour before' :
-                           '1 day before'}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {formData.isRecurring && formData.recurrencePattern && (
-                    <div className="flex items-start gap-4">
-                      <CalendarClock className="h-5 w-5 text-gray-500 mt-0.5" />
-                      <div>
-                        <div className="font-medium">Recurring Event</div>
-                        <div className="text-gray-700">
-                          Repeats every {formData.recurrencePattern.interval || 1} {
-                            formData.recurrencePattern.frequency === 'daily' ? 'day(s)' : 
-                            formData.recurrencePattern.frequency === 'weekly' ? 'week(s)' :
-                            formData.recurrencePattern.frequency === 'monthly' ? 'month(s)' : 
-                            formData.recurrencePattern.frequency === 'yearly' ? 'year(s)' : ''
-                          }
-                          {formData.recurrencePattern.endDate && 
-                            ` until ${format(new Date(formData.recurrencePattern.endDate), 'MMMM d, yyyy')}`}
-                          {formData.recurrencePattern.occurrences &&
-                            ` for ${formData.recurrencePattern.occurrences} occurrences`}
-                          {!formData.recurrencePattern.endDate && !formData.recurrencePattern.occurrences &&
-                            ` (no end date)`}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {(formData.caseId || formData.clientName || formData.assignedLawyer) && (
-                    <div className="border-t border-gray-200 pt-4">
-                      <h3 className="font-medium mb-3">Legal Details</h3>
+                      )}
                       
-                      <div className="space-y-4">
-                        {formData.caseId && (
-                          <div className="flex items-start gap-4">
-                            <Briefcase className="h-5 w-5 text-gray-500 mt-0.5" />
-                            <div>
-                              <div className="font-medium">Case ID</div>
-                              <div className="text-gray-700">{formData.caseId}</div>
-                            </div>
+                      {formData.clientName && (
+                        <div className="flex items-start gap-4">
+                          <Users className="h-5 w-5 text-gray-500 mt-0.5" />
+                          <div>
+                            <div className="font-medium">Client</div>
+                            <div className="text-gray-700">{formData.clientName}</div>
                           </div>
-                        )}
-                        
-                        {formData.clientName && (
-                          <div className="flex items-start gap-4">
-                            <Users className="h-5 w-5 text-gray-500 mt-0.5" />
-                            <div>
-                              <div className="font-medium">Client</div>
-                              <div className="text-gray-700">{formData.clientName}</div>
-                            </div>
+                        </div>
+                      )}
+                      
+                      {formData.assignedLawyer && (
+                        <div className="flex items-start gap-4">
+                          <Scale className="h-5 w-5 text-gray-500 mt-0.5" />
+                          <div>
+                            <div className="font-medium">Assigned Lawyer</div>
+                            <div className="text-gray-700">{formData.assignedLawyer}</div>
                           </div>
-                        )}
-                        
-                        {formData.assignedLawyer && (
-                          <div className="flex items-start gap-4">
-                            <Scale className="h-5 w-5 text-gray-500 mt-0.5" />
-                            <div>
-                              <div className="font-medium">Assigned Lawyer</div>
-                              <div className="text-gray-700">{formData.assignedLawyer}</div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </div>
-                  )}
-                  
-                  {formData.court
+                  </div>
+                )}
+                
+                {formData.courtInfo && (formData.courtInfo.courtName || formData.courtInfo.judgeDetails || formData.courtInfo.docketNumber) && (
+                  <div className="border-t border-gray-200 pt-4">
+                    <h3 className="font-medium mb-3">Court Information</h3>
+                    
+                    <div className="space-y-4">
+                      {formData.courtInfo.courtName && (
+                        <div className="flex items-start gap-4">
+                          <Scale className="h-5 w-5 text-gray-500 mt-0.5" />
+                          <div>
+                            <div className="font-medium">Court Name</div>
+                            <div className="text-gray-700">{formData.courtInfo.courtName}</div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {formData.courtInfo.judgeDetails && (
+                        <div className="flex items-start gap-4">
+                          <Users className="h-5 w-5 text-gray-500 mt-0.5" />
+                          <div>
+                            <div className="font-medium">Judge Details</div>
+                            <div className="text-gray-700">{formData.courtInfo.judgeDetails}</div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {formData.courtInfo.docketNumber && (
+                        <div className="flex items-start gap-4">
+                          <FileText className="h-5 w-5 text-gray-500 mt-0.5" />
+                          <div>
+                            <div className="font-medium">Docket Number</div>
+                            <div className="text-gray-700">{formData.courtInfo.docketNumber}</div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
+                {formData.documents && formData.documents.length > 0 && (
+                  <div className="border-t border-gray-200 pt-4">
+                    <h3 className="font-medium mb-3">Linked Documents</h3>
+                    
+                    <div className="space-y-2">
+                      {formData.documents.map(doc => (
+                        <div key={doc.id} className="flex items-center justify-between p-3 border rounded-md">
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-blue-500" />
+                            <span>{doc.name}</span>
+                          </div>
+                          <a 
+                            href={doc.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-blue-500 hover:text-blue-700 text-sm"
+                          >
+                            View
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                <div className="pt-4 mt-auto">
+                  <Button onClick={handleSwitchToEdit} className="w-full">
+                    Edit Event
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
