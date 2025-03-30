@@ -7,8 +7,7 @@ import {
   FileText, 
   MoreHorizontal,
   Check,
-  Edit,
-  GripVertical
+  Edit
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -160,20 +159,16 @@ export function TaskBoard({ tasks: initialTasks }: TaskBoardProps) {
                             <Card 
                               ref={provided.innerRef}
                               {...provided.draggableProps}
-                              className={`border shadow-sm transition-shadow ${
+                              {...provided.dragHandleProps} 
+                              className={`border shadow-sm transition-shadow cursor-grab ${
                                 snapshot.isDragging ? 'shadow-lg' : 'hover:shadow-md'
                               }`}
                             >
                               <CardHeader className="p-3 pb-0">
                                 <div className="flex justify-between items-start">
-                                  <div className="flex items-center">
-                                    <div {...provided.dragHandleProps} className="mr-2 text-gray-400 cursor-grab">
-                                      <GripVertical size={16} />
-                                    </div>
-                                    <CardTitle className="text-sm font-medium">
-                                      {task.name}
-                                    </CardTitle>
-                                  </div>
+                                  <CardTitle className="text-sm font-medium">
+                                    {task.name}
+                                  </CardTitle>
                                   <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                       <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
