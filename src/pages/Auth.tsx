@@ -77,10 +77,10 @@ export default function Auth() {
         <div className="text-center mb-8">
           <div className="flex justify-center mb-2">
             <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-yorpro-600 to-yorpro-800 flex items-center justify-center shadow-lg">
-              <span className="text-white font-bold text-xl">Y</span>
+              <span className="text-white font-bold text-xl">L</span>
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">YorPro Legal Management</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Legal Practice Management</h1>
           <p className="text-gray-600 mt-2">Sign in to your account or create a new one</p>
         </div>
 
@@ -164,7 +164,7 @@ export default function Auth() {
           </CardContent>
           <CardFooter className="flex justify-center border-t pt-4">
             <p className="text-xs text-center text-gray-500">
-              By continuing, you agree to YorPro's Terms of Service and Privacy Policy.
+              By continuing, you agree to Legal Practice Management's Terms of Service and Privacy Policy.
             </p>
           </CardFooter>
         </Card>

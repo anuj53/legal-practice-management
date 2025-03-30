@@ -59,14 +59,14 @@ const SidebarItem = ({
   </NavLink>
 );
 
-const YorProLogo = ({ collapsed }: { collapsed?: boolean }) => (
+const LPMLogo = ({ collapsed }: { collapsed?: boolean }) => (
   <div className={cn("flex items-center gap-3 px-4 py-6", collapsed && "justify-center")}>
     <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-white/30 to-white/5 backdrop-blur-md shadow-lg border border-white/20 hover:scale-105 transition-all duration-300">
-      <span className="text-white font-bold text-2xl">Y</span>
+      <span className="text-white font-bold text-2xl">L</span>
     </div>
     {!collapsed && (
       <div className="flex flex-col">
-        <span className="font-bold text-white text-2xl tracking-tight">YorPro</span>
+        <span className="font-bold text-white text-2xl tracking-tight">LPM</span>
         <span className="text-xs text-white/70 tracking-wide uppercase">Legal Management</span>
       </div>
     )}
@@ -116,7 +116,7 @@ export function Sidebar({ collapsed = false, onToggleCollapse }: SidebarProps) {
       <div className="relative z-10 flex flex-1 flex-col h-full overflow-hidden">
         {/* Logo section - fixed at top */}
         <div className="flex-shrink-0">
-          <YorProLogo collapsed={collapsed} />
+          <LPMLogo collapsed={collapsed} />
           <Separator className="bg-white/10 mx-4 my-2" />
         </div>
         

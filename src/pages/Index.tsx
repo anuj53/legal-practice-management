@@ -133,7 +133,7 @@ const Index = () => {
   return (
     <div className="container py-8 mx-auto">
       <div className="mb-8 px-4 md:px-0">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome to YorPro</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome to Legal Practice Management</h1>
         <p className="text-gray-600 text-lg">
           Legal management system for efficient case handling and client management
         </p>
