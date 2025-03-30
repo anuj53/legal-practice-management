@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Calendar, Event, isValidUUID, convertDbEventToEvent, convertEventToDbEvent } from '@/utils/calendarUtils';
@@ -123,6 +124,12 @@ export const fetchEvents = async () => {
 // Update calendar in Supabase
 export const updateCalendarInDb = async (calendar: Calendar) => {
   try {
+    // First check if user is authenticated
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+    
     // Remove sharedWith from the data sent to Supabase if it exists
     const { sharedWith, ...calendarData } = calendar;
     
@@ -256,7 +263,7 @@ export const createEventInDb = async (event: Omit<Event, 'id'>) => {
       recurrence_pattern: event.recurrencePattern ? JSON.stringify(event.recurrencePattern) : null,
       event_type_id: eventTypeId,
       calendar_id: event.calendar,
-      created_by: user.id
+      created_by: user.id // Set explicitly even though trigger will handle this
     };
     
     console.log('API: Formatted DB event for create:', dbEvent);
@@ -293,6 +300,12 @@ export const createEventInDb = async (event: Omit<Event, 'id'>) => {
 export const updateEventInDb = async (event: Event) => {
   try {
     console.log('API: Updating event in DB:', event);
+    
+    // First check if user is authenticated
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
     
     // Thorough UUID validation for update
     if (!event.id) {
@@ -375,6 +388,12 @@ export const deleteEventFromDb = async (id: string) => {
   try {
     console.log('API: Deleting event from DB:', id);
     
+    // First check if user is authenticated
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+    
     // Validate UUID before attempting to delete
     if (!isValidUUID(id)) {
       throw new Error(`Invalid UUID format for event ID: ${id}`);
@@ -402,6 +421,12 @@ export const deleteEventFromDb = async (id: string) => {
 export const deleteCalendarFromDb = async (id: string) => {
   try {
     console.log('API: Deleting calendar from DB:', id);
+    
+    // First check if user is authenticated
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
     
     // Validate UUID before attempting to delete
     if (!isValidUUID(id)) {

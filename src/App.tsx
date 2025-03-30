@@ -12,20 +12,14 @@ import { AuthRoute } from './components/auth/AuthRoute';
 import { AuthProvider } from './hooks/useAuth';
 
 function App() {
-  // Development bypass option - remove in production
-  const bypassAuth = new URLSearchParams(window.location.search).get('bypass') === 'true';
-  const AuthWrapper = bypassAuth 
-    ? ({ children }: { children: React.ReactNode }) => <>{children}</> 
-    : AuthRoute;
-
   return (
     <ThemeProvider defaultTheme="light" storageKey="yorpro-theme">
       <AuthProvider>
         <Router>
           <Routes>
             <Route path="/auth" element={<Auth />} />
-            <Route element={<AuthWrapper><MainLayout /></AuthWrapper>}>
-              <Route path="/" element={<Index />} />
+            <Route element={<AuthRoute><MainLayout /></AuthRoute>}>
+              <Route path="/" element={<Navigate to="/calendar" replace />} />
               <Route path="/calendar" element={<Calendar />} />
               <Route path="/tasks" element={<Tasks />} />
               <Route path="*" element={<NotFound />} />
