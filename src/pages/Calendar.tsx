@@ -138,24 +138,22 @@ export default function Calendar() {
   const toggleSidebar = () => {
     setSidebarCollapsed(prevState => !prevState);
     
-    const triggerResize = () => {
-      window.dispatchEvent(new Event('resize'));
-      console.log('Resize event dispatched for calendar');
-    };
+    console.log(`Sidebar toggled to ${!sidebarCollapsed ? 'collapsed' : 'expanded'}`);
     
-    setTimeout(triggerResize, 50);
-    setTimeout(triggerResize, 150);
-    setTimeout(triggerResize, 300);
-    setTimeout(triggerResize, 500);
-    
-    const calendarEl = document.querySelector('.fc');
-    if (calendarEl) {
-      calendarEl.getBoundingClientRect();
-      calendarEl.classList.add('calendar-reflow');
-      setTimeout(() => calendarEl.classList.remove('calendar-reflow'), 10);
+    if (document.querySelector('.fc')) {
+      document.querySelector('.fc')?.classList.add('force-reflow');
+      document.querySelector('.fc')?.getBoundingClientRect();
+      setTimeout(() => {
+        document.querySelector('.fc')?.classList.remove('force-reflow');
+      }, 10);
     }
     
-    console.log(`Sidebar ${sidebarCollapsed ? 'expanded' : 'collapsed'}`);
+    [10, 50, 100, 300, 500, 800].forEach(delay => {
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+        console.log(`Resize event triggered after ${delay}ms`);
+      }, delay);
+    });
   };
   
   if (!session) {

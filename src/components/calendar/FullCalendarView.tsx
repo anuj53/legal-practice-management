@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -35,6 +36,7 @@ export function FullCalendarView({
 }: FullCalendarViewProps) {
   const calendarRef = useRef<FullCalendar | null>(null);
   const isMobile = useIsMobile();
+  const prevSizeRef = useRef<{ width: number; height: number } | null>(null);
 
   const getDefaultColor = (type: string): string => {
     switch (type) {
@@ -53,35 +55,57 @@ export function FullCalendarView({
     }
   };
 
+  // This effect handles forced rerenders triggered by sidebar collapses
   useEffect(() => {
-    console.log("Calendar component received new props - forcing complete reload");
+    if (!calendarRef.current) return;
     
-    if (calendarRef.current) {
-      const api = calendarRef.current.getApi();
-      
-      setTimeout(() => {
-        if (calendarRef.current) {
-          console.log("Reinitializing calendar with view:", view);
-          const api = calendarRef.current.getApi();
-          api.changeView(getViewType(view));
+    console.log("Calendar component received forceRerender signal:", forceRerender);
+    
+    const api = calendarRef.current.getApi();
+    
+    // Completely reinitialize the calendar with the current view and date
+    setTimeout(() => {
+      if (calendarRef.current) {
+        const api = calendarRef.current.getApi();
+        const currentViewType = getViewType(view);
+        
+        console.log("Reinitializing calendar with view:", currentViewType);
+        
+        // Force the view to change even if it's the same view
+        api.changeView('dayGridMonth');
+        setTimeout(() => {
+          api.changeView(currentViewType);
           api.gotoDate(date);
           api.updateSize();
-        }
-      }, 50);
-    }
-  }, [view, date, forceRerender]);
+        }, 0);
+      }
+    }, 10);
+  }, [forceRerender, view, date]);
   
+  // This effect handles window resize events
   useEffect(() => {
     const handleResize = () => {
       if (calendarRef.current) {
-        console.log("Calendar resize event received, updating calendar layout");
-        const api = calendarRef.current.getApi();
-        api.updateSize();
+        const container = calendarRef.current.elRef.current?.parentElement;
+        if (!container) return;
+        
+        const { width, height } = container.getBoundingClientRect();
+        const prevSize = prevSizeRef.current;
+        
+        // Only update if dimensions have actually changed
+        if (!prevSize || prevSize.width !== width || prevSize.height !== height) {
+          console.log("Calendar size changed, updating layout:", { width, height });
+          prevSizeRef.current = { width, height };
+          
+          const api = calendarRef.current.getApi();
+          api.updateSize();
+        }
       }
     };
     
     window.addEventListener('resize', handleResize);
     
+    // Initial size update with delay to ensure DOM is ready
     setTimeout(handleResize, 100);
     
     return () => {

@@ -47,23 +47,7 @@ export function CalendarMain({
     if (calendarContainerRef.current) {
       // Force a complete re-render by incrementing the state
       setForceRerender(prev => prev + 1);
-      console.log('Calendar force rerender triggered due to sidebar state change');
-      
-      // Also trigger resize events after a delay sequence
-      const triggerResize = () => {
-        window.dispatchEvent(new Event('resize'));
-      };
-      
-      const timers = [
-        setTimeout(triggerResize, 50),
-        setTimeout(triggerResize, 150),
-        setTimeout(triggerResize, 300),
-        setTimeout(triggerResize, 500)
-      ];
-      
-      return () => {
-        timers.forEach(timer => clearTimeout(timer));
-      };
+      console.log('Calendar force rerender triggered due to sidebar state change', forceRerender + 1);
     }
   }, [sidebarCollapsed]);
 
