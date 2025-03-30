@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format, addDays } from 'date-fns';
 import { X, Users, MapPin, Clock, CalendarClock, Bell, FileText, Briefcase, Scale, Plus, Trash2 } from 'lucide-react';
@@ -285,6 +284,12 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
     const calendar = myCalendars.find(cal => cal.id === id);
     return calendar ? calendar.name : 'Unknown Calendar';
   };
+
+  // This function explicitly handles tab changes
+  const handleTabChange = (value: string) => {
+    console.log("Tab changed to:", value);
+    setActiveTab(value);
+  };
   
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -308,7 +313,11 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
         {/* Main Content Area */}
         <div className="h-[70vh] overflow-hidden flex flex-col">
           {!isViewOnly ? (
-            <Tabs defaultValue="general" value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
+            <Tabs 
+              value={activeTab} 
+              onValueChange={handleTabChange} 
+              className="flex flex-col h-full"
+            >
               <div className="px-6 pt-4 border-b">
                 <TabsList className="grid grid-cols-4">
                   <TabsTrigger value="general">General</TabsTrigger>
@@ -319,7 +328,7 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
               </div>
               
               <div className="flex-1 overflow-y-auto p-6">
-                <TabsContent value="general" className="space-y-4 mt-0">
+                <TabsContent value="general" className="space-y-4 mt-0 h-full">
                   <div>
                     <Label htmlFor="title">Title</Label>
                     <Input
@@ -477,7 +486,7 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
                   </div>
                 </TabsContent>
 
-                <TabsContent value="legal" className="space-y-4 mt-0">
+                <TabsContent value="legal" className="space-y-4 mt-0 h-full">
                   <div>
                     <Label htmlFor="caseId">Case ID</Label>
                     <Input
@@ -554,7 +563,7 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
                   </div>
                 </TabsContent>
                 
-                <TabsContent value="recurrence" className="space-y-4 mt-0">
+                <TabsContent value="recurrence" className="space-y-4 mt-0 h-full">
                   <div className="border p-4 rounded-md">
                     <h3 className="font-medium mb-3">Recurrence Pattern</h3>
                     
@@ -671,7 +680,7 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
                   </div>
                 </TabsContent>
                 
-                <TabsContent value="documents" className="space-y-4 mt-0">
+                <TabsContent value="documents" className="space-y-4 mt-0 h-full">
                   <div>
                     <h3 className="font-medium mb-3">Linked Documents</h3>
                     
@@ -903,84 +912,4 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
                     </div>
                   )}
                   
-                  {formData.courtInfo && (formData.courtInfo.courtName || formData.courtInfo.judgeDetails || formData.courtInfo.docketNumber) && (
-                    <div className="border-t border-gray-200 pt-4">
-                      <h3 className="font-medium mb-3">Court Information</h3>
-                      
-                      <div className="space-y-4">
-                        {formData.courtInfo.courtName && (
-                          <div className="flex items-start gap-4">
-                            <Scale className="h-5 w-5 text-gray-500 mt-0.5" />
-                            <div>
-                              <div className="font-medium">Court Name</div>
-                              <div className="text-gray-700">{formData.courtInfo.courtName}</div>
-                            </div>
-                          </div>
-                        )}
-                        
-                        {formData.courtInfo.judgeDetails && (
-                          <div className="flex items-start gap-4">
-                            <Users className="h-5 w-5 text-gray-500 mt-0.5" />
-                            <div>
-                              <div className="font-medium">Judge</div>
-                              <div className="text-gray-700">{formData.courtInfo.judgeDetails}</div>
-                            </div>
-                          </div>
-                        )}
-                        
-                        {formData.courtInfo.docketNumber && (
-                          <div className="flex items-start gap-4">
-                            <FileText className="h-5 w-5 text-gray-500 mt-0.5" />
-                            <div>
-                              <div className="font-medium">Docket Number</div>
-                              <div className="text-gray-700">{formData.courtInfo.docketNumber}</div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {formData.documents && formData.documents.length > 0 && (
-                    <div className="border-t border-gray-200 pt-4">
-                      <h3 className="font-medium mb-3">Documents</h3>
-                      <div className="space-y-2">
-                        {formData.documents.map(doc => (
-                          <div key={doc.id} className="flex items-center justify-between p-3 border rounded-md">
-                            <div className="flex items-center gap-2">
-                              <FileText className="h-4 w-4 text-blue-500" />
-                              <span>{doc.name}</span>
-                            </div>
-                            <a 
-                              href={doc.url} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="text-blue-500 hover:text-blue-700 text-sm"
-                            >
-                              View
-                            </a>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-              
-              <DialogFooter className="bg-gray-50 p-4 mt-auto">
-                <div className="flex justify-end space-x-2">
-                  <Button variant="outline" onClick={onClose}>
-                    Close
-                  </Button>
-                  <Button onClick={handleSwitchToEdit}>
-                    Edit
-                  </Button>
-                </div>
-              </DialogFooter>
-            </>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
+                  {formData.court
