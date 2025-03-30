@@ -26,9 +26,10 @@ interface EventModalProps {
   mode: 'create' | 'edit' | 'view';
   onSave: (event: Event) => void;
   onDelete: (id: string) => void;
+  onEditClick?: () => void;
 }
 
-export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: EventModalProps) {
+export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete, onEditClick }: EventModalProps) {
   const [title, setTitle] = useState('');
   const [startDate, setStartDate] = useState<Date | undefined>(new Date());
   const [endDate, setEndDate] = useState<Date | undefined>(addHours(new Date(), 1));
@@ -49,7 +50,7 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
   const { eventTypes = [], loading: eventTypesLoading } = useEventTypes();
 
   const getEventTypeColor = (typeId: string | undefined) => {
-    if (!typeId) return '#6B7280'; // Default gray
+    if (!typeId) return '#6B7280';
     const foundType = eventTypes.find(type => type.id === typeId);
     return foundType?.color || '#6B7280';
   };
@@ -289,11 +290,12 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
                   Delete
                 </Button>
                 <Button onClick={() => {
-                  onClose();
-                  setTimeout(() => {
-                    setModalMode('edit');
-                    setModalOpen(true);
-                  }, 100);
+                  if (onEditClick) {
+                    onClose();
+                    setTimeout(() => {
+                      onEditClick();
+                    }, 100);
+                  }
                 }}>
                   Edit
                 </Button>

@@ -147,6 +147,7 @@ export default function Calendar() {
   
   const handleEditEvent = () => {
     setModalMode('edit');
+    setModalOpen(true);
   };
   
   if (!session) {
@@ -227,6 +228,7 @@ export default function Calendar() {
         mode={modalMode}
         onSave={handleSaveEvent}
         onDelete={handleDeleteEvent}
+        onEditClick={handleEditEvent}
       />
       
       <Dialog open={calendarDialogOpen} onOpenChange={setCalendarDialogOpen}>
