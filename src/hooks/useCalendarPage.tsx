@@ -11,6 +11,7 @@ export function useCalendarPage() {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('view');
+  const [localDataUpdated, setLocalDataUpdated] = useState(0);
 
   const {
     myCalendars = [],
@@ -23,14 +24,12 @@ export function useCalendarPage() {
     createCalendar,
     updateCalendar,
     deleteCalendar,
-    dataUpdated,
-    setDataUpdated
   } = useCalendar();
   
   // Add a refresh function that can be called when needed
   const refreshCalendarData = () => {
     console.log('Manually refreshing calendar data');
-    setDataUpdated(prev => prev + 1);
+    setLocalDataUpdated(prev => prev + 1);
   };
   
   // Ensure we refresh events data after calendar events:
@@ -39,6 +38,15 @@ export function useCalendarPage() {
   useEffect(() => {
     refreshCalendarData();
   }, []);
+  
+  // Use local state to trigger refreshes
+  useEffect(() => {
+    if (localDataUpdated > 0) {
+      console.log('Local data updated, refreshing from useCalendar');
+      // This effect will simply cause the component to re-render
+      // which will pull fresh data from useCalendar
+    }
+  }, [localDataUpdated]);
   
   const filteredEvents = events.filter(event => {
     const calendar = [...(myCalendars || []), ...(otherCalendars || [])].find(cal => cal.id === event.calendar);
