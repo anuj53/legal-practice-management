@@ -75,6 +75,7 @@ export function WorkflowTemplateDetailView({
   const fetchTemplateDetails = async () => {
     setIsLoading(true);
     try {
+      // Fetch the workflow template
       const { data: templateData, error: templateError } = await supabase
         .from('workflow_templates')
         .select('*')
@@ -84,6 +85,7 @@ export function WorkflowTemplateDetailView({
       if (templateError) throw templateError;
       setTemplate(templateData as WorkflowTemplate);
       
+      // Fetch task templates separately without trying to join profiles
       const { data: tasksData, error: tasksError } = await supabase
         .from('task_templates')
         .select(`
@@ -99,16 +101,41 @@ export function WorkflowTemplateDetailView({
           due_date_offset,
           depends_on_task_id,
           position,
-          workflow_id,
-          profiles(first_name, last_name)
+          workflow_id
         `)
         .eq('workflow_id', templateId)
         .order('position', { ascending: true });
       
       if (tasksError) throw tasksError;
       
-      // Fix the casting issue by first converting to unknown, then to TaskTemplate[]
-      setTasks((tasksData || []) as unknown as TaskTemplate[]);
+      // For tasks with default_assignee, fetch the profile info separately
+      const enhancedTasks = await Promise.all((tasksData || []).map(async (task) => {
+        if (task.default_assignee) {
+          try {
+            const { data: profileData, error: profileError } = await supabase
+              .from('profiles')
+              .select('first_name, last_name')
+              .eq('id', task.default_assignee)
+              .single();
+            
+            if (!profileError && profileData) {
+              return {
+                ...task,
+                profiles: profileData
+              };
+            }
+          } catch (error) {
+            console.error('Error fetching profile:', error);
+          }
+        }
+        
+        return {
+          ...task,
+          profiles: null
+        };
+      }));
+      
+      setTasks(enhancedTasks as TaskTemplate[]);
     } catch (error) {
       console.error('Error fetching template details:', error);
       toast({
