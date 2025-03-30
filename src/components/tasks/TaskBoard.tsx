@@ -19,6 +19,7 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { toast } from '@/hooks/use-toast';
 import { EditTaskDialog } from './EditTaskDialog';
 import { Task } from './TaskList';
+import { useTaskTypes } from '@/contexts/TaskTypeContext';
 
 interface TaskBoardProps {
   tasks: Task[];
@@ -30,8 +31,13 @@ export function TaskBoard({ tasks: initialTasks }: TaskBoardProps) {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
-  // Define all task types that should always be displayed
-  const allTaskTypes = ['Onboarding', 'Documentation', 'Follow Up', 'Meeting', 'Invoicing'];
+  // Get task types from context
+  const { taskTypes } = useTaskTypes();
+  
+  // Filter active task types only
+  const activeTaskTypes = taskTypes
+    .filter(type => type.active)
+    .map(type => type.name);
 
   // Group tasks by task type
   const tasksByType = tasks.reduce((acc: Record<string, Task[]>, task) => {
@@ -120,7 +126,7 @@ export function TaskBoard({ tasks: initialTasks }: TaskBoardProps) {
     <>
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          {allTaskTypes.map((taskType) => (
+          {activeTaskTypes.map((taskType) => (
             <div key={taskType} className="flex flex-col">
               <div className="flex items-center mb-3 pl-2">
                 <div className={`h-3 w-3 rounded-full ${getTaskTypeColor(taskType)} mr-2`}></div>

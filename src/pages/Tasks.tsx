@@ -23,6 +23,7 @@ import { NewTaskDialog } from '@/components/tasks/NewTaskDialog';
 import { TaskTypeDialog } from '@/components/tasks/TaskTypeDialog';
 import { NewTaskListDialog } from '@/components/tasks/NewTaskListDialog';
 import { TaskListsView } from '@/components/tasks/TaskListsView';
+import { TaskTypeProvider } from '@/contexts/TaskTypeContext';
 
 export default function Tasks() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -108,109 +109,111 @@ export default function Tasks() {
   });
 
   return (
-    <div className="container py-6">
-      <div className="flex flex-col space-y-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Tasks</h1>
-            <p className="text-gray-600 mt-1">Manage and track all your case-related tasks</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button onClick={() => setIsNewTaskOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              New Task
-            </Button>
-            <Button variant="outline" onClick={() => setIsTaskTypeOpen(true)}>
-              <ListChecks className="mr-2 h-4 w-4" />
-              Task Types
-            </Button>
-            <Button variant="outline" onClick={() => setIsNewTaskListOpen(true)}>
-              <ClipboardList className="mr-2 h-4 w-4" />
-              Task Lists
-            </Button>
-          </div>
-        </div>
-
-        <div className="bg-white border rounded-lg p-4 shadow-sm">
-          <div className="flex flex-col md:flex-row gap-4 items-center">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
-              <Input
-                placeholder="Search tasks..."
-                className="pl-10"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+    <TaskTypeProvider>
+      <div className="container py-6">
+        <div className="flex flex-col space-y-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Tasks</h1>
+              <p className="text-gray-600 mt-1">Manage and track all your case-related tasks</p>
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm">
-                <Filter className="mr-2 h-4 w-4" />
-                Filter
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={() => setIsNewTaskOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                New Task
               </Button>
-              <Button variant="outline" size="sm">
-                <SlidersHorizontal className="mr-2 h-4 w-4" />
-                Sort
+              <Button variant="outline" onClick={() => setIsTaskTypeOpen(true)}>
+                <ListChecks className="mr-2 h-4 w-4" />
+                Task Types
               </Button>
-              <div className="border rounded-md flex">
-                <Button
-                  variant={viewMode === 'list' ? 'default' : 'ghost'}
-                  size="sm"
-                  className="rounded-r-none"
-                  onClick={() => setViewMode('list')}
-                >
-                  <CheckSquare className="h-4 w-4" />
+              <Button variant="outline" onClick={() => setIsNewTaskListOpen(true)}>
+                <ClipboardList className="mr-2 h-4 w-4" />
+                Task Lists
+              </Button>
+            </div>
+          </div>
+
+          <div className="bg-white border rounded-lg p-4 shadow-sm">
+            <div className="flex flex-col md:flex-row gap-4 items-center">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
+                <Input
+                  placeholder="Search tasks..."
+                  className="pl-10"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm">
+                  <Filter className="mr-2 h-4 w-4" />
+                  Filter
                 </Button>
-                <Button
-                  variant={viewMode === 'board' ? 'default' : 'ghost'}
-                  size="sm"
-                  className="rounded-l-none"
-                  onClick={() => setViewMode('board')}
-                >
-                  <Calendar className="h-4 w-4" />
+                <Button variant="outline" size="sm">
+                  <SlidersHorizontal className="mr-2 h-4 w-4" />
+                  Sort
                 </Button>
+                <div className="border rounded-md flex">
+                  <Button
+                    variant={viewMode === 'list' ? 'default' : 'ghost'}
+                    size="sm"
+                    className="rounded-r-none"
+                    onClick={() => setViewMode('list')}
+                  >
+                    <CheckSquare className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === 'board' ? 'default' : 'ghost'}
+                    size="sm"
+                    className="rounded-l-none"
+                    onClick={() => setViewMode('board')}
+                  >
+                    <Calendar className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
+
+          <Tabs 
+            defaultValue="my-tasks" 
+            className="w-full"
+            value={activeTab}
+            onValueChange={setActiveTab}
+          >
+            <TabsList className="grid grid-cols-2 w-full md:w-fit">
+              <TabsTrigger value="my-tasks">My Tasks</TabsTrigger>
+              <TabsTrigger value="all-tasks">All Tasks</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="my-tasks" className="mt-4">
+              {viewMode === 'list' ? (
+                <TaskList tasks={filteredTasks} />
+              ) : (
+                <TaskBoard tasks={filteredTasks} />
+              )}
+            </TabsContent>
+            
+            <TabsContent value="all-tasks" className="mt-4">
+              {viewMode === 'list' ? (
+                <TaskList tasks={filteredTasks} />
+              ) : (
+                <TaskBoard tasks={filteredTasks} />
+              )}
+            </TabsContent>
+          </Tabs>
+
+          <Tabs className="hidden">
+            <TabsContent value="task-lists">
+              <TaskListsView />
+            </TabsContent>
+          </Tabs>
+
+          <NewTaskDialog open={isNewTaskOpen} onOpenChange={setIsNewTaskOpen} />
+          <TaskTypeDialog open={isTaskTypeOpen} onOpenChange={setIsTaskTypeOpen} />
+          <NewTaskListDialog open={isNewTaskListOpen} onOpenChange={setIsNewTaskListOpen} />
         </div>
-
-        <Tabs 
-          defaultValue="my-tasks" 
-          className="w-full"
-          value={activeTab}
-          onValueChange={setActiveTab}
-        >
-          <TabsList className="grid grid-cols-2 w-full md:w-fit">
-            <TabsTrigger value="my-tasks">My Tasks</TabsTrigger>
-            <TabsTrigger value="all-tasks">All Tasks</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="my-tasks" className="mt-4">
-            {viewMode === 'list' ? (
-              <TaskList tasks={filteredTasks} />
-            ) : (
-              <TaskBoard tasks={filteredTasks} />
-            )}
-          </TabsContent>
-          
-          <TabsContent value="all-tasks" className="mt-4">
-            {viewMode === 'list' ? (
-              <TaskList tasks={filteredTasks} />
-            ) : (
-              <TaskBoard tasks={filteredTasks} />
-            )}
-          </TabsContent>
-        </Tabs>
-
-        <Tabs className="hidden">
-          <TabsContent value="task-lists">
-            <TaskListsView />
-          </TabsContent>
-        </Tabs>
-
-        <NewTaskDialog open={isNewTaskOpen} onOpenChange={setIsNewTaskOpen} />
-        <TaskTypeDialog open={isTaskTypeOpen} onOpenChange={setIsTaskTypeOpen} />
-        <NewTaskListDialog open={isNewTaskListOpen} onOpenChange={setIsNewTaskListOpen} />
       </div>
-    </div>
+    </TaskTypeProvider>
   );
 }

@@ -29,6 +29,7 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { toast } from '@/hooks/use-toast';
 import { Task } from './TaskList';
+import { useTaskTypes } from '@/contexts/TaskTypeContext';
 
 interface EditTaskDialogProps {
   open: boolean;
@@ -50,6 +51,9 @@ const formSchema = z.object({
 });
 
 export function EditTaskDialog({ open, onOpenChange, task, onSave }: EditTaskDialogProps) {
+  const { taskTypes } = useTaskTypes();
+  const activeTaskTypes = taskTypes.filter(type => type.active);
+  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -178,11 +182,11 @@ export function EditTaskDialog({ open, onOpenChange, task, onSave }: EditTaskDia
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="Onboarding">Onboarding</SelectItem>
-                        <SelectItem value="Documentation">Documentation</SelectItem>
-                        <SelectItem value="Follow Up">Follow Up</SelectItem>
-                        <SelectItem value="Meeting">Meeting</SelectItem>
-                        <SelectItem value="Invoicing">Invoicing</SelectItem>
+                        {activeTaskTypes.map(type => (
+                          <SelectItem key={type.id} value={type.name}>
+                            {type.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </FormItem>

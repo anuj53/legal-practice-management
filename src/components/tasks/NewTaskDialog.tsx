@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -34,6 +33,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useForm } from 'react-hook-form';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useTaskTypes } from '@/contexts/TaskTypeContext';
 
 interface NewTaskDialogProps {
   open: boolean;
@@ -41,6 +41,9 @@ interface NewTaskDialogProps {
 }
 
 export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
+  const { taskTypes } = useTaskTypes();
+  const activeTaskTypes = taskTypes.filter(type => type.active);
+  
   const form = useForm({
     defaultValues: {
       name: '',
@@ -162,11 +165,11 @@ export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="onboarding">Onboarding</SelectItem>
-                        <SelectItem value="documentation">Documentation</SelectItem>
-                        <SelectItem value="follow-up">Follow Up</SelectItem>
-                        <SelectItem value="meeting">Meeting</SelectItem>
-                        <SelectItem value="invoicing">Invoicing</SelectItem>
+                        {activeTaskTypes.map(type => (
+                          <SelectItem key={type.id} value={type.name}>
+                            {type.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </FormItem>

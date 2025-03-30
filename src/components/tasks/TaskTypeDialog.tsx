@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,26 +22,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { toast } from '@/hooks/use-toast';
+import { useTaskTypes, TaskType } from '@/contexts/TaskTypeContext';
 
 interface TaskTypeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-interface TaskType {
-  id: string;
-  name: string;
-  active: boolean;
-}
-
 export function TaskTypeDialog({ open, onOpenChange }: TaskTypeDialogProps) {
-  const [taskTypes, setTaskTypes] = useState<TaskType[]>([
-    { id: '1', name: 'Onboarding', active: true },
-    { id: '2', name: 'Documentation', active: true },
-    { id: '3', name: 'Follow Up', active: true },
-    { id: '4', name: 'Meeting', active: true },
-    { id: '5', name: 'Invoicing', active: true },
-  ]);
+  const { taskTypes, setTaskTypes } = useTaskTypes();
   
   const [newTaskType, setNewTaskType] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
@@ -52,12 +41,20 @@ export function TaskTypeDialog({ open, onOpenChange }: TaskTypeDialogProps) {
 
   const handleAddType = () => {
     if (newTaskType.trim()) {
-      setTaskTypes([
-        ...taskTypes,
-        { id: Date.now().toString(), name: newTaskType, active: true }
-      ]);
+      const newType = { 
+        id: Date.now().toString(), 
+        name: newTaskType, 
+        active: true 
+      };
+      
+      setTaskTypes([...taskTypes, newType]);
       setNewTaskType('');
       setShowAddForm(false);
+      
+      toast({
+        title: "Task Type Added",
+        description: `${newTaskType} has been added as a task type.`,
+      });
     }
   };
 
@@ -71,6 +68,11 @@ export function TaskTypeDialog({ open, onOpenChange }: TaskTypeDialogProps) {
         )
       );
       setEditingType(null);
+      
+      toast({
+        title: "Task Type Updated",
+        description: `Task type has been renamed to ${editingType.name}.`,
+      });
     }
   };
 
@@ -81,11 +83,24 @@ export function TaskTypeDialog({ open, onOpenChange }: TaskTypeDialogProps) {
       )
     );
     setToggleConfirm(null);
+    
+    toast({
+      title: active ? "Task Type Enabled" : "Task Type Disabled",
+      description: `Task type has been ${active ? "enabled" : "disabled"}.`,
+    });
   };
 
   const handleDeleteType = (id: string) => {
-    setTaskTypes(taskTypes.filter(type => type.id !== id));
-    setDeleteConfirm(null);
+    const typeToDelete = taskTypes.find(type => type.id === id);
+    if (typeToDelete) {
+      setTaskTypes(taskTypes.filter(type => type.id !== id));
+      setDeleteConfirm(null);
+      
+      toast({
+        title: "Task Type Deleted",
+        description: `${typeToDelete.name} has been deleted.`,
+      });
+    }
   };
 
   return (
@@ -195,7 +210,6 @@ export function TaskTypeDialog({ open, onOpenChange }: TaskTypeDialogProps) {
         </DialogFooter>
       </DialogContent>
       
-      {/* Confirmation dialog for disabling/enabling task type */}
       <AlertDialog 
         open={toggleConfirm !== null} 
         onOpenChange={() => setToggleConfirm(null)}
@@ -226,7 +240,6 @@ export function TaskTypeDialog({ open, onOpenChange }: TaskTypeDialogProps) {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Confirmation dialog for deleting task type */}
       <AlertDialog 
         open={deleteConfirm !== null} 
         onOpenChange={() => setDeleteConfirm(null)}
