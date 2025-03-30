@@ -145,11 +145,6 @@ export default function Calendar() {
     setSidebarCollapsed(!sidebarCollapsed);
   };
   
-  const handleEditEvent = () => {
-    setModalMode('edit');
-    setModalOpen(true);
-  };
-  
   if (!session) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -228,7 +223,6 @@ export default function Calendar() {
         mode={modalMode}
         onSave={handleSaveEvent}
         onDelete={handleDeleteEvent}
-        onEditClick={handleEditEvent}
       />
       
       <Dialog open={calendarDialogOpen} onOpenChange={setCalendarDialogOpen}>

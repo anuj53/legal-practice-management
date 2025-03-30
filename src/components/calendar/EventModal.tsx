@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -15,7 +16,7 @@ import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RecurrenceDialog } from '@/components/calendar/RecurrenceDialog';
 import { RecurrencePattern } from '@/types/calendar';
-import { useEventTypes } from '@/hooks/useEventTypes';
+import { useEventTypes, EventType } from '@/hooks/useEventTypes';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
@@ -26,10 +27,9 @@ interface EventModalProps {
   mode: 'create' | 'edit' | 'view';
   onSave: (event: Event) => void;
   onDelete: (id: string) => void;
-  onEditClick?: () => void;
 }
 
-export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete, onEditClick }: EventModalProps) {
+export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: EventModalProps) {
   const [title, setTitle] = useState('');
   const [startDate, setStartDate] = useState<Date | undefined>(new Date());
   const [endDate, setEndDate] = useState<Date | undefined>(addHours(new Date(), 1));
@@ -44,17 +44,16 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete, onE
   const [recurrenceDialogOpen, setRecurrenceDialogOpen] = useState(false);
   const [eventType, setEventType] = useState('');
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState('view');
-
+  
   const { eventTypes = [], loading: eventTypesLoading } = useEventTypes();
-
+  
+  // Get event type color
   const getEventTypeColor = (typeId: string | undefined) => {
-    if (!typeId) return '#6B7280';
+    if (!typeId) return '#6B7280'; // Default gray
     const foundType = eventTypes.find(type => type.id === typeId);
     return foundType?.color || '#6B7280';
   };
-
+  
   useEffect(() => {
     if (event) {
       console.log("EventModal: Received event:", event);
@@ -79,14 +78,14 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete, onE
       }
     }
   }, [event]);
-
+  
   useEffect(() => {
     if (isAllDay) {
       setStartTime('00:00');
       setEndTime('23:59');
     }
   }, [isAllDay]);
-
+  
   const handleSave = () => {
     if (!startDate || !endDate || !selectedCalendar) {
       return;
@@ -114,6 +113,7 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete, onE
       calendar: selectedCalendar,
       isRecurring,
       recurrencePattern: isRecurring ? recurrencePattern || undefined : undefined,
+      // Preserve other properties
       caseId: event?.caseId,
       clientName: event?.clientName,
       assignedLawyer: event?.assignedLawyer,
@@ -126,26 +126,26 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete, onE
     
     onSave(updatedEvent);
   };
-
+  
   const handleDelete = () => {
     if (event?.id) {
       onDelete(event.id);
     }
   };
-
+  
   const handleOpenRecurrenceDialog = () => {
     setRecurrenceDialogOpen(true);
   };
-
+  
   const handleCloseRecurrenceDialog = () => {
     setRecurrenceDialogOpen(false);
   };
-
+  
   const handleRecurrenceChange = (pattern: RecurrencePattern) => {
     setRecurrencePattern(pattern);
     setRecurrenceDialogOpen(false);
   };
-
+  
   const formatRecurrenceText = () => {
     if (!recurrencePattern) return 'Not recurring';
     
@@ -179,11 +179,11 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete, onE
     
     return text;
   };
-
+  
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>
               {mode === 'create' ? 'Create Event' : mode === 'edit' ? 'Edit Event' : 'Event Details'}
@@ -191,13 +191,14 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete, onE
           </DialogHeader>
           
           {mode === 'view' ? (
-            <div className="flex-1 overflow-y-auto p-4">
-              <div className="flex flex-col mb-4">
-                <div className="flex items-start justify-between mb-2">
-                  <h2 className="text-2xl font-bold">{title}</h2>
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="flex items-start gap-4 mb-6">
+                <div className="flex-1">
+                  <h2 className="text-2xl font-bold mb-2">{title}</h2>
                   
                   {event?.event_type_id && (
                     <Badge 
+                      className="mb-2" 
                       style={{ 
                         backgroundColor: getEventTypeColor(event.event_type_id),
                         color: 'white'
@@ -206,64 +207,55 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete, onE
                       {eventTypes.find(t => t.id === event.event_type_id)?.name || event.type}
                     </Badge>
                   )}
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div className="flex items-center gap-2">
-                    <CalendarIcon className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm">
-                      {isAllDay ? (
-                        format(new Date(event?.start || new Date()), 'PPPP')
-                      ) : (
-                        <>
-                          {format(new Date(event?.start || new Date()), 'PPPP')}
-                        </>
-                      )}
-                    </span>
-                  </div>
                   
-                  {!isAllDay && (
+                  <div className="space-y-2 text-sm text-gray-600">
+                    {location && (
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4" />
+                        <span>{location}</span>
+                      </div>
+                    )}
+                    
                     <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm">
-                        {format(new Date(event?.start || new Date()), 'h:mm a')} - 
-                        {format(new Date(event?.end || new Date()), 'h:mm a')}
+                      <CalendarIcon className="h-4 w-4" />
+                      <span>
+                        {isAllDay ? (
+                          format(new Date(event?.start || new Date()), 'PPPP')
+                        ) : (
+                          <>
+                            {format(new Date(event?.start || new Date()), 'PPPP')}
+                            {' '} at {format(new Date(event?.start || new Date()), 'h:mm a')} - {format(new Date(event?.end || new Date()), 'h:mm a')}
+                          </>
+                        )}
                       </span>
                     </div>
-                  )}
-                  
-                  {location && (
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm">{location}</span>
-                    </div>
-                  )}
-                  
-                  {isRecurring && recurrencePattern && (
-                    <div className="flex items-center gap-2">
-                      <RotateCw className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm">{formatRecurrenceText()}</span>
-                    </div>
-                  )}
-                  
-                  {event?.caseId && (
-                    <div className="flex items-center gap-2">
-                      <File className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm">Case: {event.caseId}</span>
-                    </div>
-                  )}
-                  
-                  {event?.clientName && (
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm">Client: {event.clientName}</span>
-                    </div>
-                  )}
+                    
+                    {isRecurring && recurrencePattern && (
+                      <div className="flex items-center gap-2">
+                        <RotateCw className="h-4 w-4" />
+                        <span>{formatRecurrenceText()}</span>
+                      </div>
+                    )}
+                    
+                    {event?.caseId && (
+                      <div className="flex items-center gap-2">
+                        <File className="h-4 w-4" />
+                        <span>Case: {event.caseId}</span>
+                      </div>
+                    )}
+                    
+                    {event?.clientName && (
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4" />
+                        <span>Client: {event.clientName}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
               
               {description && (
-                <div className="mb-4">
+                <div className="mb-6">
                   <h3 className="text-sm font-semibold mb-2">Description</h3>
                   <div className="text-sm bg-gray-50 p-3 rounded-md whitespace-pre-wrap">
                     {description}
@@ -272,7 +264,7 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete, onE
               )}
               
               {event?.courtInfo && (
-                <div className="mb-4">
+                <div className="mb-6">
                   <h3 className="text-sm font-semibold mb-2">Court Information</h3>
                   <div className="text-sm bg-gray-50 p-3 rounded-md space-y-2">
                     {event.courtInfo.courtName && <div><span className="font-medium">Court:</span> {event.courtInfo.courtName}</div>}
@@ -290,12 +282,10 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete, onE
                   Delete
                 </Button>
                 <Button onClick={() => {
-                  if (onEditClick) {
-                    onClose();
-                    setTimeout(() => {
-                      onEditClick();
-                    }, 100);
-                  }
+                  onClose();
+                  setTimeout(() => {
+                    // Edit mode will be set by the parent component
+                  }, 100);
                 }}>
                   Edit
                 </Button>
@@ -340,71 +330,70 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete, onE
                 <Label htmlFor="date" className="text-right">
                   Date
                 </Label>
-                <div className="col-span-3 grid grid-cols-2 gap-4">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant={'outline'}
-                        className={cn(
-                          'w-full justify-start text-left font-normal',
-                          !startDate && 'text-muted-foreground'
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {startDate ? format(startDate, 'PPP') : <span>Pick a date</span>}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={startDate}
-                        onSelect={setStartDate}
-                        disabled={(date) => date < new Date('1900-01-01')}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      id="allDay"
-                      checked={isAllDay}
-                      onCheckedChange={(checked: boolean) => setIsAllDay(checked)}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={'outline'}
+                      className={cn(
+                        'w-[240px] justify-start text-left font-normal',
+                        !startDate && 'text-muted-foreground'
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {startDate ? format(startDate, 'PPP') : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={startDate}
+                      onSelect={setStartDate}
+                      disabled={(date) => date < new Date('1900-01-01')}
+                      initialFocus
                     />
-                    <Label htmlFor="allDay" className="cursor-pointer">
-                      All Day
-                    </Label>
-                  </div>
+                  </PopoverContent>
+                </Popover>
+                
+                <div className="col-span-3 flex items-center">
+                  <Label htmlFor="allDay" className="mr-2">
+                    All Day
+                  </Label>
+                  <Checkbox
+                    id="allDay"
+                    checked={isAllDay}
+                    onCheckedChange={(checked) => setIsAllDay(checked === true)}
+                  />
                 </div>
               </div>
               
               {!isAllDay && (
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label className="text-right">
-                    Time
-                  </Label>
-                  <div className="col-span-3 grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="startTime" className="text-xs text-gray-500 mb-1 block">Start</Label>
-                      <Input
-                        type="time"
-                        id="startTime"
-                        value={startTime}
-                        onChange={(e) => setStartTime(e.target.value)}
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="endTime" className="text-xs text-gray-500 mb-1 block">End</Label>
-                      <Input
-                        type="time"
-                        id="endTime"
-                        value={endTime}
-                        onChange={(e) => setEndTime(e.target.value)}
-                      />
-                    </div>
+                <>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="startTime" className="text-right">
+                      Start Time
+                    </Label>
+                    <Input
+                      type="time"
+                      id="startTime"
+                      value={startTime}
+                      onChange={(e) => setStartTime(e.target.value)}
+                      className="col-span-3"
+                    />
                   </div>
-                </div>
+                  
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="endTime" className="text-right">
+                      End Time
+                    </Label>
+                    <Input
+                      type="time"
+                      id="endTime"
+                      value={endTime}
+                      onChange={(e) => setEndTime(e.target.value)}
+                      className="col-span-3"
+                    />
+                  </div>
+                </>
               )}
               
               <div className="grid grid-cols-4 items-center gap-4">
@@ -420,15 +409,15 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete, onE
                 />
               </div>
               
-              <div className="grid grid-cols-4 items-start gap-4">
-                <Label htmlFor="description" className="text-right mt-2">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="description" className="text-right">
                   Description
                 </Label>
                 <Textarea
                   id="description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="col-span-3 min-h-[80px]"
+                  className="col-span-3"
                 />
               </div>
               
@@ -456,7 +445,7 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete, onE
                   <Checkbox
                     id="recurrence"
                     checked={isRecurring}
-                    onCheckedChange={(checked: boolean) => setIsRecurring(checked)}
+                    onCheckedChange={(checked) => setIsRecurring(checked === true)}
                   />
                 </div>
               </div>
