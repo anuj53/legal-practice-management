@@ -289,12 +289,12 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[700px] p-0 overflow-hidden">
-        <div className="bg-yorpro-600 text-white py-4 px-6">
+        <div className="bg-legal-blue text-white py-4 px-6">
           <div className="flex justify-between items-center">
             <DialogTitle className="text-xl font-semibold">
               {editMode ? (mode === 'create' ? 'Create Event' : 'Edit Event') : formData.title}
             </DialogTitle>
-            <Button variant="ghost" size="icon" onClick={onClose} className="text-white hover:bg-yorpro-700">
+            <Button variant="ghost" size="icon" onClick={onClose} className="text-white hover:bg-legal-blue/80">
               <X className="h-5 w-5" />
             </Button>
           </div>
