@@ -48,6 +48,12 @@ export default function Calendar() {
     handleDeleteCalendar,
   } = useCalendarPage();
   
+  useEffect(() => {
+    console.log('Calendar page received myCalendars:', 
+      myCalendars.map(cal => ({id: cal.id, name: cal.name, color: cal.color, checked: cal.checked}))
+    );
+  }, [myCalendars]);
+  
   const handleTimeSlotSelect = (start: Date, end: Date) => {
     console.log("Time slot selected:", start, end);
     const defaultCalendarId = myCalendars.length > 0 ? myCalendars[0].id : '';

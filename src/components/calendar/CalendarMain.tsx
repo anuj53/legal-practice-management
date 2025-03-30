@@ -38,6 +38,9 @@ export function CalendarMain({
 }: CalendarMainProps) {
   const isMobile = useIsMobile();
 
+  // Debug calendars being passed
+  console.log('CalendarMain: myCalendars:', myCalendars.map(cal => ({id: cal.id, name: cal.name, color: cal.color})));
+
   return (
     <div className="h-full overflow-hidden relative">
       {isMobile && (
@@ -70,6 +73,8 @@ export function CalendarMain({
         onDateClick={null}
         onCreateEvent={onCreateEvent}
         showFullDay={showFullDay}
+        myCalendars={myCalendars}
+        otherCalendars={otherCalendars}
         onDateSelect={(start, end) => {
           if (!onCreateEvent) {
             onDayClick(start);

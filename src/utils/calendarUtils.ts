@@ -7,7 +7,7 @@ export interface Event {
   end: Date;
   type: string;
   calendar: string;
-  color?: string; // Add color property
+  color?: string;
   location?: string;
   description?: string;
   isAllDay?: boolean;
@@ -102,10 +102,11 @@ export const convertDbEventToEvent = (dbEvent: any, eventTypeMap?: Record<string
     start: new Date(dbEvent.start_time),
     end: new Date(dbEvent.end_time),
     type: eventType,
-    color: eventColor, // Add color to returned event
+    color: eventColor,
     calendar: dbEvent.calendar_id,
     location: dbEvent.location || '',
     description: dbEvent.description || '',
+    isAllDay: dbEvent.is_all_day || false,
     isRecurring: dbEvent.is_recurring || false,
     recurrencePattern: recurrencePattern
   };

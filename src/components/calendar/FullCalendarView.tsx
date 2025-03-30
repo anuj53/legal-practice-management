@@ -44,16 +44,18 @@ export function FullCalendarView({
     // First check in myCalendars
     const myCalendar = myCalendars.find(cal => cal.id === calendarId);
     if (myCalendar) {
+      console.log(`Found color for calendar ${calendarId}: ${myCalendar.color}`);
       return myCalendar.color;
     }
     
     // Then check in otherCalendars
     const otherCalendar = otherCalendars.find(cal => cal.id === calendarId);
     if (otherCalendar) {
+      console.log(`Found color for other calendar ${calendarId}: ${otherCalendar.color}`);
       return otherCalendar.color;
     }
     
-    // Fallback to default color
+    console.log(`No color found for calendar ID: ${calendarId}`);
     return '#6B7280';
   };
 

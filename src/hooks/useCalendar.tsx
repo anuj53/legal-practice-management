@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Calendar, Event, isValidUUID } from '@/utils/calendarUtils';
@@ -63,8 +64,26 @@ export const useCalendar = () => {
       const calendarsResult = await fetchCalendars();
       if (calendarsResult) {
         console.log('Loaded calendars from DB:', calendarsResult);
-        setMyCalendars(calendarsResult.myCalendars);
-        setOtherCalendars(calendarsResult.otherCalendars);
+        
+        // Ensure all calendars have the 'checked' property set to true
+        const processedMyCalendars = calendarsResult.myCalendars.map(cal => ({
+          ...cal,
+          checked: true
+        }));
+        
+        const processedOtherCalendars = calendarsResult.otherCalendars.map(cal => ({
+          ...cal,
+          checked: true
+        }));
+        
+        setMyCalendars(processedMyCalendars);
+        setOtherCalendars(processedOtherCalendars);
+        
+        // Print calendars with colors for debugging
+        console.log('Processed myCalendars with colors:', 
+          processedMyCalendars.map(cal => ({id: cal.id, name: cal.name, color: cal.color, checked: cal.checked}))
+        );
+        
       } else {
         await createDefaultCalendars();
       }
