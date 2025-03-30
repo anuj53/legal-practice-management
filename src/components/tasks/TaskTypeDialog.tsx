@@ -12,7 +12,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Edit, Plus, Trash2 } from 'lucide-react';
+import { ArrowUp, ArrowDown, Edit, Plus, Trash2 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -104,13 +104,41 @@ export function TaskTypeDialog({ open, onOpenChange }: TaskTypeDialogProps) {
     }
   };
 
+  const moveTypeUp = (index: number) => {
+    if (index <= 0) return;
+    setTaskTypes(prevTypes => {
+      const newTypes = [...prevTypes];
+      [newTypes[index], newTypes[index - 1]] = [newTypes[index - 1], newTypes[index]];
+      return newTypes;
+    });
+    
+    toast({
+      title: "Task Type Moved",
+      description: "Task type has been moved up.",
+    });
+  };
+
+  const moveTypeDown = (index: number) => {
+    if (index >= taskTypes.length - 1) return;
+    setTaskTypes(prevTypes => {
+      const newTypes = [...prevTypes];
+      [newTypes[index], newTypes[index + 1]] = [newTypes[index + 1], newTypes[index]];
+      return newTypes;
+    });
+    
+    toast({
+      title: "Task Type Moved",
+      description: "Task type has been moved down.",
+    });
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Manage Task Types</DialogTitle>
           <DialogDescription>
-            Create and manage types of tasks for better organization.
+            Create, manage, and reorder types of tasks for better organization.
           </DialogDescription>
         </DialogHeader>
         
@@ -163,10 +191,10 @@ export function TaskTypeDialog({ open, onOpenChange }: TaskTypeDialogProps) {
         )}
 
         <div className="border rounded-md overflow-hidden">
-          <div className="grid grid-cols-12 bg-gray-100 p-3 border-b">
+          <div className="grid grid-cols-14 bg-gray-100 p-3 border-b">
             <div className="col-span-8 font-medium text-sm">Name</div>
             <div className="col-span-2 font-medium text-sm text-center">Status</div>
-            <div className="col-span-2 font-medium text-sm text-center">Actions</div>
+            <div className="col-span-4 font-medium text-sm text-center">Actions</div>
           </div>
           
           <div className="divide-y">
@@ -175,8 +203,8 @@ export function TaskTypeDialog({ open, onOpenChange }: TaskTypeDialogProps) {
                 No task types found. Add a new type to get started.
               </div>
             ) : (
-              taskTypes.map((type) => (
-                <div key={type.id} className="grid grid-cols-12 p-3 items-center">
+              taskTypes.map((type, index) => (
+                <div key={type.id} className="grid grid-cols-14 p-3 items-center">
                   <div className="col-span-8">{type.name}</div>
                   <div className="col-span-2 flex justify-center">
                     <Switch
@@ -184,11 +212,30 @@ export function TaskTypeDialog({ open, onOpenChange }: TaskTypeDialogProps) {
                       onCheckedChange={() => setToggleConfirm({ id: type.id, active: !type.active })}
                     />
                   </div>
-                  <div className="col-span-2 flex justify-center space-x-1">
+                  <div className="col-span-4 flex justify-center space-x-1">
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => moveTypeUp(index)}
+                      disabled={index === 0}
+                      title="Move Up"
+                    >
+                      <ArrowUp className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => moveTypeDown(index)}
+                      disabled={index === taskTypes.length - 1}
+                      title="Move Down"
+                    >
+                      <ArrowDown className="h-4 w-4" />
+                    </Button>
                     <Button 
                       variant="ghost" 
                       size="icon"
                       onClick={() => setEditingType(type)}
+                      title="Edit"
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
@@ -196,6 +243,7 @@ export function TaskTypeDialog({ open, onOpenChange }: TaskTypeDialogProps) {
                       variant="ghost" 
                       size="icon"
                       onClick={() => setDeleteConfirm(type.id)}
+                      title="Delete"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
