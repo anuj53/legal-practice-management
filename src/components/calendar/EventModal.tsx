@@ -18,8 +18,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from '@/components/ui/separator';
-import { CalendarEvent as Event, ReminderType, RecurrencePattern } from '@/types/calendar';
-import { useCalendar } from '@/hooks/useCalendar';
+import { Event } from '@/utils/calendarUtils';
+import { RecurrencePattern } from '@/types/calendar';
+import { useCalendar } from '@/hooks/useCalendar.tsx';
 import { RecurrenceDialog } from './RecurrenceDialog';
 
 interface EventModalProps {
@@ -38,7 +39,7 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
     id: Math.random().toString(36).substring(2, 9),
     title: '',
     start: new Date(),
-    end: new Date(new Date().getTime() + 30 * 60000), // 30 minutes later
+    end: new Date(new Date().getTime() + 30 * 60000),
     type: 'client-meeting',
     calendar: myCalendars.length > 0 ? myCalendars[0].id : '',
     description: '',
@@ -92,6 +93,9 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
     }
     
     setActiveTab('general');
+    
+    console.log("Available myCalendars:", myCalendars);
+    console.log("Available otherCalendars:", otherCalendars);
   }, [event, mode, isOpen, myCalendars]);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {

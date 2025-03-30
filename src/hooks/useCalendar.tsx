@@ -70,6 +70,7 @@ export const useCalendar = () => {
       // Fetch calendars
       const calendarsResult = await fetchCalendars();
       if (calendarsResult) {
+        console.log('Loaded calendars from DB:', calendarsResult);
         setMyCalendars(calendarsResult.myCalendars);
         setOtherCalendars(calendarsResult.otherCalendars);
       } else {

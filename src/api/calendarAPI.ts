@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Calendar, Event, isValidUUID, convertDbEventToEvent, convertEventToDbEvent } from '@/utils/calendarUtils';
@@ -28,6 +29,7 @@ export const fetchCalendars = async () => {
     
     if (calendarsData && calendarsData.length > 0) {
       console.log('Found calendars in DB:', calendarsData.length);
+      console.log('Calendar data:', calendarsData);
       
       // Transform to expected format and separate into my/other calendars
       const myCalendars = calendarsData
@@ -56,10 +58,13 @@ export const fetchCalendars = async () => {
           sharedWith: [], // Initialize with empty array
         }));
 
+      console.log('Processed myCalendars:', myCalendars);
+      console.log('Processed otherCalendars:', otherCalendars);
       return { myCalendars, otherCalendars };
     }
     
     // If no calendars found, return empty arrays
+    console.log('No calendars found in database, returning empty arrays');
     return { myCalendars: [], otherCalendars: [] };
   } catch (err) {
     console.error('Error fetching calendars:', err);
