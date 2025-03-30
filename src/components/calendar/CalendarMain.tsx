@@ -81,7 +81,7 @@ export function CalendarMain({
         onDateClick={null}
         onCreateEvent={onCreateEvent}
         showFullDay={showFullDay}
-        key={`calendar-view-${sidebarCollapsed ? 'collapsed' : 'expanded'}`} // Keep this to force re-render
+        key={`calendar-view-${sidebarCollapsed ? 'collapsed' : 'expanded'}`} // This key forces a complete re-render
         onDateSelect={(start, end) => {
           if (!onCreateEvent) {
             onDayClick(start);
