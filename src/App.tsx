@@ -1,7 +1,7 @@
 
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { MainLayout } from './components/layouts/MainLayout';
-import { ThemeProvider } from '@/components/ThemeProvider';
+import { ThemeProvider } from './components/ThemeProvider';
 import { Toaster } from '@/components/ui/toaster';
 import Index from '@/pages/Index';
 import NotFound from '@/pages/NotFound';
