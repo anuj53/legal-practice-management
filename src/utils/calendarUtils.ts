@@ -111,3 +111,72 @@ export const convertEventToDbEvent = (event: Event) => {
     recurrence_pattern: event.recurrencePattern ? JSON.stringify(event.recurrencePattern) : null
   };
 };
+
+// Function to expand recurring events for rendering in the calendar
+export const expandRecurringEvents = (events: Event[]): Event[] => {
+  const expandedEvents: Event[] = [];
+  
+  events.forEach(event => {
+    // Add the original event
+    expandedEvents.push(event);
+    
+    // If the event is not recurring, we're done
+    if (!event.isRecurring || !event.recurrencePattern) {
+      return;
+    }
+    
+    const { frequency, interval, occurrences, endDate } = event.recurrencePattern;
+    
+    // Basic implementation for daily, weekly, and monthly recurrences
+    // This can be expanded with more complex rules as needed
+    
+    // Determine how many occurrences to generate
+    let maxOccurrences = occurrences || 10; // Default to 10 if not specified
+    
+    // Calculate end date for recurrence
+    const recurrenceEndDate = endDate || new Date(new Date().setMonth(new Date().getMonth() + 3)); // Default to 3 months ahead
+    
+    // Start with the original event date
+    let currentDate = new Date(event.start);
+    let occurrenceCount = 0;
+    
+    // Generate occurrences
+    while (occurrenceCount < maxOccurrences && currentDate <= recurrenceEndDate) {
+      // Skip the first occurrence as it's the original event
+      if (occurrenceCount > 0) {
+        // Calculate duration of the event
+        const duration = event.end.getTime() - event.start.getTime();
+        
+        // Create a new occurrence
+        const occurrenceEvent: Event = {
+          ...event,
+          id: `${event.id}_occurrence_${occurrenceCount}`,
+          start: new Date(currentDate),
+          end: new Date(currentDate.getTime() + duration)
+        };
+        
+        expandedEvents.push(occurrenceEvent);
+      }
+      
+      // Move to the next occurrence based on frequency and interval
+      switch (frequency) {
+        case 'daily':
+          currentDate = new Date(currentDate.setDate(currentDate.getDate() + interval));
+          break;
+        case 'weekly':
+          currentDate = new Date(currentDate.setDate(currentDate.getDate() + (7 * interval)));
+          break;
+        case 'monthly':
+          currentDate = new Date(currentDate.setMonth(currentDate.getMonth() + interval));
+          break;
+        case 'yearly':
+          currentDate = new Date(currentDate.setFullYear(currentDate.getFullYear() + interval));
+          break;
+      }
+      
+      occurrenceCount++;
+    }
+  });
+  
+  return expandedEvents;
+};

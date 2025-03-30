@@ -1,11 +1,15 @@
 
-import React, { useState } from 'react';
-import { addDays, format } from 'date-fns';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import React, { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarIcon, Check, ChevronsUpDown } from 'lucide-react';
+import { format } from 'date-fns';
 import { RecurrenceFrequency, RecurrencePattern } from '@/types/calendar';
 
 interface RecurrenceDialogProps {
@@ -21,186 +25,140 @@ export function RecurrenceDialog({
   onSave,
   initialPattern
 }: RecurrenceDialogProps) {
-  const defaultPattern: RecurrencePattern = {
-    frequency: 'daily',
-    interval: 1,
-  };
-
-  const [pattern, setPattern] = useState<RecurrencePattern>(initialPattern || defaultPattern);
-  const [endType, setEndType] = useState<'never' | 'on_date' | 'after_occurrences'>(
-    initialPattern?.endDate ? 'on_date' : initialPattern?.occurrences ? 'after_occurrences' : 'never'
+  const [frequency, setFrequency] = useState<RecurrenceFrequency>(initialPattern?.frequency || 'daily');
+  const [interval, setInterval] = useState<number>(initialPattern?.interval || 1);
+  const [endType, setEndType] = useState<'never' | 'after' | 'on'>(
+    initialPattern?.occurrences ? 'after' : initialPattern?.endDate ? 'on' : 'never'
   );
+  const [occurrences, setOccurrences] = useState<number>(initialPattern?.occurrences || 10);
+  const [endDate, setEndDate] = useState<Date | undefined>(initialPattern?.endDate);
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
 
-  const handleFrequencyChange = (frequency: RecurrenceFrequency) => {
-    setPattern(prev => ({ ...prev, frequency }));
-  };
-
-  const handleIntervalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const interval = parseInt(e.target.value);
-    if (interval > 0) {
-      setPattern(prev => ({ ...prev, interval }));
+  useEffect(() => {
+    if (initialPattern) {
+      setFrequency(initialPattern.frequency);
+      setInterval(initialPattern.interval);
+      setEndType(
+        initialPattern.occurrences ? 'after' :
+        initialPattern.endDate ? 'on' : 'never'
+      );
+      setOccurrences(initialPattern.occurrences || 10);
+      setEndDate(initialPattern.endDate);
     }
-  };
-
-  const handleEndTypeChange = (type: 'never' | 'on_date' | 'after_occurrences') => {
-    setEndType(type);
-    
-    // Update pattern based on end type
-    if (type === 'never') {
-      const { endDate, occurrences, ...rest } = pattern;
-      setPattern(rest);
-    } else if (type === 'on_date' && !pattern.endDate) {
-      setPattern(prev => ({
-        ...prev,
-        endDate: addDays(new Date(), 30),
-        occurrences: undefined
-      }));
-    } else if (type === 'after_occurrences' && !pattern.occurrences) {
-      setPattern(prev => ({
-        ...prev,
-        occurrences: 10,
-        endDate: undefined
-      }));
-    }
-  };
-
-  const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPattern(prev => ({
-      ...prev,
-      endDate: new Date(e.target.value),
-      occurrences: undefined
-    }));
-  };
-
-  const handleOccurrencesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const occurrences = parseInt(e.target.value);
-    if (occurrences > 0) {
-      setPattern(prev => ({
-        ...prev,
-        occurrences,
-        endDate: undefined
-      }));
-    }
-  };
+  }, [initialPattern, isOpen]);
 
   const handleSave = () => {
+    const pattern: RecurrencePattern = {
+      frequency,
+      interval,
+      ...(endType === 'after' ? { occurrences } : {}),
+      ...(endType === 'on' ? { endDate } : {})
+    };
+    
     onSave(pattern);
-    onClose();
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Set Recurrence Pattern</DialogTitle>
+          <DialogTitle>Recurrence Pattern</DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-6 py-4">
-          <div className="space-y-4">
-            <Label>Recurrence</Label>
-            <RadioGroup 
-              value={pattern.frequency} 
-              onValueChange={(val) => handleFrequencyChange(val as RecurrenceFrequency)}
-              className="space-y-2"
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="frequency">Repeats</Label>
+            <Select 
+              value={frequency} 
+              onValueChange={(value: RecurrenceFrequency) => setFrequency(value)}
             >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="daily" id="daily" />
-                <Label htmlFor="daily">Daily</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="weekly" id="weekly" />
-                <Label htmlFor="weekly">Weekly</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="monthly" id="monthly" />
-                <Label htmlFor="monthly">Monthly</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="yearly" id="yearly" />
-                <Label htmlFor="yearly">Yearly</Label>
-              </div>
-            </RadioGroup>
+              <SelectTrigger>
+                <SelectValue placeholder="Select frequency" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="daily">Daily</SelectItem>
+                <SelectItem value="weekly">Weekly</SelectItem>
+                <SelectItem value="monthly">Monthly</SelectItem>
+                <SelectItem value="yearly">Yearly</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           
-          <div>
-            <Label htmlFor="interval">Repeat every</Label>
-            <div className="flex items-center gap-2 mt-1">
-              <Input
-                id="interval"
-                type="number"
-                min="1"
-                value={pattern.interval}
-                onChange={handleIntervalChange}
-                className="w-20"
-              />
-              <span>
-                {pattern.frequency === 'daily' ? 'day(s)' : 
-                 pattern.frequency === 'weekly' ? 'week(s)' :
-                 pattern.frequency === 'monthly' ? 'month(s)' : 'year(s)'}
-              </span>
-            </div>
+          <div className="flex items-center gap-2">
+            <Label htmlFor="interval" className="whitespace-nowrap">Every</Label>
+            <Input 
+              id="interval"
+              type="number" 
+              min={1} 
+              value={interval} 
+              onChange={(e) => setInterval(parseInt(e.target.value) || 1)}
+              className="w-20"
+            />
+            <span className="ml-1">
+              {frequency === 'daily' && (interval > 1 ? 'days' : 'day')}
+              {frequency === 'weekly' && (interval > 1 ? 'weeks' : 'week')}
+              {frequency === 'monthly' && (interval > 1 ? 'months' : 'month')}
+              {frequency === 'yearly' && (interval > 1 ? 'years' : 'year')}
+            </span>
           </div>
           
-          <div>
-            <Label>End recurrence</Label>
-            <div className="space-y-2 mt-1">
-              <div className="flex items-center gap-2">
-                <input 
-                  type="radio" 
-                  id="end-never" 
-                  name="end-recurrence"
-                  checked={endType === 'never'}
-                  onChange={() => handleEndTypeChange('never')}
-                />
-                <Label htmlFor="end-never" className="cursor-pointer">Never</Label>
+          <div className="space-y-2">
+            <Label>Ends</Label>
+            <RadioGroup value={endType} onValueChange={(value: 'never' | 'after' | 'on') => setEndType(value)}>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="never" id="never" />
+                <Label htmlFor="never">Never</Label>
               </div>
               
-              <div className="flex items-center gap-2">
-                <input 
-                  type="radio" 
-                  id="end-date" 
-                  name="end-recurrence"
-                  checked={endType === 'on_date'}
-                  onChange={() => handleEndTypeChange('on_date')}
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="after" id="after" />
+                <Label htmlFor="after">After</Label>
+                <Input 
+                  type="number" 
+                  min={1} 
+                  disabled={endType !== 'after'}
+                  value={occurrences} 
+                  onChange={(e) => setOccurrences(parseInt(e.target.value) || 1)}
+                  className="w-20 ml-2"
                 />
-                <Label htmlFor="end-date" className="cursor-pointer">On date</Label>
-                {endType === 'on_date' && (
-                  <Input
-                    type="date"
-                    value={pattern.endDate ? format(pattern.endDate, 'yyyy-MM-dd') : ''}
-                    onChange={handleEndDateChange}
-                    className="w-auto"
-                  />
-                )}
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <input 
-                  type="radio" 
-                  id="end-occurrences" 
-                  name="end-recurrence"
-                  checked={endType === 'after_occurrences'}
-                  onChange={() => handleEndTypeChange('after_occurrences')}
-                />
-                <Label htmlFor="end-occurrences" className="cursor-pointer">After</Label>
-                {endType === 'after_occurrences' && (
-                  <Input
-                    type="number"
-                    min="1"
-                    value={pattern.occurrences || 10}
-                    onChange={handleOccurrencesChange}
-                    className="w-20"
-                  />
-                )}
                 <span>occurrences</span>
               </div>
-            </div>
+              
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="on" id="on" />
+                <Label htmlFor="on">On date</Label>
+                
+                <Popover open={datePickerOpen && endType === 'on'} onOpenChange={(open) => endType === 'on' && setDatePickerOpen(open)}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      disabled={endType !== 'on'}
+                      className="ml-2 w-[200px] justify-start text-left font-normal"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {endDate ? format(endDate, 'PPP') : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={endDate}
+                      onSelect={(date) => {
+                        setEndDate(date);
+                        setDatePickerOpen(false);
+                      }}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </RadioGroup>
           </div>
         </div>
         
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={handleSave}>Save</Button>
+          <Button onClick={handleSave}>Apply</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
