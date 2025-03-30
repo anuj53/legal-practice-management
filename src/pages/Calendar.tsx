@@ -145,6 +145,10 @@ export default function Calendar() {
     setSidebarCollapsed(!sidebarCollapsed);
   };
   
+  const handleEditEvent = () => {
+    setModalMode('edit');
+  };
+  
   if (!session) {
     return (
       <div className="flex items-center justify-center h-full">

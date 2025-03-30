@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -44,16 +43,17 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
   const [recurrenceDialogOpen, setRecurrenceDialogOpen] = useState(false);
   const [eventType, setEventType] = useState('');
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState('view');
+
   const { eventTypes = [], loading: eventTypesLoading } = useEventTypes();
-  
-  // Get event type color
+
   const getEventTypeColor = (typeId: string | undefined) => {
     if (!typeId) return '#6B7280'; // Default gray
     const foundType = eventTypes.find(type => type.id === typeId);
     return foundType?.color || '#6B7280';
   };
-  
+
   useEffect(() => {
     if (event) {
       console.log("EventModal: Received event:", event);
@@ -78,14 +78,14 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
       }
     }
   }, [event]);
-  
+
   useEffect(() => {
     if (isAllDay) {
       setStartTime('00:00');
       setEndTime('23:59');
     }
   }, [isAllDay]);
-  
+
   const handleSave = () => {
     if (!startDate || !endDate || !selectedCalendar) {
       return;
@@ -113,7 +113,6 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
       calendar: selectedCalendar,
       isRecurring,
       recurrencePattern: isRecurring ? recurrencePattern || undefined : undefined,
-      // Preserve other properties
       caseId: event?.caseId,
       clientName: event?.clientName,
       assignedLawyer: event?.assignedLawyer,
@@ -126,26 +125,26 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
     
     onSave(updatedEvent);
   };
-  
+
   const handleDelete = () => {
     if (event?.id) {
       onDelete(event.id);
     }
   };
-  
+
   const handleOpenRecurrenceDialog = () => {
     setRecurrenceDialogOpen(true);
   };
-  
+
   const handleCloseRecurrenceDialog = () => {
     setRecurrenceDialogOpen(false);
   };
-  
+
   const handleRecurrenceChange = (pattern: RecurrencePattern) => {
     setRecurrencePattern(pattern);
     setRecurrenceDialogOpen(false);
   };
-  
+
   const formatRecurrenceText = () => {
     if (!recurrencePattern) return 'Not recurring';
     
@@ -179,7 +178,7 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
     
     return text;
   };
-  
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -292,7 +291,8 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
                 <Button onClick={() => {
                   onClose();
                   setTimeout(() => {
-                    // Edit mode will be set by the parent component
+                    setModalMode('edit');
+                    setModalOpen(true);
                   }, 100);
                 }}>
                   Edit
