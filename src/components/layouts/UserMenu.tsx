@@ -11,16 +11,37 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/components/ui/use-toast";
 
 export function UserMenu() {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   
   const initials = user?.email
     ? user.email.substring(0, 2).toUpperCase()
     : "U";
   
   const handleSignOut = async () => {
-    await signOut();
+    try {
+      console.log("Sign out initiated");
+      await signOut();
+      console.log("Sign out completed, redirecting to auth page");
+      toast({
+        title: "Signed out successfully",
+        description: "You have been signed out of your account",
+      });
+      // Force navigation to auth page after sign out
+      navigate("/auth");
+    } catch (error) {
+      console.error("Error during sign out:", error);
+      toast({
+        title: "Sign out failed",
+        description: "There was a problem signing out. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
   
   return (
