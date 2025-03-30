@@ -111,6 +111,7 @@ export function TaskListsView() {
         </Button>
       </div>
       
+      {/* Card container for task lists */}
       <Card className="border border-gray-200 shadow-sm">
         <CardContent className="p-0">
           <Table>
