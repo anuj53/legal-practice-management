@@ -19,7 +19,7 @@ function App() {
     : AuthRoute;
 
   return (
-    <ThemeProvider defaultTheme="light" storageKey="legalpm-theme">
+    <ThemeProvider defaultTheme="light" storageKey="yorpro-theme">
       <AuthProvider>
         <Router>
           <Routes>

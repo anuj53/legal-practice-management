@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -186,7 +187,7 @@ export function TaskTypeDialog({ open, onOpenChange }: TaskTypeDialogProps) {
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader className="pb-4 mb-4 border-b">
           <DialogTitle className="text-xl flex items-center gap-2">
-            <ListChecks className="h-5 w-5 text-legal-600" />
+            <ListChecks className="h-5 w-5 text-yorpro-600" />
             Manage Task Types
           </DialogTitle>
           <DialogDescription className="mt-1.5 text-sm text-muted-foreground">
@@ -219,14 +220,14 @@ export function TaskTypeDialog({ open, onOpenChange }: TaskTypeDialogProps) {
                   value={newTaskType}
                   onChange={(e) => setNewTaskType(e.target.value)}
                   placeholder="Enter task type name"
-                  className="focus:ring-2 focus:ring-legal-500 focus:border-legal-500"
+                  className="focus:ring-2 focus:ring-yorpro-500 focus:border-yorpro-500"
                   autoFocus
                   onKeyDown={handleKeyDown}
                 />
                 <Button 
                   onClick={handleAddType} 
                   variant="default"
-                  className="bg-gradient-to-r from-legal-600 to-legal-500 hover:from-legal-700 hover:to-legal-600 transition-all"
+                  className="bg-gradient-to-r from-yorpro-600 to-yorpro-500 hover:from-yorpro-700 hover:to-yorpro-600 transition-all"
                 >
                   Save
                 </Button>
@@ -256,14 +257,14 @@ export function TaskTypeDialog({ open, onOpenChange }: TaskTypeDialogProps) {
                   value={editingType.name}
                   onChange={(e) => setEditingType({ ...editingType, name: e.target.value })}
                   placeholder="Enter task type name"
-                  className="focus:ring-2 focus:ring-legal-500 focus:border-legal-500"
+                  className="focus:ring-2 focus:ring-yorpro-500 focus:border-yorpro-500"
                   autoFocus
                   onKeyDown={handleKeyDown}
                 />
                 <Button 
                   onClick={handleUpdateType} 
                   variant="default"
-                  className="bg-gradient-to-r from-legal-600 to-legal-500 hover:from-legal-700 hover:to-legal-600 transition-all"
+                  className="bg-gradient-to-r from-yorpro-600 to-yorpro-500 hover:from-yorpro-700 hover:to-yorpro-600 transition-all"
                 >
                   Update
                 </Button>
@@ -283,7 +284,7 @@ export function TaskTypeDialog({ open, onOpenChange }: TaskTypeDialogProps) {
                 onClick={() => setShowAddForm(true)} 
                 size="sm"
                 variant="default"
-                className="bg-gradient-to-r from-legal-600 to-legal-500 hover:from-legal-700 hover:to-legal-600 transition-all shadow-sm hover:shadow-md"
+                className="bg-gradient-to-r from-yorpro-600 to-yorpro-500 hover:from-yorpro-700 hover:to-yorpro-600 transition-all shadow-sm hover:shadow-md"
                 disabled={showAddForm}
               >
                 <Plus className="h-4 w-4 mr-1.5" />
@@ -324,7 +325,7 @@ export function TaskTypeDialog({ open, onOpenChange }: TaskTypeDialogProps) {
                   {taskTypes.map((type, index) => (
                     <TableRow 
                       key={type.id} 
-                      className={`group ${highlightedRow === type.id ? 'bg-legal-50' : 'hover:bg-gray-50'} transition-colors`}
+                      className={`group ${highlightedRow === type.id ? 'bg-yorpro-50' : 'hover:bg-gray-50'} transition-colors`}
                     >
                       <TableCell className="font-medium py-3">{type.name}</TableCell>
                       <TableCell className="text-center">
@@ -333,7 +334,7 @@ export function TaskTypeDialog({ open, onOpenChange }: TaskTypeDialogProps) {
                             <Switch
                               checked={type.active}
                               onCheckedChange={() => setToggleConfirm({ id: type.id, active: !type.active })}
-                              className="data-[state=checked]:bg-legal-600"
+                              className="data-[state=checked]:bg-yorpro-600"
                             />
                             <span className={`text-sm ${type.active ? 'text-green-600' : 'text-gray-400'}`}>
                               {type.active ? 'Active' : 'Inactive'}
