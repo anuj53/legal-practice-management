@@ -36,6 +36,6 @@ export interface Profile {
   id: string;
   first_name: string | null;
   last_name: string | null;
-  email_alias?: string | null;  // Make email_alias optional
+  email_alias?: string | null;
   created_at?: string;
 }

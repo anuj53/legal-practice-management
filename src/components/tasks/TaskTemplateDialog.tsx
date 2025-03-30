@@ -72,6 +72,7 @@ export function TaskTemplateDialog({
   const { taskTypes } = useTaskTypes();
   const { toast } = useToast();
   const [users, setUsers] = useState<Profile[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const activeTaskTypes = taskTypes.filter(type => type.active);
   
@@ -93,60 +94,81 @@ export function TaskTemplateDialog({
   
   // Fetch users
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('id, first_name, last_name')
-          .order('first_name', { ascending: true });
-        
-        if (error) throw error;
-        
-        // Cast the data to match the Profile interface
-        setUsers((data || []) as Profile[]);
-      } catch (error) {
-        console.error('Error fetching users:', error);
-      }
-    };
-    
-    fetchUsers();
-  }, []);
+    if (open) {
+      const fetchUsers = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('id, first_name, last_name')
+            .order('first_name', { ascending: true });
+          
+          if (error) throw error;
+          
+          console.log("Fetched profiles:", data);
+          // Cast the data to match the Profile interface
+          setUsers((data || []) as Profile[]);
+        } catch (error) {
+          console.error('Error fetching users:', error);
+        }
+      };
+      
+      fetchUsers();
+    }
+  }, [open]);
   
   // Reset form when edit task changes
   useEffect(() => {
-    if (editTask) {
-      form.reset({
-        name: editTask.name,
-        description: editTask.description || '',
-        priority: editTask.priority,
-        isPrivate: editTask.is_private,
-        taskType: editTask.task_type || '',
-        timeEstimate: editTask.time_estimate || '',
-        defaultAssignee: editTask.default_assignee || '',
-        dueDateType: (editTask.due_date_type as 'trigger_date' | 'after_task' | 'specific_date'),
-        dueDateOffset: editTask.due_date_offset || 0,
-        dependsOnTaskId: editTask.depends_on_task_id || '',
-      });
-    } else {
-      form.reset({
-        name: '',
-        description: '',
-        priority: 'Normal',
-        isPrivate: false,
-        taskType: '',
-        timeEstimate: '',
-        defaultAssignee: '',
-        dueDateType: 'trigger_date',
-        dueDateOffset: 0,
-        dependsOnTaskId: '',
-      });
+    if (open) {
+      console.log("Dialog opened. EditTask:", editTask);
+      console.log("WorkflowId:", workflowId);
+      if (editTask) {
+        form.reset({
+          name: editTask.name,
+          description: editTask.description || '',
+          priority: editTask.priority,
+          isPrivate: editTask.is_private,
+          taskType: editTask.task_type || '',
+          timeEstimate: editTask.time_estimate || '',
+          defaultAssignee: editTask.default_assignee || '',
+          dueDateType: (editTask.due_date_type as 'trigger_date' | 'after_task' | 'specific_date'),
+          dueDateOffset: editTask.due_date_offset || 0,
+          dependsOnTaskId: editTask.depends_on_task_id || '',
+        });
+      } else {
+        form.reset({
+          name: '',
+          description: '',
+          priority: 'Normal',
+          isPrivate: false,
+          taskType: '',
+          timeEstimate: '',
+          defaultAssignee: '',
+          dueDateType: 'trigger_date',
+          dueDateOffset: 0,
+          dependsOnTaskId: '',
+        });
+      }
     }
-  }, [editTask, form]);
+  }, [editTask, form, open, workflowId]);
 
   async function onSubmit(data: FormData) {
+    if (!workflowId) {
+      console.error("No workflow ID provided");
+      toast({
+        title: "Error",
+        description: "Missing workflow ID. Please try again.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsSubmitting(true);
     try {
+      console.log("Submitting form with data:", data);
+      console.log("For workflow ID:", workflowId);
+      
       // Set position to next available position
-      const position = existingTaskTemplates.length;
+      const position = editTask ? editTask.position : existingTaskTemplates.length;
       
       if (editTask) {
         // Update existing task
@@ -191,7 +213,10 @@ export function TaskTemplateDialog({
             position
           });
         
-        if (error) throw error;
+        if (error) {
+          console.error("Error inserting task template:", error);
+          throw error;
+        }
         
         toast({
           title: "Task Template Created",
@@ -208,11 +233,17 @@ export function TaskTemplateDialog({
         description: "Failed to save task template.",
         variant: "destructive"
       });
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
   // Handle conditional form fields based on due date type
   const dueDateType = form.watch('dueDateType');
+
+  console.log("Rendering TaskTemplateDialog with open:", open);
+  console.log("WorkflowId:", workflowId);
+  console.log("Existing templates:", existingTaskTemplates);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -507,11 +538,19 @@ export function TaskTemplateDialog({
             />
             
             <DialogFooter className="gap-2 sm:gap-0">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => onOpenChange(false)}
+                disabled={isSubmitting}
+              >
                 Cancel
               </Button>
-              <Button type="submit">
-                {editTask ? 'Update Task' : 'Add Task'}
+              <Button 
+                type="submit"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Saving...' : editTask ? 'Update Task' : 'Add Task'}
               </Button>
             </DialogFooter>
           </form>

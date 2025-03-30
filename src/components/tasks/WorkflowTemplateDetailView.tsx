@@ -155,6 +155,7 @@ export function WorkflowTemplateDetailView({
   }, [open, templateId]);
   
   const handleAddTask = () => {
+    console.log("Opening task dialog with workflowId:", templateId);
     setEditingTask(null);
     setIsTaskDialogOpen(true);
   };
@@ -466,14 +467,16 @@ export function WorkflowTemplateDetailView({
           </div>
         )}
         
-        <TaskTemplateDialog
-          open={isTaskDialogOpen}
-          onOpenChange={setIsTaskDialogOpen}
-          workflowId={templateId}
-          existingTaskTemplates={tasks}
-          editTask={editingTask}
-          onSuccess={fetchTemplateDetails}
-        />
+        {templateId && (
+          <TaskTemplateDialog
+            open={isTaskDialogOpen}
+            onOpenChange={setIsTaskDialogOpen}
+            workflowId={templateId}
+            existingTaskTemplates={tasks}
+            editTask={editingTask}
+            onSuccess={fetchTemplateDetails}
+          />
+        )}
         
         <AssignWorkflowDialog
           open={isAssignDialogOpen}
