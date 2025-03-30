@@ -39,7 +39,7 @@ export function TodaysEventsList({ events, collapsed = false, onEventClick }: To
           No events scheduled for today
         </div>
       ) : (
-        <ScrollArea className="max-h-48 pr-3 -mr-3">
+        <ScrollArea className="max-h-[160px] pr-3 -mr-3">
           <div className="space-y-2">
             {sortedEvents.map((event) => (
               <div 

@@ -39,7 +39,7 @@ export function CalendarMain({
   const isMobile = useIsMobile();
 
   return (
-    <div className="h-full w-full overflow-hidden relative flex flex-col">
+    <div className="h-full w-full flex flex-col">
       {isMobile && (
         <Sheet>
           <SheetTrigger asChild>
@@ -62,7 +62,7 @@ export function CalendarMain({
         </Sheet>
       )}
       
-      <div className="flex-1 h-full">
+      <div className="flex-1 h-full w-full overflow-hidden">
         <FullCalendarView
           view={view}
           date={date}

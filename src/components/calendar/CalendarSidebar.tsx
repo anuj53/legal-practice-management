@@ -41,7 +41,7 @@ export function CalendarSidebar({
   });
 
   return (
-    <div className={`h-full bg-white/80 backdrop-blur-sm shadow-lg flex flex-col rounded-xl border border-gray-200 relative ${collapsed ? 'w-16' : 'w-auto'} transition-all duration-300`}>
+    <div className={`h-full flex flex-col bg-white/80 backdrop-blur-sm shadow-lg rounded-xl border border-gray-200 relative ${collapsed ? 'w-16' : 'w-auto'} transition-all duration-300`}>
       {/* Toggle collapse button */}
       {onToggleCollapse && (
         <Button 
