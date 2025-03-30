@@ -22,7 +22,9 @@ export function CalendarCheckbox({
   onClick, 
   onEdit 
 }: CalendarCheckboxProps) {
-  const handleCheckboxChange = () => {
+  const handleCheckboxChange = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     onClick(id, category);
   };
 
@@ -35,11 +37,7 @@ export function CalendarCheckbox({
             backgroundColor: checked ? color : 'transparent',
             borderColor: color 
           }}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleCheckboxChange();
-          }}
+          onClick={handleCheckboxChange}
         >
           {checked && (
             <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
@@ -51,11 +49,7 @@ export function CalendarCheckbox({
       
       <span 
         className="text-sm flex-1 truncate cursor-pointer" 
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          handleCheckboxChange();
-        }}
+        onClick={handleCheckboxChange}
       >
         {name}
       </span>

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { CalendarViewType } from '@/types/calendar';
 import { Calendar, Event } from '@/utils/calendarUtils';
@@ -23,7 +24,9 @@ export function useCalendarPage() {
     deleteEvent,
     createCalendar,
     updateCalendar,
-    deleteCalendar
+    deleteCalendar,
+    setMyCalendars,
+    setOtherCalendars
   } = useCalendar();
   
   console.log('useCalendarPage: myCalendars received from useCalendar hook:', 
@@ -56,16 +59,18 @@ export function useCalendarPage() {
         checked: !calendar.checked
       };
       
+      // Update local state first to avoid reload
       if (category === 'my') {
-        setMyCalendars(calendarList.map(cal => 
+        setMyCalendars(myCalendars.map(cal => 
           cal.id === id ? updatedCalendar : cal
         ));
       } else {
-        setOtherCalendars(calendarList.map(cal => 
+        setOtherCalendars(otherCalendars.map(cal => 
           cal.id === id ? updatedCalendar : cal
         ));
       }
       
+      // Only update checked state in the database without triggering a reload
       updateCalendar(updatedCalendar);
     }
   };

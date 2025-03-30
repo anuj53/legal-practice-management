@@ -94,7 +94,6 @@ export const useCalendar = () => {
         console.log('Processed myCalendars with colors:', 
           processedMyCalendars.map(cal => ({id: cal.id, name: cal.name, color: cal.color, checked: cal.checked}))
         );
-        
       } else {
         await createDefaultCalendars();
       }
@@ -165,24 +164,31 @@ export const useCalendar = () => {
 
   const updateCalendar = async (calendar: Calendar) => {
     try {
-      await updateCalendarInDb(calendar);
+      // Check if this is just a visibility toggle (checked property)
+      const isVisibilityToggle = 'checked' in calendar && 
+        Object.keys(calendar).some(key => key === 'checked');
       
-      if (myCalendars.some(cal => cal.id === calendar.id)) {
-        setMyCalendars(prev => 
-          prev.map(cal => cal.id === calendar.id ? calendar : cal)
-        );
-      } else {
-        setOtherCalendars(prev => 
-          prev.map(cal => cal.id === calendar.id ? calendar : cal)
-        );
-      }
-      
-      // Don't trigger a full data reload when just toggling visibility
-      if (!('checked' in calendar)) {
+      // If it's a full update (not just a toggle), update in DB
+      if (!isVisibilityToggle) {
+        await updateCalendarInDb(calendar);
+        
+        // Update local state
+        if (myCalendars.some(cal => cal.id === calendar.id)) {
+          setMyCalendars(prev => 
+            prev.map(cal => cal.id === calendar.id ? calendar : cal)
+          );
+        } else {
+          setOtherCalendars(prev => 
+            prev.map(cal => cal.id === calendar.id ? calendar : cal)
+          );
+        }
+        
+        // Trigger a full data reload only for non-visibility updates
         setDataUpdated(prev => prev + 1);
+        toast.success(`Updated calendar: ${calendar.name}`);
       }
-      
-      toast.success(`Updated calendar: ${calendar.name}`);
+      // For visibility toggle, we don't need to hit the DB or trigger reload
+      // The state is already updated in useCalendarPage
     } catch (err) {
       console.error('Error updating calendar:', err);
       setError('Failed to update calendar');
