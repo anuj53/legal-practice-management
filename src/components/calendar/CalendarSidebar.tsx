@@ -65,7 +65,7 @@ export function CalendarSidebar({
       />
       
       {collapsed ? (
-        <div className="flex-1 p-2 flex flex-col items-center gap-2">
+        <div className="flex-1 p-2 flex flex-col items-center gap-2 overflow-y-auto">
           {myCalendars.map(calendar => (
             <div 
               key={calendar.id} 
@@ -90,24 +90,26 @@ export function CalendarSidebar({
           )}
         </div>
       ) : (
-        <ScrollArea className="flex-1 p-4">
-          <CalendarList
-            title="My Calendars"
-            calendars={myCalendars}
-            category="my"
-            onCalendarToggle={onCalendarToggle}
-            onEditCalendar={onEditCalendar}
-          />
-          
-          {otherCalendars.length > 0 && (
+        <ScrollArea className="flex-1">
+          <div className="p-4">
             <CalendarList
-              title="Other Calendars"
-              calendars={otherCalendars}
-              category="other"
+              title="My Calendars"
+              calendars={myCalendars}
+              category="my"
               onCalendarToggle={onCalendarToggle}
               onEditCalendar={onEditCalendar}
             />
-          )}
+            
+            {otherCalendars.length > 0 && (
+              <CalendarList
+                title="Other Calendars"
+                calendars={otherCalendars}
+                category="other"
+                onCalendarToggle={onCalendarToggle}
+                onEditCalendar={onEditCalendar}
+              />
+            )}
+          </div>
         </ScrollArea>
       )}
     </div>
