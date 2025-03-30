@@ -3,7 +3,7 @@ import React from 'react';
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon, Clock, MapPin } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Event } from '@/utils/calendarUtils';
+import { Event, expandRecurringEvents } from '@/utils/calendarUtils';
 
 interface TodaysEventsListProps {
   events: Event[];
@@ -20,8 +20,22 @@ export function TodaysEventsList({
   myCalendars = [],
   otherCalendars = []
 }: TodaysEventsListProps) {
+  // Expand recurring events so we can catch instances that occur today
+  const expandedEvents = expandRecurringEvents(events);
+  
+  // Filter for today's events
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  
+  const todaysEvents = expandedEvents.filter(event => {
+    const eventDate = new Date(event.start);
+    return eventDate >= today && eventDate < tomorrow;
+  });
+  
   // Sort events by start time
-  const sortedEvents = [...events].sort((a, b) => 
+  const sortedEvents = [...todaysEvents].sort((a, b) => 
     new Date(a.start).getTime() - new Date(b.start).getTime()
   );
 
