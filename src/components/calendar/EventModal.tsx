@@ -104,8 +104,6 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
     setActiveTab('general');
   }, [event, mode, isOpen, myCalendars]);
   
-  
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -911,4 +909,82 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
                   
                   {formData.courtInfo && (formData.courtInfo.courtName || formData.courtInfo.judgeDetails || formData.courtInfo.docketNumber) && (
                     <div className="border-t border-gray-200 pt-4">
-                      <h
+                      <h3 className="font-medium mb-3">Court Information</h3>
+                      
+                      <div className="space-y-4">
+                        {formData.courtInfo.courtName && (
+                          <div className="flex items-start gap-4">
+                            <Scale className="h-5 w-5 text-gray-500 mt-0.5" />
+                            <div>
+                              <div className="font-medium">Court Name</div>
+                              <div className="text-gray-700">{formData.courtInfo.courtName}</div>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {formData.courtInfo.judgeDetails && (
+                          <div className="flex items-start gap-4">
+                            <Users className="h-5 w-5 text-gray-500 mt-0.5" />
+                            <div>
+                              <div className="font-medium">Judge</div>
+                              <div className="text-gray-700">{formData.courtInfo.judgeDetails}</div>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {formData.courtInfo.docketNumber && (
+                          <div className="flex items-start gap-4">
+                            <FileText className="h-5 w-5 text-gray-500 mt-0.5" />
+                            <div>
+                              <div className="font-medium">Docket Number</div>
+                              <div className="text-gray-700">{formData.courtInfo.docketNumber}</div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {formData.documents && formData.documents.length > 0 && (
+                    <div className="border-t border-gray-200 pt-4">
+                      <h3 className="font-medium mb-3">Documents</h3>
+                      <div className="space-y-2">
+                        {formData.documents.map(doc => (
+                          <div key={doc.id} className="flex items-center justify-between p-3 border rounded-md">
+                            <div className="flex items-center gap-2">
+                              <FileText className="h-4 w-4 text-blue-500" />
+                              <span>{doc.name}</span>
+                            </div>
+                            <a 
+                              href={doc.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-blue-500 hover:text-blue-700 text-sm"
+                            >
+                              View
+                            </a>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <DialogFooter className="bg-gray-50 p-4 mt-auto">
+                <div className="flex justify-end space-x-2">
+                  <Button variant="outline" onClick={onClose}>
+                    Close
+                  </Button>
+                  <Button onClick={handleSwitchToEdit}>
+                    Edit
+                  </Button>
+                </div>
+              </DialogFooter>
+            </>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
