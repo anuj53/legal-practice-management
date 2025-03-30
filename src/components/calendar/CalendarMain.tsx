@@ -21,6 +21,7 @@ interface CalendarMainProps {
   otherCalendars?: any[];
   onCalendarToggle?: (id: string, category: 'my' | 'other') => void;
   onEditCalendar?: (calendar: any) => void;
+  sidebarCollapsed?: boolean;
 }
 
 export function CalendarMain({ 
@@ -34,7 +35,8 @@ export function CalendarMain({
   myCalendars = [],
   otherCalendars = [],
   onCalendarToggle,
-  onEditCalendar
+  onEditCalendar,
+  sidebarCollapsed
 }: CalendarMainProps) {
   const isMobile = useIsMobile();
 
@@ -70,6 +72,7 @@ export function CalendarMain({
         onDateClick={null}
         onCreateEvent={onCreateEvent}
         showFullDay={showFullDay}
+        sidebarCollapsed={sidebarCollapsed}
         onDateSelect={(start, end) => {
           if (!onCreateEvent) {
             onDayClick(start);
