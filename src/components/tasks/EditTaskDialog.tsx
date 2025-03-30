@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   Dialog, 
@@ -29,19 +28,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { toast } from '@/hooks/use-toast';
-
-interface Task {
-  id: string;
-  name: string;
-  description: string;
-  priority: string;
-  assignee: string;
-  dueDate: string;
-  taskType: string;
-  timeEstimate: string;
-  matter: string;
-  isPrivate: boolean;
-}
+import { Task } from './TaskList';
 
 interface EditTaskDialogProps {
   open: boolean;
@@ -78,7 +65,6 @@ export function EditTaskDialog({ open, onOpenChange, task, onSave }: EditTaskDia
     }
   });
 
-  // Update form when task changes
   React.useEffect(() => {
     if (task) {
       form.reset({

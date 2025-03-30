@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -18,19 +17,7 @@ import {
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { toast } from '@/hooks/use-toast';
 import { EditTaskDialog } from './EditTaskDialog';
-
-interface Task {
-  id: string;
-  name: string;
-  description: string;
-  priority: string;
-  assignee: string;
-  dueDate: string;
-  taskType: string;
-  timeEstimate: string;
-  matter: string;
-  isPrivate: boolean;
-}
+import { Task } from './TaskList';
 
 interface TaskBoardProps {
   tasks: Task[];
@@ -75,29 +62,23 @@ export function TaskBoard({ tasks: initialTasks }: TaskBoardProps) {
     }
   };
 
-  // Handle drag end event
   const onDragEnd = (result: any) => {
     const { destination, source, draggableId } = result;
 
-    // Return if dropped outside a droppable area or dropped in the same place
     if (!destination || 
         (destination.droppableId === source.droppableId && 
          destination.index === source.index)) {
       return;
     }
 
-    // Make a copy of the tasks
     const updatedTasks = [...tasks];
     
-    // Find the task that was dragged
     const draggedTask = updatedTasks.find(task => task.id === draggableId);
     
     if (draggedTask) {
-      // Update the task's type to the new column
       const newTaskType = destination.droppableId;
       const oldTaskType = draggedTask.taskType;
       
-      // If task type changed, update it and show a toast
       if (oldTaskType !== newTaskType) {
         draggedTask.taskType = newTaskType;
         toast({
@@ -106,18 +87,15 @@ export function TaskBoard({ tasks: initialTasks }: TaskBoardProps) {
         });
       }
       
-      // Update the tasks state
       setTasks(updatedTasks);
     }
   };
 
-  // Handle edit button click
   const handleEditTask = (task: Task) => {
     setEditingTask(task);
     setIsEditDialogOpen(true);
   };
 
-  // Handle save after editing
   const handleSaveTask = (updatedTask: Task) => {
     const updatedTasks = tasks.map(task => 
       task.id === updatedTask.id ? updatedTask : task
@@ -125,7 +103,6 @@ export function TaskBoard({ tasks: initialTasks }: TaskBoardProps) {
     setTasks(updatedTasks);
   };
 
-  // Get specific color for each task type column
   const getTaskTypeColor = (taskType: string) => {
     const colors = {
       'Onboarding': 'bg-purple-500',
@@ -190,14 +167,14 @@ export function TaskBoard({ tasks: initialTasks }: TaskBoardProps) {
                                           variant="ghost" 
                                           size="sm" 
                                           className="h-8 w-8 p-0"
-                                          onClick={(e) => e.stopPropagation()} // Prevent opening edit dialog when clicking dropdown
+                                          onClick={(e) => e.stopPropagation()}
                                         >
                                           <MoreHorizontal className="h-4 w-4" />
                                         </Button>
                                       </DropdownMenuTrigger>
                                       <DropdownMenuContent align="end">
                                         <DropdownMenuItem onClick={(e) => {
-                                          e.stopPropagation(); // Prevent opening edit dialog
+                                          e.stopPropagation();
                                           handleEditTask(task);
                                         }}>
                                           <Edit className="h-4 w-4 mr-2" />

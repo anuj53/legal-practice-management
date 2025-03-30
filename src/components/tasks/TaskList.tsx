@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   Check, 
@@ -32,12 +31,11 @@ import {
 import { EditTaskDialog } from './EditTaskDialog';
 import { toast } from '@/hooks/use-toast';
 
-interface Task {
+export interface Task {
   id: string;
   name: string;
   description: string;
   priority: string;
-  status: string;
   assignee: string;
   dueDate: string;
   taskType: string;
@@ -84,27 +82,30 @@ export function TaskList({ tasks: initialTasks }: TaskListProps) {
     return <Badge variant="outline" className={className}>{priority}</Badge>;
   };
 
-  const getStatusBadge = (status: string) => {
+  const getTaskTypeBadge = (taskType: string) => {
     let className = "";
     
-    switch (status) {
-      case 'Completed':
-        className = "bg-green-100 text-green-800 hover:bg-green-100";
+    switch (taskType) {
+      case 'Onboarding':
+        className = "bg-purple-100 text-purple-800 hover:bg-purple-100";
         break;
-      case 'In Progress':
+      case 'Documentation':
         className = "bg-blue-100 text-blue-800 hover:bg-blue-100";
         break;
-      case 'Pending':
-        className = "bg-yellow-100 text-yellow-800 hover:bg-yellow-100";
+      case 'Follow Up':
+        className = "bg-indigo-100 text-indigo-800 hover:bg-indigo-100";
         break;
-      case 'Overdue':
-        className = "bg-red-100 text-red-800 hover:bg-red-100";
+      case 'Meeting':
+        className = "bg-emerald-100 text-emerald-800 hover:bg-emerald-100";
+        break;
+      case 'Invoicing':
+        className = "bg-amber-100 text-amber-800 hover:bg-amber-100";
         break;
       default:
         className = "bg-gray-100 text-gray-800 hover:bg-gray-100";
     }
     
-    return <Badge variant="outline" className={className}>{status}</Badge>;
+    return <Badge variant="outline" className={className}>{taskType}</Badge>;
   };
 
   const handleEditTask = (task: Task) => {
@@ -139,7 +140,7 @@ export function TaskList({ tasks: initialTasks }: TaskListProps) {
               <TableRow>
                 <TableHead className="w-[300px]">Task Name</TableHead>
                 <TableHead>Priority</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Type</TableHead>
                 <TableHead>Assignee</TableHead>
                 <TableHead>Due Date</TableHead>
                 <TableHead>Matter</TableHead>
@@ -163,7 +164,7 @@ export function TaskList({ tasks: initialTasks }: TaskListProps) {
                       </div>
                     </TableCell>
                     <TableCell>{getPriorityBadge(task.priority)}</TableCell>
-                    <TableCell>{getStatusBadge(task.status)}</TableCell>
+                    <TableCell>{getTaskTypeBadge(task.taskType)}</TableCell>
                     <TableCell>{task.assignee}</TableCell>
                     <TableCell>{formatDate(task.dueDate)}</TableCell>
                     <TableCell>
@@ -174,14 +175,6 @@ export function TaskList({ tasks: initialTasks }: TaskListProps) {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          title="Mark as complete"
-                          onClick={() => handleCompleteTask(task.id)}
-                        >
-                          <Check className="h-4 w-4" />
-                        </Button>
                         <Button 
                           variant="ghost" 
                           size="icon"

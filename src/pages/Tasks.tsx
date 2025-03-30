@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -18,7 +17,7 @@ import {
   SlidersHorizontal 
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { TaskList } from '@/components/tasks/TaskList';
+import { TaskList, Task } from '@/components/tasks/TaskList';
 import { TaskBoard } from '@/components/tasks/TaskBoard';
 import { NewTaskDialog } from '@/components/tasks/NewTaskDialog';
 import { TaskTypeDialog } from '@/components/tasks/TaskTypeDialog';
@@ -33,7 +32,7 @@ export default function Tasks() {
   const [isTaskTypeOpen, setIsTaskTypeOpen] = useState(false);
   const [isNewTaskListOpen, setIsNewTaskListOpen] = useState(false);
   
-  const tasks = [
+  const tasks: Task[] = [
     {
       id: '1',
       name: 'Send monthly invoice to client',
