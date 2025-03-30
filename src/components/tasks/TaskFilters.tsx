@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -120,11 +121,11 @@ export function TaskFilters({ onSearch, onFilterChange, onSort }: TaskFiltersPro
   };
   
   return (
-    <div className="flex flex-col md:flex-row gap-4 items-center">
-      <div className="relative flex-1">
+    <div className="flex flex-wrap items-center gap-4">
+      <div className="relative min-w-[200px] max-w-full flex-1 shrink basis-0">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
         <Input
-          placeholder="Search tasks by name, description, or matter..."
+          placeholder="Search tasks..."
           className="pl-10"
           value={searchQuery}
           onChange={handleSearchChange}
@@ -144,10 +145,10 @@ export function TaskFilters({ onSearch, onFilterChange, onSort }: TaskFiltersPro
         )}
       </div>
       
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-none">
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="relative">
+            <Button variant="outline" size="sm" className="relative whitespace-nowrap">
               <Filter className="mr-2 h-4 w-4" />
               Filter
               {activeFilterCount > 0 && (
@@ -291,7 +292,7 @@ export function TaskFilters({ onSearch, onFilterChange, onSort }: TaskFiltersPro
         
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="whitespace-nowrap">
               <ArrowUpDown className="mr-2 h-4 w-4" />
               Sort
               {sortConfig.field && (
