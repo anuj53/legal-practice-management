@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -33,7 +32,6 @@ export default function Tasks() {
   const [isTaskTypeOpen, setIsTaskTypeOpen] = useState(false);
   const [isNewTaskListOpen, setIsNewTaskListOpen] = useState(false);
   
-  // Mock data for tasks and task lists
   const tasks = [
     {
       id: '1',
@@ -102,14 +100,11 @@ export default function Tasks() {
     }
   ];
 
-  // Function to filter tasks
   const filteredTasks = tasks.filter(task => {
-    // Filter by search query
     const matchesSearch = 
       task.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       task.description.toLowerCase().includes(searchQuery.toLowerCase());
       
-    // Filter by tab
     const matchesTab = 
       (activeTab === 'my-tasks' && task.assignee === 'John Doe') ||
       (activeTab === 'all-tasks') ||
@@ -122,7 +117,6 @@ export default function Tasks() {
   return (
     <div className="container py-6">
       <div className="flex flex-col space-y-6">
-        {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Tasks</h1>
@@ -144,7 +138,6 @@ export default function Tasks() {
           </div>
         </div>
 
-        {/* Filter and search section */}
         <div className="bg-white border rounded-lg p-4 shadow-sm">
           <div className="flex flex-col md:flex-row gap-4 items-center">
             <div className="relative flex-1">
@@ -187,7 +180,6 @@ export default function Tasks() {
           </div>
         </div>
 
-        {/* Tabs */}
         <Tabs 
           defaultValue="my-tasks" 
           className="w-full"
@@ -234,14 +226,12 @@ export default function Tasks() {
           </TabsContent>
         </Tabs>
 
-        {/* Task Lists Tab - Shown when user clicks on "Task Lists" */}
         <Tabs className="hidden">
           <TabsContent value="task-lists">
             <TaskListsView />
           </TabsContent>
         </Tabs>
 
-        {/* Dialogs */}
         <NewTaskDialog open={isNewTaskOpen} onOpenChange={setIsNewTaskOpen} />
         <TaskTypeDialog open={isTaskTypeOpen} onOpenChange={setIsTaskTypeOpen} />
         <NewTaskListDialog open={isNewTaskListOpen} onOpenChange={setIsNewTaskListOpen} />
