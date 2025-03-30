@@ -57,15 +57,17 @@ export function CalendarSidebar({
         </Button>
       )}
       
-      {/* Today's Events List */}
-      <TodaysEventsList 
-        events={todaysEvents} 
-        collapsed={collapsed} 
-        onEventClick={onEventClick}
-      />
+      {/* Today's Events List - non-scrollable section */}
+      <div className="flex-shrink-0">
+        <TodaysEventsList 
+          events={todaysEvents} 
+          collapsed={collapsed} 
+          onEventClick={onEventClick}
+        />
+      </div>
       
       {collapsed ? (
-        <div className="flex-1 p-2 flex flex-col items-center gap-2 overflow-y-auto">
+        <div className="flex-1 p-2 flex flex-col items-center gap-2 overflow-y-auto min-h-0">
           {myCalendars.map(calendar => (
             <div 
               key={calendar.id} 
@@ -90,27 +92,29 @@ export function CalendarSidebar({
           )}
         </div>
       ) : (
-        <ScrollArea className="flex-1">
-          <div className="p-4">
-            <CalendarList
-              title="My Calendars"
-              calendars={myCalendars}
-              category="my"
-              onCalendarToggle={onCalendarToggle}
-              onEditCalendar={onEditCalendar}
-            />
-            
-            {otherCalendars.length > 0 && (
+        <div className="flex-1 overflow-hidden min-h-0">
+          <ScrollArea className="h-full">
+            <div className="p-4">
               <CalendarList
-                title="Other Calendars"
-                calendars={otherCalendars}
-                category="other"
+                title="My Calendars"
+                calendars={myCalendars}
+                category="my"
                 onCalendarToggle={onCalendarToggle}
                 onEditCalendar={onEditCalendar}
               />
-            )}
-          </div>
-        </ScrollArea>
+              
+              {otherCalendars.length > 0 && (
+                <CalendarList
+                  title="Other Calendars"
+                  calendars={otherCalendars}
+                  category="other"
+                  onCalendarToggle={onCalendarToggle}
+                  onEditCalendar={onEditCalendar}
+                />
+              )}
+            </div>
+          </ScrollArea>
+        </div>
       )}
     </div>
   );

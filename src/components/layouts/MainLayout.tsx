@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
@@ -5,7 +6,7 @@ import { Header } from './Header';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Menu } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 export function MainLayout() {
@@ -71,7 +72,9 @@ export function MainLayout() {
                 
                 <div className="relative z-10 h-full">
                   <ScrollArea className="h-full w-full">
-                    <Outlet />
+                    <div className="p-4 md:p-6">
+                      <Outlet />
+                    </div>
                   </ScrollArea>
                 </div>
               </div>
@@ -80,7 +83,7 @@ export function MainLayout() {
         </>
       ) : (
         <>
-          <div className={`${sidebarCollapsed ? 'w-24' : 'w-72'} transition-all duration-300 ease-in-out relative`}>
+          <div className={`${sidebarCollapsed ? 'w-24' : 'w-72'} transition-all duration-300 ease-in-out relative h-screen`}>
             <Sidebar collapsed={sidebarCollapsed} onToggleCollapse={toggleSidebar} />
           </div>
           <div className="flex-1 flex flex-col overflow-hidden">
@@ -120,7 +123,11 @@ export function MainLayout() {
                 </div>
                 
                 <div className="relative z-10 h-full w-full">
-                  <Outlet />
+                  <ScrollArea className="h-full w-full">
+                    <div className="p-4 md:p-6">
+                      <Outlet />
+                    </div>
+                  </ScrollArea>
                 </div>
               </div>
             </main>

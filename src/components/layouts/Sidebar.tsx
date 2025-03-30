@@ -113,14 +113,16 @@ export function Sidebar({ collapsed = false, onToggleCollapse }: SidebarProps) {
         </div>
       </div>
       
-      <div className="relative z-10 flex-1 flex flex-col">
-        <YorProLogo collapsed={collapsed} />
+      <div className="relative z-10 flex flex-1 flex-col h-full overflow-hidden">
+        {/* Logo section - fixed at top */}
+        <div className="flex-shrink-0">
+          <YorProLogo collapsed={collapsed} />
+          <Separator className="bg-white/10 mx-4 my-2" />
+        </div>
         
-        <Separator className="bg-white/10 mx-4 my-2" />
-        
-        {/* Make sure ScrollArea has proper height to scroll */}
-        <div className="flex-1 min-h-0 overflow-hidden">
-          <ScrollArea className="h-full px-4 py-2">
+        {/* Navigation section - scrollable */}
+        <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+          <ScrollArea className="flex-1 px-4 py-2">
             <div className="space-y-1">
               <SidebarItem icon={BarChart} label="Dashboard" to="/" collapsed={collapsed} />
               <SidebarItem icon={Calendar} label="Calendar" to="/calendar" collapsed={collapsed} />
@@ -156,10 +158,14 @@ export function Sidebar({ collapsed = false, onToggleCollapse }: SidebarProps) {
               <SidebarItem icon={Settings} label="Settings" to="/settings" collapsed={collapsed} />
               <SidebarItem icon={Palette} label="Appearance" to="/appearance" collapsed={collapsed} />
             </div>
+            
+            {/* Add padding at the bottom to ensure last items are visible when scrolled */}
+            <div className="h-6"></div>
           </ScrollArea>
         </div>
         
-        <div className="p-4 mt-auto relative z-10">
+        {/* User profile section - fixed at bottom */}
+        <div className="flex-shrink-0 p-4 relative z-10">
           <div className="rounded-xl bg-gradient-to-r from-yorpro-700/30 to-yorpro-800/30 backdrop-blur-md p-4 border border-white/10 shadow-lg hover:shadow-xl transition-all duration-300 group">
             <div className="flex items-center gap-3">
               <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-yorpro-400/80 to-yorpro-500/80 flex items-center justify-center shadow-lg border border-white/20 group-hover:scale-105 transition-all duration-300">
