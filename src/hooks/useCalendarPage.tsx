@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import { CalendarViewType } from '@/types/calendar';
-import { Calendar, Event } from '@/utils/calendarUtils';
+import { Calendar, Event, isValidUUID } from '@/utils/calendarUtils';
 import { useCalendar } from '@/hooks/useCalendar';
 import { toast } from 'sonner';
 
@@ -139,15 +138,16 @@ export function useCalendarPage() {
       });
     }
     
+    // Validate calendar ID is a valid UUID before proceeding
+    if (!isValidUUID(event.calendar)) {
+      console.error("Invalid calendar ID format:", event.calendar);
+      toast.error("Invalid calendar format. Please select a valid calendar.");
+      return;
+    }
+    
     try {
       if (modalMode === 'create') {
-        console.log("Creating new event");
-        
-        if (!event.calendar) {
-          console.error("Missing calendar ID for new event");
-          toast.error("Cannot save: Missing calendar ID");
-          return;
-        }
+        console.log("Creating new event with calendar ID:", event.calendar);
         
         const { id, ...eventWithoutId } = event;
         
@@ -164,17 +164,10 @@ export function useCalendarPage() {
       } 
       else {
         console.log("Updating existing event with ID:", event.id);
-        console.log("Event calendar ID:", event.calendar);
         
         if (!event.id) {
           console.error("Missing event ID for update");
           toast.error("Cannot update event: Missing ID");
-          return;
-        }
-        
-        if (!event.calendar) {
-          console.error("Missing calendar ID for event update");
-          toast.error("Cannot update event: Missing calendar ID");
           return;
         }
         
