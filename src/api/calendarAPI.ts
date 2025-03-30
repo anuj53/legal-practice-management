@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Calendar, Event, isValidUUID, convertDbEventToEvent, convertEventToDbEvent } from '@/utils/calendarUtils';
@@ -125,6 +124,12 @@ export const fetchEvents = async () => {
       
       const eventTypeMap = eventTypes ? eventTypes.reduce((acc, type) => {
         acc[type.id] = { name: type.name, color: type.color };
+        return acc;
+      }, {}) : {};
+      
+      // Create a reverse map from name to id for lookups later
+      const eventTypeNameToId = eventTypes ? eventTypes.reduce((acc, type) => {
+        acc[type.name.toLowerCase()] = type.id;
         return acc;
       }, {}) : {};
       
@@ -318,14 +323,32 @@ export const createEventInDb = async (event: Omit<Event, 'id'>) => {
     // Find event type id if needed
     let eventTypeId = null;
     if (event.type) {
-      const { data: eventTypes } = await supabase
+      // First try to find by exact name
+      const { data: eventTypesByName } = await supabase
         .from('event_types')
         .select('*')
-        .eq('name', event.type)
+        .ilike('name', event.type)
         .limit(1);
       
-      if (eventTypes && eventTypes.length > 0) {
-        eventTypeId = eventTypes[0].id;
+      if (eventTypesByName && eventTypesByName.length > 0) {
+        eventTypeId = eventTypesByName[0].id;
+        console.log(`Found event type by name: ${event.type}, id: ${eventTypeId}`);
+      } else {
+        // If not found, create the event type
+        const { data: newEventType, error: eventTypeError } = await supabase
+          .from('event_types')
+          .insert({
+            name: event.type,
+            color: event.color || '#4caf50' // Use the event color or default to green
+          })
+          .select();
+        
+        if (eventTypeError) {
+          console.error('Error creating event type:', eventTypeError);
+        } else if (newEventType && newEventType.length > 0) {
+          eventTypeId = newEventType[0].id;
+          console.log(`Created new event type: ${event.type}, id: ${eventTypeId}`);
+        }
       }
     }
     
@@ -460,14 +483,32 @@ export const updateEventInDb = async (event: Event) => {
     // Get event type id
     let eventTypeId = null;
     if (event.type) {
-      const { data: eventTypes } = await supabase
+      // First try to find by exact name
+      const { data: eventTypesByName } = await supabase
         .from('event_types')
         .select('*')
-        .eq('name', event.type)
+        .ilike('name', event.type)
         .limit(1);
       
-      if (eventTypes && eventTypes.length > 0) {
-        eventTypeId = eventTypes[0].id;
+      if (eventTypesByName && eventTypesByName.length > 0) {
+        eventTypeId = eventTypesByName[0].id;
+        console.log(`Found event type by name for update: ${event.type}, id: ${eventTypeId}`);
+      } else {
+        // If not found, create the event type
+        const { data: newEventType, error: eventTypeError } = await supabase
+          .from('event_types')
+          .insert({
+            name: event.type,
+            color: event.color || '#4caf50' // Use the event color or default to green
+          })
+          .select();
+        
+        if (eventTypeError) {
+          console.error('Error creating event type during update:', eventTypeError);
+        } else if (newEventType && newEventType.length > 0) {
+          eventTypeId = newEventType[0].id;
+          console.log(`Created new event type during update: ${event.type}, id: ${eventTypeId}`);
+        }
       }
     }
     

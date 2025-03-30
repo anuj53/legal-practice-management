@@ -38,7 +38,7 @@ export function CalendarMain({
 }: CalendarMainProps) {
   const isMobile = useIsMobile();
 
-  // Debug events - Add this to check if events contain the legal details and other fields
+  // Enhanced debug events with more details
   console.log('CalendarMain: Events with details:', events.map(event => ({
     id: event.id,
     title: event.title,
@@ -46,7 +46,10 @@ export function CalendarMain({
     reminder: event.reminder,
     caseId: event.caseId,
     clientName: event.clientName,
-    courtInfo: event.courtInfo
+    courtInfo: event.courtInfo,
+    type: event.type,
+    calendar: event.calendar,
+    calendars: myCalendars.find(cal => cal.id === event.calendar)?.name
   })));
 
   return (

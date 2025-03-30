@@ -1,4 +1,3 @@
-
 import { v4 as uuidv4 } from 'uuid';
 
 export interface Event {
@@ -86,6 +85,7 @@ export const convertDbEventToEvent = (dbEvent: any, eventTypeMap?: Record<string
   if (dbEvent.event_type_id && eventTypeMap && eventTypeMap[dbEvent.event_type_id]) {
     eventType = eventTypeMap[dbEvent.event_type_id].name;
     eventColor = eventTypeMap[dbEvent.event_type_id].color || eventColor;
+    console.log(`Found event type for ${dbEvent.title}: ${eventType}, color: ${eventColor}`);
   }
   
   // Try to get calendar color if calendars are provided
