@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { CalendarHeader } from '@/components/calendar/CalendarHeader';
 import { CalendarSidebar } from '@/components/calendar/CalendarSidebar';
@@ -137,28 +136,23 @@ export default function Calendar() {
   };
   
   const toggleSidebar = () => {
-    // Update sidebar state
     setSidebarCollapsed(prevState => !prevState);
     
-    // Force a complete re-render by triggering resize events in sequence
     const triggerResize = () => {
       window.dispatchEvent(new Event('resize'));
       console.log('Resize event dispatched for calendar');
     };
     
-    // Multiple resize events at different times to ensure calendar fully reinitializes
     setTimeout(triggerResize, 50);
     setTimeout(triggerResize, 150);
     setTimeout(triggerResize, 300);
+    setTimeout(triggerResize, 500);
     
-    // Also simulate a view change (which forces full reload)
-    const currentView = document.querySelector('.fc')?.className || '';
-    if (currentView) {
-      // Remove and add the class to force a reflow
-      document.querySelectorAll('.fc').forEach(el => {
-        el.classList.remove('fc');
-        setTimeout(() => el.classList.add('fc'), 10);
-      });
+    const calendarEl = document.querySelector('.fc');
+    if (calendarEl) {
+      calendarEl.getBoundingClientRect();
+      calendarEl.classList.add('calendar-reflow');
+      setTimeout(() => calendarEl.classList.remove('calendar-reflow'), 10);
     }
     
     console.log(`Sidebar ${sidebarCollapsed ? 'expanded' : 'collapsed'}`);

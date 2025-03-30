@@ -58,15 +58,14 @@ export function FullCalendarView({
     
     if (calendarRef.current) {
       const api = calendarRef.current.getApi();
-      api.destroy();
       
       setTimeout(() => {
         if (calendarRef.current) {
           console.log("Reinitializing calendar with view:", view);
-          const newApi = calendarRef.current.getApi();
-          newApi.changeView(getViewType(view));
-          newApi.gotoDate(date);
-          newApi.updateSize();
+          const api = calendarRef.current.getApi();
+          api.changeView(getViewType(view));
+          api.gotoDate(date);
+          api.updateSize();
         }
       }, 50);
     }

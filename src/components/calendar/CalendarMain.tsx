@@ -49,13 +49,21 @@ export function CalendarMain({
       setForceRerender(prev => prev + 1);
       console.log('Calendar force rerender triggered due to sidebar state change');
       
-      // Also trigger resize events after a delay
-      const timer = setTimeout(() => {
+      // Also trigger resize events after a delay sequence
+      const triggerResize = () => {
         window.dispatchEvent(new Event('resize'));
-        console.log('Calendar resize triggered due to sidebar state change');
-      }, 150);
+      };
       
-      return () => clearTimeout(timer);
+      const timers = [
+        setTimeout(triggerResize, 50),
+        setTimeout(triggerResize, 150),
+        setTimeout(triggerResize, 300),
+        setTimeout(triggerResize, 500)
+      ];
+      
+      return () => {
+        timers.forEach(timer => clearTimeout(timer));
+      };
     }
   }, [sidebarCollapsed]);
 
