@@ -13,7 +13,7 @@ import {
   Plus, 
   ListChecks
 } from 'lucide-react';
-import { TaskList, Task } from '@/components/tasks/TaskList';
+import { TaskList, Task as UITask } from '@/components/tasks/TaskList';
 import { TaskBoard } from '@/components/tasks/TaskBoard';
 import { NewTaskDialog } from '@/components/tasks/NewTaskDialog';
 import { TaskTypeDialog } from '@/components/tasks/TaskTypeDialog';
@@ -22,6 +22,7 @@ import { WorkflowTemplatesView } from '@/components/tasks/WorkflowTemplatesView'
 import { TaskTypeProvider } from '@/contexts/TaskTypeContext';
 import { TaskFilters, TaskFilters as TaskFiltersType, SortConfig } from '@/components/tasks/TaskFilters';
 import { fetchTasks } from '@/components/tasks/TaskService';
+import { Task } from '@/types/task';
 
 export default function Tasks() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -41,7 +42,7 @@ export default function Tasks() {
     direction: 'asc'
   });
   
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<UITask[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const loadTasks = async () => {
@@ -49,7 +50,7 @@ export default function Tasks() {
     try {
       const data = await fetchTasks();
       
-      const transformedTasks = data.map(task => ({
+      const transformedTasks: UITask[] = data.map(task => ({
         id: task.id,
         name: task.name,
         description: task.description || '',
@@ -60,7 +61,7 @@ export default function Tasks() {
         timeEstimate: task.time_estimate || '',
         matter: task.matter_id || '',
         isPrivate: task.is_private,
-        status: task.status
+        status: (task.status as UITask['status']) || 'Pending'
       }));
       
       setTasks(transformedTasks);
