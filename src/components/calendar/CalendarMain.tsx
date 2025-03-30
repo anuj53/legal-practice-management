@@ -2,7 +2,7 @@
 import React, { useEffect, useRef } from 'react';
 import { FullCalendarView } from '@/components/calendar/FullCalendarView';
 import { CalendarViewType } from '@/types/calendar';
-import { Event } from '@/utils/calendarUtils';
+import type { Event } from '@/utils/calendarUtils';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { CalendarSidebar } from '@/components/calendar/CalendarSidebar';
