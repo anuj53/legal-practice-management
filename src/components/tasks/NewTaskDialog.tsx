@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -35,6 +35,8 @@ import { useForm } from 'react-hook-form';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useTaskTypes } from '@/contexts/TaskTypeContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface NewTaskDialogProps {
   open: boolean;
@@ -43,7 +45,42 @@ interface NewTaskDialogProps {
 
 export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
   const { taskTypes } = useTaskTypes();
+  const { toast } = useToast();
+  const [users, setUsers] = useState<{ id: string; first_name: string; last_name: string }[]>([]);
+  const [matters, setMatters] = useState<{ id: string; name: string }[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const activeTaskTypes = taskTypes.filter(type => type.active);
+  
+  // Fetch users
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name')
+          .order('first_name', { ascending: true });
+        
+        if (error) throw error;
+        setUsers(data || []);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+      }
+    };
+    
+    fetchUsers();
+  }, []);
+  
+  // For demonstration, we'll use mock matters data
+  useEffect(() => {
+    // In a real app, you would fetch matters from the database
+    setMatters([
+      { id: 'matter1', name: 'A vs B client matter' },
+      { id: 'matter2', name: 'Smith Contract' },
+      { id: 'matter3', name: 'Johnson Estate' },
+      { id: 'matter4', name: 'Williams v. City' },
+    ]);
+  }, []);
   
   const form = useForm({
     defaultValues: {
@@ -56,13 +93,58 @@ export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
       taskType: '',
       timeEstimate: '',
       matter: '',
-      dueDate: undefined,
+      dueDate: undefined as Date | undefined,
     },
   });
 
-  function onSubmit(data: any) {
+  async function onSubmit(data: any) {
     console.log('Form submitted:', data);
-    onOpenChange(false);
+    setIsSubmitting(true);
+    
+    try {
+      // Format the data for the database
+      const taskData = {
+        name: data.name,
+        description: data.description || null,
+        priority: data.priority,
+        status: data.status,
+        assigned_to: data.assignee,
+        is_private: data.isPrivate,
+        task_type: data.taskType || null,
+        time_estimate: data.timeEstimate || null,
+        matter_id: data.matter || null,
+        due_date: data.dueDate ? new Date(data.dueDate).toISOString() : null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      
+      // Insert the task into the tasks table
+      // Note: You'll need to create this table in your Supabase project
+      const { data: insertedTask, error } = await supabase
+        .from('tasks')
+        .insert(taskData)
+        .select('*')
+        .single();
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Task Created",
+        description: `Task "${data.name}" has been successfully created.`,
+      });
+      
+      form.reset();
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error creating task:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create task. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -126,9 +208,11 @@ export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="john.doe">John Doe</SelectItem>
-                        <SelectItem value="sarah.lee">Sarah Lee</SelectItem>
-                        <SelectItem value="robert.brown">Robert Brown</SelectItem>
+                        {users.map(user => (
+                          <SelectItem key={user.id} value={user.id}>
+                            {user.first_name} {user.last_name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </FormItem>
@@ -229,10 +313,11 @@ export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="matter1">A vs B client matter</SelectItem>
-                        <SelectItem value="matter2">Smith Contract</SelectItem>
-                        <SelectItem value="matter3">Johnson Estate</SelectItem>
-                        <SelectItem value="matter4">Williams v. City</SelectItem>
+                        {matters.map(matter => (
+                          <SelectItem key={matter.id} value={matter.id}>
+                            {matter.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </FormItem>
@@ -272,6 +357,7 @@ export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
                           selected={field.value}
                           onSelect={field.onChange}
                           initialFocus
+                          className={cn("p-3 pointer-events-auto")}
                         />
                       </PopoverContent>
                     </Popover>
@@ -318,8 +404,22 @@ export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button type="submit">Save Task</Button>
-              <Button type="submit" variant="secondary">
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Saving...' : 'Save Task'}
+              </Button>
+              <Button 
+                type="submit" 
+                variant="secondary" 
+                disabled={isSubmitting}
+                onClick={() => {
+                  form.handleSubmit(async (data) => {
+                    await onSubmit(data);
+                    // Don't close the dialog, just reset the form
+                    form.reset();
+                  })();
+                  return false;
+                }}
+              >
                 Save and Create Another
               </Button>
             </DialogFooter>
