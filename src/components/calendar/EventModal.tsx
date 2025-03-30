@@ -18,8 +18,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from '@/components/ui/separator';
-import { Event, ReminderType } from '@/types/calendar';
+import { CalendarEvent as Event, ReminderType, RecurrencePattern } from '@/types/calendar';
 import { useCalendar } from '@/hooks/useCalendar';
+import { RecurrenceDialog } from './RecurrenceDialog';
 
 interface EventModalProps {
   isOpen: boolean;
@@ -399,7 +400,13 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
                         <SelectContent>
                           {myCalendars.map(calendar => (
                             <SelectItem key={calendar.id} value={calendar.id}>
-                              {calendar.name}
+                              <div className="flex items-center">
+                                <div 
+                                  className="w-3 h-3 rounded-full mr-2" 
+                                  style={{ backgroundColor: calendar.color }}
+                                />
+                                {calendar.name}
+                              </div>
                             </SelectItem>
                           ))}
                           {otherCalendars.length > 0 && (
@@ -409,7 +416,13 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
                               </SelectItem>
                               {otherCalendars.map(calendar => (
                                 <SelectItem key={calendar.id} value={calendar.id}>
-                                  {calendar.name}
+                                  <div className="flex items-center">
+                                    <div 
+                                      className="w-3 h-3 rounded-full mr-2" 
+                                      style={{ backgroundColor: calendar.color }}
+                                    />
+                                    {calendar.name}
+                                  </div>
                                 </SelectItem>
                               ))}
                             </>
