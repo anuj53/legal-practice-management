@@ -197,34 +197,9 @@ export function FullCalendarView({
         allDaySlot={true}
         slotDuration="00:30:00"
         eventTimeFormat={{
-          hour: 'numeric',
+          hour: '2-digit',
           minute: '2-digit',
           meridiem: 'short'
-        }}
-        displayEventTime={true}
-        displayEventEnd={false}
-        eventContent={(eventInfo) => {
-          const startTime = eventInfo.event.start 
-            ? new Intl.DateTimeFormat('en-US', {
-                hour: 'numeric',
-                minute: '2-digit',
-                hour12: true
-              }).format(eventInfo.event.start)
-            : '';
-            
-          // Format to 1:00P instead of 1:00 PM
-          const formattedTime = startTime.replace(' AM', 'A').replace(' PM', 'P');
-          
-          return {
-            html: `
-              <div class="fc-event-main-frame">
-                <div class="fc-event-time">${formattedTime}</div>
-                <div class="fc-event-title-container">
-                  <div class="fc-event-title fc-sticky">${eventInfo.event.title || ''}</div>
-                </div>
-              </div>
-            `
-          };
         }}
         businessHours={{
           daysOfWeek: [1, 2, 3, 4, 5],
