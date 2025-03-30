@@ -81,7 +81,7 @@ interface SidebarProps {
 export function Sidebar({ collapsed = false, onToggleCollapse }: SidebarProps) {
   return (
     <div className={cn(
-      "bg-gradient-to-b from-yorpro-800 via-yorpro-900 to-yorpro-950 text-white h-screen flex flex-col border-r border-white/10 shadow-xl relative overflow-hidden",
+      "bg-gradient-to-b from-lpm-800 via-lpm-900 to-lpm-950 text-white h-screen flex flex-col border-r border-white/10 shadow-xl relative overflow-hidden",
       collapsed ? "w-24" : "w-72"
     )}>
       {/* Toggle collapse button */}
@@ -102,10 +102,10 @@ export function Sidebar({ collapsed = false, onToggleCollapse }: SidebarProps) {
       {/* Decorative elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* Glowing orb in top right */}
-        <div className="absolute -top-20 -right-20 w-40 h-40 rounded-full bg-yorpro-400/20 blur-3xl"></div>
+        <div className="absolute -top-20 -right-20 w-40 h-40 rounded-full bg-lpm-400/20 blur-3xl"></div>
         
         {/* Bottom left decorative element */}
-        <div className="absolute bottom-0 left-0 w-full h-64 bg-gradient-to-t from-yorpro-950/50 to-transparent"></div>
+        <div className="absolute bottom-0 left-0 w-full h-64 bg-gradient-to-t from-lpm-950/50 to-transparent"></div>
         
         {/* Subtle grid pattern */}
         <div className="absolute inset-0 opacity-5">
@@ -166,9 +166,9 @@ export function Sidebar({ collapsed = false, onToggleCollapse }: SidebarProps) {
         
         {/* User profile section - fixed at bottom */}
         <div className="flex-shrink-0 p-4 relative z-10">
-          <div className="rounded-xl bg-gradient-to-r from-yorpro-700/30 to-yorpro-800/30 backdrop-blur-md p-4 border border-white/10 shadow-lg hover:shadow-xl transition-all duration-300 group">
+          <div className="rounded-xl bg-gradient-to-r from-lpm-700/30 to-lpm-800/30 backdrop-blur-md p-4 border border-white/10 shadow-lg hover:shadow-xl transition-all duration-300 group">
             <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-yorpro-400/80 to-yorpro-500/80 flex items-center justify-center shadow-lg border border-white/20 group-hover:scale-105 transition-all duration-300">
+              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-lpm-400/80 to-lpm-500/80 flex items-center justify-center shadow-lg border border-white/20 group-hover:scale-105 transition-all duration-300">
                 <span className="font-semibold text-white">JD</span>
               </div>
               {!collapsed && (
