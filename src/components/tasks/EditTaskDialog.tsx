@@ -35,7 +35,6 @@ interface Task {
   name: string;
   description: string;
   priority: string;
-  status: string;
   assignee: string;
   dueDate: string;
   taskType: string;
@@ -55,7 +54,6 @@ const formSchema = z.object({
   name: z.string().min(1, "Task name is required"),
   description: z.string().optional(),
   priority: z.enum(["High", "Normal", "Low"]),
-  status: z.enum(["Pending", "In Progress", "Completed", "Overdue"]),
   assignee: z.string().min(1, "Assignee is required"),
   dueDate: z.string().min(1, "Due date is required"),
   taskType: z.string().min(1, "Task type is required"),
@@ -71,7 +69,6 @@ export function EditTaskDialog({ open, onOpenChange, task, onSave }: EditTaskDia
       name: task?.name || "",
       description: task?.description || "",
       priority: (task?.priority || "Normal") as "High" | "Normal" | "Low",
-      status: (task?.status || "Pending") as "Pending" | "In Progress" | "Completed" | "Overdue",
       assignee: task?.assignee || "",
       dueDate: task?.dueDate || "",
       taskType: task?.taskType || "",
@@ -88,7 +85,6 @@ export function EditTaskDialog({ open, onOpenChange, task, onSave }: EditTaskDia
         name: task.name,
         description: task.description,
         priority: task.priority as "High" | "Normal" | "Low",
-        status: task.status as "Pending" | "In Progress" | "Completed" | "Overdue",
         assignee: task.assignee,
         dueDate: task.dueDate,
         taskType: task.taskType,
@@ -182,24 +178,25 @@ export function EditTaskDialog({ open, onOpenChange, task, onSave }: EditTaskDia
               
               <FormField
                 control={form.control}
-                name="status"
+                name="taskType"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Status</FormLabel>
+                    <FormLabel>Task Type</FormLabel>
                     <Select 
                       onValueChange={field.onChange} 
                       defaultValue={field.value}
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
+                          <SelectValue placeholder="Select task type" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="Pending">Pending</SelectItem>
-                        <SelectItem value="In Progress">In Progress</SelectItem>
-                        <SelectItem value="Completed">Completed</SelectItem>
-                        <SelectItem value="Overdue">Overdue</SelectItem>
+                        <SelectItem value="Onboarding">Onboarding</SelectItem>
+                        <SelectItem value="Documentation">Documentation</SelectItem>
+                        <SelectItem value="Follow Up">Follow Up</SelectItem>
+                        <SelectItem value="Meeting">Meeting</SelectItem>
+                        <SelectItem value="Invoicing">Invoicing</SelectItem>
                       </SelectContent>
                     </Select>
                   </FormItem>
@@ -238,19 +235,6 @@ export function EditTaskDialog({ open, onOpenChange, task, onSave }: EditTaskDia
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="taskType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Task Type</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Task type" {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
                 name="timeEstimate"
                 render={({ field }) => (
                   <FormItem>
@@ -261,20 +245,20 @@ export function EditTaskDialog({ open, onOpenChange, task, onSave }: EditTaskDia
                   </FormItem>
                 )}
               />
+              
+              <FormField
+                control={form.control}
+                name="matter"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Matter</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Associated matter" {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
             </div>
-            
-            <FormField
-              control={form.control}
-              name="matter"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Matter</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Associated matter" {...field} />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
 
             <DialogFooter className="pt-4">
               <Button type="submit">Save Changes</Button>

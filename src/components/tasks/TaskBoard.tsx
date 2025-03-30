@@ -6,7 +6,6 @@ import {
   Clock, 
   FileText, 
   MoreHorizontal,
-  Check,
   Edit
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -25,7 +24,6 @@ interface Task {
   name: string;
   description: string;
   priority: string;
-  status: string;
   assignee: string;
   dueDate: string;
   taskType: string;
@@ -74,21 +72,6 @@ export function TaskBoard({ tasks: initialTasks }: TaskBoardProps) {
         return "text-green-600";
       default:
         return "text-gray-600";
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Completed':
-        return "bg-green-500";
-      case 'In Progress':
-        return "bg-blue-500";
-      case 'Pending':
-        return "bg-yellow-500";
-      case 'Overdue':
-        return "bg-red-500";
-      default:
-        return "bg-gray-500";
     }
   };
 
@@ -215,18 +198,6 @@ export function TaskBoard({ tasks: initialTasks }: TaskBoardProps) {
                                       <DropdownMenuContent align="end">
                                         <DropdownMenuItem onClick={(e) => {
                                           e.stopPropagation(); // Prevent opening edit dialog
-                                          const updatedTask = {...task, status: 'Completed'};
-                                          handleSaveTask(updatedTask);
-                                          toast({
-                                            title: "Task Completed",
-                                            description: "Task marked as complete",
-                                          });
-                                        }}>
-                                          <Check className="h-4 w-4 mr-2" />
-                                          Mark as Complete
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={(e) => {
-                                          e.stopPropagation(); // Prevent opening edit dialog
                                           handleEditTask(task);
                                         }}>
                                           <Edit className="h-4 w-4 mr-2" />
@@ -249,13 +220,10 @@ export function TaskBoard({ tasks: initialTasks }: TaskBoardProps) {
                                     </span>
                                   </div>
                                   
-                                  <div className="flex justify-between items-center mt-2">
-                                    <div className="flex items-center text-xs">
+                                  <div className="flex justify-between items-center mt-2 text-xs">
+                                    <div className="flex items-center">
                                       <FileText className="h-3.5 w-3.5 mr-1 text-gray-500" />
                                       <span className="truncate max-w-[120px]">{task.matter}</span>
-                                    </div>
-                                    <div className={`text-white rounded-full px-2 py-0.5 text-xs ${getStatusColor(task.status)}`}>
-                                      {task.status}
                                     </div>
                                   </div>
                                 </CardContent>

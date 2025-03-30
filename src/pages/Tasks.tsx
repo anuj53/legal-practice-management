@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -39,7 +40,6 @@ export default function Tasks() {
       description: 'Download the invoice from the client\'s profile, verify, and send.',
       priority: 'High',
       assignee: 'John Doe',
-      status: 'Pending',
       dueDate: '2025-01-02',
       taskType: 'Invoicing',
       timeEstimate: '15m',
@@ -52,7 +52,6 @@ export default function Tasks() {
       description: 'Check the updated contract and provide feedback',
       priority: 'Normal',
       assignee: 'John Doe',
-      status: 'In Progress',
       dueDate: '2025-01-05',
       taskType: 'Documentation',
       timeEstimate: '45m',
@@ -65,7 +64,6 @@ export default function Tasks() {
       description: 'Arrange for a follow-up meeting with the Johnson family',
       priority: 'Low',
       assignee: 'Sarah Lee',
-      status: 'Completed',
       dueDate: '2024-12-28',
       taskType: 'Meeting',
       timeEstimate: '10m',
@@ -78,7 +76,6 @@ export default function Tasks() {
       description: 'Submit the prepared documents to the county court',
       priority: 'High',
       assignee: 'John Doe',
-      status: 'Overdue',
       dueDate: '2024-12-30',
       taskType: 'Documentation',
       timeEstimate: '30m',
@@ -91,7 +88,6 @@ export default function Tasks() {
       description: 'Complete onboarding process for new client',
       priority: 'Normal',
       assignee: 'Sarah Lee',
-      status: 'Pending',
       dueDate: '2025-01-10',
       taskType: 'Onboarding',
       timeEstimate: '60m',
@@ -107,9 +103,7 @@ export default function Tasks() {
       
     const matchesTab = 
       (activeTab === 'my-tasks' && task.assignee === 'John Doe') ||
-      (activeTab === 'all-tasks') ||
-      (activeTab === 'completed' && task.status === 'Completed') ||
-      (activeTab === 'overdue' && task.status === 'Overdue');
+      (activeTab === 'all-tasks');
       
     return matchesSearch && matchesTab;
   });
@@ -186,11 +180,9 @@ export default function Tasks() {
           value={activeTab}
           onValueChange={setActiveTab}
         >
-          <TabsList className="grid grid-cols-4 w-full md:w-fit">
+          <TabsList className="grid grid-cols-2 w-full md:w-fit">
             <TabsTrigger value="my-tasks">My Tasks</TabsTrigger>
             <TabsTrigger value="all-tasks">All Tasks</TabsTrigger>
-            <TabsTrigger value="completed">Completed</TabsTrigger>
-            <TabsTrigger value="overdue">Overdue</TabsTrigger>
           </TabsList>
           
           <TabsContent value="my-tasks" className="mt-4">
@@ -202,22 +194,6 @@ export default function Tasks() {
           </TabsContent>
           
           <TabsContent value="all-tasks" className="mt-4">
-            {viewMode === 'list' ? (
-              <TaskList tasks={filteredTasks} />
-            ) : (
-              <TaskBoard tasks={filteredTasks} />
-            )}
-          </TabsContent>
-          
-          <TabsContent value="completed" className="mt-4">
-            {viewMode === 'list' ? (
-              <TaskList tasks={filteredTasks} />
-            ) : (
-              <TaskBoard tasks={filteredTasks} />
-            )}
-          </TabsContent>
-          
-          <TabsContent value="overdue" className="mt-4">
             {viewMode === 'list' ? (
               <TaskList tasks={filteredTasks} />
             ) : (
