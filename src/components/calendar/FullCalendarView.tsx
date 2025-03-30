@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -61,11 +60,10 @@ export function FullCalendarView({
   }, [view, date]);
 
   const getViewType = (view: CalendarViewType): string => {
-    // If on mobile, adapt certain views to be more mobile-friendly
     if (isMobile) {
       switch (view) {
         case 'week':
-          return 'listWeek'; // Use list view instead of grid for week on mobile
+          return 'listWeek';
         case 'day':
           return 'timeGridDay';
         case 'month':
@@ -76,7 +74,6 @@ export function FullCalendarView({
           return 'listWeek';
       }
     } else {
-      // Desktop views
       switch (view) {
         case 'day':
           return 'timeGridDay';
@@ -94,15 +91,12 @@ export function FullCalendarView({
 
   const handleEventClick = (info: EventClickArg) => {
     const eventId = info.event.id;
-    // Handle occurrence IDs (remove _occurrence_X suffix)
     const originalId = eventId.includes('_occurrence_') 
       ? eventId.split('_occurrence_')[0] 
       : eventId;
     
-    // Find the original event (not the occurrence) to preserve recurrence pattern
     const originalEvent = events.find(e => e.id === originalId);
     if (originalEvent) {
-      // Pass the original event but with the start/end dates of the clicked occurrence
       const clickedEvent = {
         ...originalEvent,
         start: info.event.start || originalEvent.start,
@@ -113,7 +107,6 @@ export function FullCalendarView({
   };
 
   const handleDateClick = (arg: any) => {
-    // Only process date clicks if the handler is provided and not null
     if (onDateClick) {
       onDateClick(arg.date);
     }
@@ -128,10 +121,8 @@ export function FullCalendarView({
     }
   };
 
-  // Expand recurring events before rendering
   const expandedEvents = expandRecurringEvents(events);
   
-  // Debug log for recurring events
   events.filter(e => e.isRecurring).forEach(e => {
     console.log('Recurring event:', e.title, 
       'pattern:', e.recurrencePattern?.frequency, 
@@ -148,7 +139,6 @@ export function FullCalendarView({
     backgroundColor: event.color || getDefaultColor(event.type),
     borderColor: event.color || getDefaultColor(event.type),
     textColor: 'white',
-    // Add extendedProps to support additional metadata
     extendedProps: {
       isRecurring: event.isRecurring,
       recurrencePattern: event.recurrencePattern,
@@ -158,7 +148,7 @@ export function FullCalendarView({
   }));
 
   return (
-    <div className="h-full rounded-lg overflow-hidden shadow-md">
+    <div className="h-full w-full rounded-lg overflow-hidden shadow-md">
       <FullCalendar
         ref={calendarRef}
         plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
@@ -189,7 +179,6 @@ export function FullCalendarView({
           startTime: '08:00',
           endTime: '18:00',
         }}
-        // Custom styling with CSS classes instead of props
         eventClassNames="rounded-md shadow-sm hover:shadow-md transition-shadow"
         eventMinHeight={24}
         dayHeaderFormat={{

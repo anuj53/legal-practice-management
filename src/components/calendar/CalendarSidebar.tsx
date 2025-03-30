@@ -52,7 +52,7 @@ export function CalendarSidebar({
           {myCalendars.map(calendar => (
             <div 
               key={calendar.id} 
-              className={`h-8 w-8 rounded-full ${calendar.checked ? 'ring-2 ring-offset-2' : 'opacity-60'}`}
+              className={`h-8 w-8 rounded-full cursor-pointer ${calendar.checked ? 'ring-2 ring-offset-2' : 'opacity-60'}`}
               style={{ backgroundColor: calendar.color }}
               onClick={() => onCalendarToggle(calendar.id, 'my')}
             />
@@ -64,7 +64,7 @@ export function CalendarSidebar({
               {otherCalendars.map(calendar => (
                 <div 
                   key={calendar.id} 
-                  className={`h-8 w-8 rounded-full ${calendar.checked ? 'ring-2 ring-offset-2' : 'opacity-60'}`}
+                  className={`h-8 w-8 rounded-full cursor-pointer ${calendar.checked ? 'ring-2 ring-offset-2' : 'opacity-60'}`}
                   style={{ backgroundColor: calendar.color }}
                   onClick={() => onCalendarToggle(calendar.id, 'other')}
                 />
@@ -79,6 +79,7 @@ export function CalendarSidebar({
             calendars={myCalendars}
             category="my"
             onCalendarToggle={onCalendarToggle}
+            onEditCalendar={onEditCalendar}
           />
           
           {otherCalendars.length > 0 && (
@@ -87,6 +88,7 @@ export function CalendarSidebar({
               calendars={otherCalendars}
               category="other"
               onCalendarToggle={onCalendarToggle}
+              onEditCalendar={onEditCalendar}
             />
           )}
         </ScrollArea>

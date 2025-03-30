@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { CalendarHeader } from '@/components/calendar/CalendarHeader';
 import { CalendarSidebar } from '@/components/calendar/CalendarSidebar';
@@ -20,6 +19,7 @@ export default function Calendar() {
   const [selectedCalendar, setSelectedCalendar] = useState<CalendarType | null>(null);
   const [session, setSession] = useState(null);
   const [showFullDay, setShowFullDay] = useState(true);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const isMobile = useIsMobile();
   
   const {
@@ -135,6 +135,10 @@ export default function Calendar() {
     }
   };
   
+  const toggleSidebar = () => {
+    setSidebarCollapsed(!sidebarCollapsed);
+  };
+  
   if (!session) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -171,7 +175,7 @@ export default function Calendar() {
         />
       </div>
       
-      <div className="flex flex-1 overflow-hidden px-2 sm:px-4 pb-2 sm:pb-4 h-[calc(100%-4rem)]">
+      <div className="flex flex-1 overflow-hidden px-2 sm:px-4 pb-2 sm:pb-4 h-[calc(100vh-10rem)]">
         <div className="flex-1 overflow-hidden relative bg-white rounded-lg shadow-md border border-gray-100">
           <CalendarMain
             view={currentView}
@@ -189,12 +193,14 @@ export default function Calendar() {
         </div>
         
         {!isMobile && (
-          <div className="w-72 ml-4 flex-shrink-0 bg-white overflow-hidden rounded-lg shadow-md border border-gray-100 hidden md:block">
+          <div className={`${sidebarCollapsed ? 'w-16' : 'w-72'} ml-4 flex-shrink-0 bg-white overflow-hidden rounded-lg shadow-md border border-gray-100 hidden md:block transition-all duration-300`}>
             <CalendarSidebar
               myCalendars={myCalendars || []}
               otherCalendars={otherCalendars || []}
               onCalendarToggle={handleCalendarToggle}
               onEditCalendar={editCalendarWrapper}
+              collapsed={sidebarCollapsed}
+              onToggleCollapse={toggleSidebar}
             />
           </div>
         )}
