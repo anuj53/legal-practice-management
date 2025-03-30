@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { format, addDays } from 'date-fns';
-import { X, Users, MapPin, Clock, CalendarClock, Bell, FileText, Briefcase, Scale, Plus, Trash2 } from 'lucide-react';
+import { X, Users, MapPin, Clock, CalendarClock, Bell, FileText, Briefcase, Scale, Plus, Trash2, Tag } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -270,6 +270,17 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
   };
   
   const isViewOnly = !editMode;
+  
+  const getEventTypeDisplayName = (type: string): string => {
+    switch(type) {
+      case 'client-meeting': return 'Client Meeting';
+      case 'internal-meeting': return 'Internal Meeting';
+      case 'court': return 'Court Appearance';
+      case 'deadline': return 'Deadline';
+      case 'personal': return 'Personal';
+      default: return type.charAt(0).toUpperCase() + type.slice(1);
+    }
+  };
   
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -787,6 +798,16 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
                       <div className="text-gray-700">
                         {formData.isAllDay ? "All day event" : 
                           `${format(formData.start, 'h:mm a')} - ${format(formData.end, 'h:mm a')}`}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-4">
+                    <Tag className="h-5 w-5 text-gray-500 mt-0.5" />
+                    <div>
+                      <div className="font-medium">Event Type</div>
+                      <div className="text-gray-700">
+                        {getEventTypeDisplayName(formData.type)}
                       </div>
                     </div>
                   </div>
