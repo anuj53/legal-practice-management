@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -20,6 +19,7 @@ interface FullCalendarViewProps {
   onDateSelect?: (start: Date, end: Date) => void;
   onCreateEvent?: (start: Date, end: Date) => void;
   showFullDay?: boolean;
+  forceRerender?: number;
 }
 
 export function FullCalendarView({
@@ -30,7 +30,8 @@ export function FullCalendarView({
   onDateClick,
   onDateSelect,
   onCreateEvent,
-  showFullDay = true
+  showFullDay = true,
+  forceRerender = 0
 }: FullCalendarViewProps) {
   const calendarRef = useRef<FullCalendar | null>(null);
   const isMobile = useIsMobile();
@@ -38,30 +39,39 @@ export function FullCalendarView({
   const getDefaultColor = (type: string): string => {
     switch (type) {
       case 'client-meeting':
-        return '#F97316'; // Bright Orange
+        return '#F97316';
       case 'internal-meeting':
-        return '#0EA5E9'; // Ocean Blue
+        return '#0EA5E9';
       case 'court':
-        return '#8B5CF6'; // Vivid Purple
+        return '#8B5CF6';
       case 'deadline':
-        return '#EF4444'; // Bright Red
+        return '#EF4444';
       case 'personal':
-        return '#10B981'; // Vibrant Green
+        return '#10B981';
       default:
-        return '#6B7280'; // Default Gray
+        return '#6B7280';
     }
   };
 
-  // Update calendar view and date when props change
   useEffect(() => {
+    console.log("Calendar component received new props - forcing complete reload");
+    
     if (calendarRef.current) {
       const api = calendarRef.current.getApi();
-      api.changeView(getViewType(view));
-      api.gotoDate(date);
+      api.destroy();
+      
+      setTimeout(() => {
+        if (calendarRef.current) {
+          console.log("Reinitializing calendar with view:", view);
+          const newApi = calendarRef.current.getApi();
+          newApi.changeView(getViewType(view));
+          newApi.gotoDate(date);
+          newApi.updateSize();
+        }
+      }, 50);
     }
-  }, [view, date]);
+  }, [view, date, forceRerender]);
   
-  // Force calendar to rerender properly when it becomes visible
   useEffect(() => {
     const handleResize = () => {
       if (calendarRef.current) {
@@ -73,7 +83,6 @@ export function FullCalendarView({
     
     window.addEventListener('resize', handleResize);
     
-    // Invoke resize once on mount to ensure proper initial size
     setTimeout(handleResize, 100);
     
     return () => {
@@ -145,7 +154,6 @@ export function FullCalendarView({
 
   const expandedEvents = expandRecurringEvents(events);
   
-  // Debug recurring events
   events.filter(e => e.isRecurring).forEach(e => {
     console.log('Recurring event:', e.title, 
       'pattern:', e.recurrencePattern?.frequency, 

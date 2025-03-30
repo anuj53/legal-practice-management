@@ -137,15 +137,29 @@ export default function Calendar() {
   };
   
   const toggleSidebar = () => {
+    // Update sidebar state
     setSidebarCollapsed(prevState => !prevState);
     
     // Force a complete re-render by triggering resize events in sequence
-    const triggerResize = () => window.dispatchEvent(new Event('resize'));
+    const triggerResize = () => {
+      window.dispatchEvent(new Event('resize'));
+      console.log('Resize event dispatched for calendar');
+    };
     
-    // Multiple resize events at different times to ensure calendar recalculates
+    // Multiple resize events at different times to ensure calendar fully reinitializes
     setTimeout(triggerResize, 50);
     setTimeout(triggerResize, 150);
     setTimeout(triggerResize, 300);
+    
+    // Also simulate a view change (which forces full reload)
+    const currentView = document.querySelector('.fc')?.className || '';
+    if (currentView) {
+      // Remove and add the class to force a reflow
+      document.querySelectorAll('.fc').forEach(el => {
+        el.classList.remove('fc');
+        setTimeout(() => el.classList.add('fc'), 10);
+      });
+    }
     
     console.log(`Sidebar ${sidebarCollapsed ? 'expanded' : 'collapsed'}`);
   };
