@@ -81,10 +81,12 @@ export const convertEventToDbEvent = (event: Omit<Event, 'id'> | Event) => {
 };
 
 export const convertDbEventToEvent = (dbEvent: any, eventTypeMap: Record<string, any> = {}): Event => {
+  console.log('Converting DB event to Event object:', dbEvent);
+
   // Get event type information
   const eventTypeInfo = dbEvent.event_type_id ? eventTypeMap[dbEvent.event_type_id] : null;
   
-  return {
+  const event = {
     id: dbEvent.id,
     title: dbEvent.title,
     description: dbEvent.description || '',
@@ -99,6 +101,9 @@ export const convertDbEventToEvent = (dbEvent: any, eventTypeMap: Record<string,
     isAllDay: false,
     recurrencePattern: dbEvent.recurrence_pattern ? JSON.parse(dbEvent.recurrence_pattern) : undefined
   };
+
+  console.log('Converted event:', event);
+  return event;
 };
 
 // This function expands recurring events based on their recurrence pattern

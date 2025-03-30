@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Calendar, Event, isValidUUID, convertDbEventToEvent, convertEventToDbEvent } from '@/utils/calendarUtils';
@@ -93,6 +94,8 @@ export const fetchEvents = async () => {
       console.error('Error fetching events from DB:', eventsError);
       throw eventsError;
     }
+
+    console.log('Raw events data from DB:', eventsData);
 
     if (eventsData && eventsData.length > 0) {
       console.log('Found events in DB:', eventsData.length);

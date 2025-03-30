@@ -150,10 +150,10 @@ export default function Calendar() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="p-8 rounded-lg bg-white shadow-lg border border-yorpro-100">
+        <div className="p-8 rounded-lg bg-white shadow-lg border border-lpm-100">
           <div className="flex flex-col items-center">
-            <div className="w-12 h-12 rounded-full border-4 border-t-yorpro-600 border-yorpro-100 animate-spin mb-4"></div>
-            <p className="text-yorpro-700 font-medium">Loading calendar data...</p>
+            <div className="w-12 h-12 rounded-full border-4 border-t-lpm-600 border-lpm-100 animate-spin mb-4"></div>
+            <p className="text-lpm-700 font-medium">Loading calendar data...</p>
           </div>
         </div>
       </div>
