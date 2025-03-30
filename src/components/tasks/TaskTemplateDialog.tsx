@@ -85,7 +85,7 @@ export function TaskTemplateDialog({
       taskType: editTask?.task_type || '',
       timeEstimate: editTask?.time_estimate || '',
       defaultAssignee: editTask?.default_assignee || '',
-      dueDateType: editTask?.due_date_type || 'trigger_date',
+      dueDateType: (editTask?.due_date_type as 'trigger_date' | 'after_task' | 'specific_date') || 'trigger_date',
       dueDateOffset: editTask?.due_date_offset || 0,
       dependsOnTaskId: editTask?.depends_on_task_id || '',
     },
@@ -123,7 +123,7 @@ export function TaskTemplateDialog({
         taskType: editTask.task_type || '',
         timeEstimate: editTask.time_estimate || '',
         defaultAssignee: editTask.default_assignee || '',
-        dueDateType: editTask.due_date_type,
+        dueDateType: (editTask.due_date_type as 'trigger_date' | 'after_task' | 'specific_date'),
         dueDateOffset: editTask.due_date_offset || 0,
         dependsOnTaskId: editTask.depends_on_task_id || '',
       });

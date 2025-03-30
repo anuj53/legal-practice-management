@@ -107,8 +107,8 @@ export function WorkflowTemplateDetailView({
       
       if (tasksError) throw tasksError;
       
-      // Cast the data to match the TaskTemplate interface
-      setTasks((tasksData || []) as TaskTemplate[]);
+      // Fix the casting issue by first converting to unknown, then to TaskTemplate[]
+      setTasks((tasksData || []) as unknown as TaskTemplate[]);
     } catch (error) {
       console.error('Error fetching template details:', error);
       toast({
