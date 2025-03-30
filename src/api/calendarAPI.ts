@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Calendar, Event, isValidUUID, convertDbEventToEvent, convertEventToDbEvent } from '@/utils/calendarUtils';
@@ -486,31 +487,42 @@ export const updateEventInDb = async (event: Event) => {
     if (event.type) {
       console.log(`Looking for event type to update: "${event.type}"`);
       
-      // First try to find by exact name
-      const { data: eventTypesByName } = await supabase
-        .from('event_types')
-        .select('*')
-        .ilike('name', event.type)
-        .limit(1);
-      
-      if (eventTypesByName && eventTypesByName.length > 0) {
-        eventTypeId = eventTypesByName[0].id;
-        console.log(`Found event type by name for update: ${event.type}, id: ${eventTypeId}`);
+      // First check if type is 'default' - if so, we don't need to find or create a type
+      if (event.type.toLowerCase() === 'default') {
+        console.log('Using default event type (null)');
       } else {
-        // If not found, create the event type
-        const { data: newEventType, error: eventTypeError } = await supabase
+        // Try to find by exact name
+        const { data: eventTypesByName, error: lookupError } = await supabase
           .from('event_types')
-          .insert({
-            name: event.type,
-            color: event.color || '#4caf50' // Use the event color or default to green
-          })
-          .select();
+          .select('*')
+          .ilike('name', event.type)
+          .limit(1);
         
-        if (eventTypeError) {
-          console.error('Error creating event type during update:', eventTypeError);
-        } else if (newEventType && newEventType.length > 0) {
-          eventTypeId = newEventType[0].id;
-          console.log(`Created new event type during update: ${event.type}, id: ${eventTypeId}`);
+        if (lookupError) {
+          console.error('Error looking up event type:', lookupError);
+        }
+        
+        if (eventTypesByName && eventTypesByName.length > 0) {
+          eventTypeId = eventTypesByName[0].id;
+          console.log(`Found event type by name for update: ${event.type}, id: ${eventTypeId}`);
+        } else {
+          // If not found, create the event type
+          console.log(`Event type "${event.type}" not found, creating new type with color: ${event.color || '#4caf50'}`);
+          
+          const { data: newEventType, error: eventTypeError } = await supabase
+            .from('event_types')
+            .insert({
+              name: event.type,
+              color: event.color || '#4caf50' // Use the event color or default to green
+            })
+            .select();
+          
+          if (eventTypeError) {
+            console.error('Error creating event type during update:', eventTypeError);
+          } else if (newEventType && newEventType.length > 0) {
+            eventTypeId = newEventType[0].id;
+            console.log(`Created new event type during update: ${event.type}, id: ${eventTypeId}`);
+          }
         }
       }
     }

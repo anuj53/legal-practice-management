@@ -1,4 +1,3 @@
-
 import { v4 as uuidv4 } from 'uuid';
 
 export interface Event {
@@ -107,7 +106,7 @@ export const convertDbEventToEvent = (dbEvent: any, eventTypeMap?: Record<string
     docketNumber: dbEvent.docket_number || undefined
   } : undefined;
   
-  return {
+  const event = {
     id: dbEvent.id,
     title: dbEvent.title,
     start: new Date(dbEvent.start_time),
@@ -125,6 +124,9 @@ export const convertDbEventToEvent = (dbEvent: any, eventTypeMap?: Record<string
     assignedLawyer: dbEvent.assigned_lawyer || undefined,
     courtInfo: courtInfo
   };
+
+  console.log(`Converted event ${event.id}: type=${event.type}, color=${event.color}, from db_event_type_id=${dbEvent.event_type_id}`);
+  return event;
 };
 
 // Convert app event to database event

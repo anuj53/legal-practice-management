@@ -38,7 +38,7 @@ export function CalendarMain({
 }: CalendarMainProps) {
   const isMobile = useIsMobile();
 
-  // Enhanced debug events with more details
+  // Enhanced debug events with more details including type and color
   console.log('CalendarMain: Events with details:', events.map(event => ({
     id: event.id,
     title: event.title,
