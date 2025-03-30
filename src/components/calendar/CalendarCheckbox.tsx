@@ -31,20 +31,15 @@ export function CalendarCheckbox({
   return (
     <div className="flex items-center space-x-2 py-1.5 px-2 hover:bg-gray-100 rounded">
       <div className="flex items-center">
-        <div 
-          className="h-4 w-4 rounded-sm cursor-pointer flex items-center justify-center"
+        <Checkbox 
+          checked={checked}
+          onCheckedChange={() => onClick(id, category)}
+          className="rounded-sm"
           style={{ 
             backgroundColor: checked ? color : 'transparent',
             borderColor: color 
           }}
-          onClick={handleCheckboxChange}
-        >
-          {checked && (
-            <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
-          )}
-        </div>
+        />
       </div>
       
       <span 
