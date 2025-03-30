@@ -17,6 +17,8 @@ import {
   UserPlus,
   ClipboardList,
   GitBranch,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -73,14 +75,30 @@ const YorProLogo = ({ collapsed }: { collapsed?: boolean }) => (
 
 interface SidebarProps {
   collapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
-export function Sidebar({ collapsed = false }: SidebarProps) {
+export function Sidebar({ collapsed = false, onToggleCollapse }: SidebarProps) {
   return (
     <div className={cn(
       "bg-gradient-to-b from-yorpro-800 via-yorpro-900 to-yorpro-950 text-white h-screen flex flex-col border-r border-white/10 shadow-xl relative overflow-hidden",
       collapsed ? "w-24" : "w-72"
     )}>
+      {/* Toggle collapse button */}
+      {onToggleCollapse && (
+        <Button 
+          variant="glass" 
+          size="icon" 
+          className="absolute top-1/2 -right-3 h-8 w-8 rounded-full shadow-lg border border-white/20 z-20"
+          onClick={onToggleCollapse}
+        >
+          {collapsed ? 
+            <ChevronRight className="h-4 w-4" /> : 
+            <ChevronLeft className="h-4 w-4" />
+          }
+        </Button>
+      )}
+      
       {/* Decorative elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* Glowing orb in top right */}

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
@@ -13,6 +12,10 @@ export function MainLayout() {
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  const toggleSidebar = () => {
+    setSidebarCollapsed(!sidebarCollapsed);
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
@@ -35,10 +38,8 @@ export function MainLayout() {
             </Header>
             <main className="flex-1 overflow-hidden bg-gradient-to-br from-gray-50 via-white to-gray-100">
               <div className="relative h-full">
-                {/* Updated background patterns with modern design */}
                 <div className="absolute inset-0 bg-grid-gray-100/25 [mask-image:radial-gradient(white,transparent_85%)]" />
                 
-                {/* Top right decorative element */}
                 <div className="absolute top-0 right-0 -mt-16 opacity-30 select-none pointer-events-none">
                   <svg width="400" height="400" viewBox="0 0 400 400" fill="none">
                     <g opacity="0.2">
@@ -55,7 +56,6 @@ export function MainLayout() {
                   </svg>
                 </div>
                 
-                {/* Bottom left decorative element */}
                 <div className="absolute bottom-0 left-0 opacity-30 select-none pointer-events-none">
                   <svg width="300" height="300" viewBox="0 0 300 300" fill="none">
                     <path d="M0 0L300 300" stroke="url(#paint1_linear)" strokeWidth="2" />
@@ -83,27 +83,14 @@ export function MainLayout() {
         // Desktop version with collapsible sidebar
         <>
           <div className={`${sidebarCollapsed ? 'w-24' : 'w-72'} transition-all duration-300 ease-in-out relative`}>
-            <Sidebar collapsed={sidebarCollapsed} />
-            <Button 
-              variant="glass" 
-              size="icon" 
-              className="absolute top-1/2 -right-3 h-8 w-8 rounded-full shadow-lg border border-white/20"
-              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            >
-              {sidebarCollapsed ? 
-                <ChevronRight className="h-4 w-4" /> : 
-                <ChevronLeft className="h-4 w-4" />
-              }
-            </Button>
+            <Sidebar collapsed={sidebarCollapsed} onToggleCollapse={toggleSidebar} />
           </div>
           <div className="flex-1 flex flex-col overflow-hidden">
             <Header />
             <main className="flex-1 overflow-hidden bg-gradient-to-br from-gray-50 via-white to-gray-100">
               <div className="relative h-full">
-                {/* Updated background patterns with modern design */}
                 <div className="absolute inset-0 bg-grid-gray-100/25 [mask-image:radial-gradient(white,transparent_85%)]" />
                 
-                {/* Top right decorative element */}
                 <div className="absolute top-0 right-0 -mt-16 opacity-30 select-none pointer-events-none">
                   <svg width="400" height="400" viewBox="0 0 400 400" fill="none">
                     <g opacity="0.2">
@@ -120,7 +107,6 @@ export function MainLayout() {
                   </svg>
                 </div>
                 
-                {/* Bottom left decorative element */}
                 <div className="absolute bottom-0 left-0 opacity-30 select-none pointer-events-none">
                   <svg width="300" height="300" viewBox="0 0 300 300" fill="none">
                     <path d="M0 0L300 300" stroke="url(#paint1_linear)" strokeWidth="2" />
