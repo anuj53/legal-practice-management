@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
   Tabs, 
@@ -11,13 +11,9 @@ import {
   Calendar, 
   CheckSquare, 
   ClipboardList, 
-  Filter, 
-  ListChecks, 
   Plus, 
-  Search, 
-  SlidersHorizontal 
+  ListChecks
 } from 'lucide-react';
-import { Input } from '@/components/ui/input';
 import { TaskList, Task } from '@/components/tasks/TaskList';
 import { TaskBoard } from '@/components/tasks/TaskBoard';
 import { NewTaskDialog } from '@/components/tasks/NewTaskDialog';
@@ -25,14 +21,25 @@ import { TaskTypeDialog } from '@/components/tasks/TaskTypeDialog';
 import { NewTaskListDialog } from '@/components/tasks/NewTaskListDialog';
 import { TaskListsView } from '@/components/tasks/TaskListsView';
 import { TaskTypeProvider } from '@/contexts/TaskTypeContext';
+import { TaskFilters, TaskFilters as TaskFiltersType, SortConfig } from '@/components/tasks/TaskFilters';
 
 export default function Tasks() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('my-tasks');
-  const [viewMode, setViewMode] = useState<'list' | 'board'>('board'); // Changed default to 'board' instead of 'list'
+  const [viewMode, setViewMode] = useState<'list' | 'board'>('board');
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
   const [isTaskTypeOpen, setIsTaskTypeOpen] = useState(false);
   const [isNewTaskListOpen, setIsNewTaskListOpen] = useState(false);
+  const [filters, setFilters] = useState<TaskFiltersType>({
+    priority: [],
+    taskType: [],
+    dueDate: null,
+    assignee: []
+  });
+  const [sortConfig, setSortConfig] = useState<SortConfig>({
+    field: '',
+    direction: 'asc'
+  });
   
   const tasks: Task[] = [
     {
@@ -97,17 +104,64 @@ export default function Tasks() {
     }
   ];
 
-  const filteredTasks = tasks.filter(task => {
-    const matchesSearch = 
-      task.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      task.description.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredTasks = useMemo(() => {
+    return tasks.filter(task => {
+      // Filter by search query
+      const matchesSearch = searchQuery ? 
+        task.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        task.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        task.matter.toLowerCase().includes(searchQuery.toLowerCase()) :
+        true;
       
-    const matchesTab = 
-      (activeTab === 'my-tasks' && task.assignee === 'John Doe') ||
-      (activeTab === 'all-tasks');
+      // Filter by tab (my tasks vs all tasks)
+      const matchesTab = 
+        (activeTab === 'my-tasks' && task.assignee === 'John Doe') ||
+        (activeTab === 'all-tasks');
       
-    return matchesSearch && matchesTab;
-  });
+      // Filter by priority
+      const matchesPriority = filters.priority.length === 0 || 
+        filters.priority.includes(task.priority);
+      
+      // Filter by task type
+      const matchesTaskType = filters.taskType.length === 0 || 
+        filters.taskType.includes(task.taskType);
+      
+      // Filter by due date
+      const matchesDueDate = !filters.dueDate || 
+        new Date(task.dueDate).toDateString() === filters.dueDate.toDateString();
+      
+      return matchesSearch && matchesTab && matchesPriority && matchesTaskType && matchesDueDate;
+    }).sort((a, b) => {
+      if (!sortConfig.field) return 0;
+      
+      const field = sortConfig.field;
+      const direction = sortConfig.direction === 'asc' ? 1 : -1;
+      
+      if (field === 'dueDate') {
+        return (new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()) * direction;
+      }
+      
+      if (field === 'priority') {
+        const priorityValue = { 'High': 3, 'Normal': 2, 'Low': 1 };
+        return (priorityValue[a.priority as keyof typeof priorityValue] - 
+                priorityValue[b.priority as keyof typeof priorityValue]) * direction;
+      }
+      
+      return a[field].toString().localeCompare(b[field].toString()) * direction;
+    });
+  }, [tasks, searchQuery, activeTab, filters, sortConfig]);
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+  };
+
+  const handleFilterChange = (newFilters: TaskFiltersType) => {
+    setFilters(newFilters);
+  };
+
+  const handleSort = (newSortConfig: SortConfig) => {
+    setSortConfig(newSortConfig);
+  };
 
   return (
     <TaskTypeProvider>
@@ -135,43 +189,29 @@ export default function Tasks() {
           </div>
 
           <div className="bg-white border rounded-lg p-4 shadow-sm">
-            <div className="flex flex-col md:flex-row gap-4 items-center">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
-                <Input
-                  placeholder="Search tasks..."
-                  className="pl-10"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm">
-                  <Filter className="mr-2 h-4 w-4" />
-                  Filter
+            <TaskFilters 
+              onSearch={handleSearch}
+              onFilterChange={handleFilterChange}
+              onSort={handleSort}
+            />
+            <div className="flex justify-end mt-4">
+              <div className="border rounded-md flex">
+                <Button
+                  variant={viewMode === 'list' ? 'default' : 'ghost'}
+                  size="sm"
+                  className="rounded-r-none"
+                  onClick={() => setViewMode('list')}
+                >
+                  <CheckSquare className="h-4 w-4" />
                 </Button>
-                <Button variant="outline" size="sm">
-                  <SlidersHorizontal className="mr-2 h-4 w-4" />
-                  Sort
+                <Button
+                  variant={viewMode === 'board' ? 'default' : 'ghost'}
+                  size="sm"
+                  className="rounded-l-none"
+                  onClick={() => setViewMode('board')}
+                >
+                  <Calendar className="h-4 w-4" />
                 </Button>
-                <div className="border rounded-md flex">
-                  <Button
-                    variant={viewMode === 'list' ? 'default' : 'ghost'}
-                    size="sm"
-                    className="rounded-r-none"
-                    onClick={() => setViewMode('list')}
-                  >
-                    <CheckSquare className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant={viewMode === 'board' ? 'default' : 'ghost'}
-                    size="sm"
-                    className="rounded-l-none"
-                    onClick={() => setViewMode('board')}
-                  >
-                    <Calendar className="h-4 w-4" />
-                  </Button>
-                </div>
               </div>
             </div>
           </div>
