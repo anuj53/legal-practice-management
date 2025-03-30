@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Calendar, Event, isValidUUID } from '@/utils/calendarUtils';
@@ -224,6 +223,7 @@ export const useCalendar = () => {
   const createEvent = async (event: Omit<Event, 'id'>) => {
     try {
       console.log('useCalendar: Creating event with calendar ID:', event.calendar);
+      console.log('useCalendar: Event type:', event.type);
       
       if (!event.calendar || !isValidUUID(event.calendar)) {
         const msg = `Invalid calendar ID: ${event.calendar}`;
@@ -252,6 +252,7 @@ export const useCalendar = () => {
     try {
       console.log('useCalendar: Updating event with ID:', event.id);
       console.log('useCalendar: Event calendar ID:', event.calendar);
+      console.log('useCalendar: Event type:', event.type);
       
       if (!event.id || !isValidUUID(event.id)) {
         const msg = `Invalid event ID: ${event.id}`;
@@ -266,6 +267,7 @@ export const useCalendar = () => {
       }
       
       const updatedEvent = await updateEventInDb(event);
+      console.log('useCalendar: Updated event returned:', updatedEvent);
       
       setEvents(prev => prev.map(e => e.id === event.id ? updatedEvent : e));
       

@@ -39,8 +39,9 @@ export function useCalendarPage() {
     console.log('Filtered events:', filteredEvents.map(e => ({
       id: e.id,
       title: e.title,
+      type: e.type,
       calendarId: e.calendar,
-      calendar: [...(myCalendars || []), ...(otherCalendars || [])].find(cal => cal.id === e.calendar)
+      calendar: [...(myCalendars || []), ...(otherCalendars || [])].find(cal => cal.id === e.calendar)?.name
     })));
   }, [filteredEvents, myCalendars, otherCalendars]);
   
@@ -85,7 +86,7 @@ export function useCalendarPage() {
       title: '',
       start: now,
       end: new Date(now.getTime() + 60 * 60 * 1000),
-      type: 'client-meeting',
+      type: 'meeting',
       calendar: defaultCalendarId,
       isAllDay: false,
       description: '',
@@ -139,6 +140,7 @@ export function useCalendarPage() {
   const handleSaveEvent = async (event: Event) => {
     console.log("handleSaveEvent called with event:", event);
     console.log("Current modal mode:", modalMode);
+    console.log("Event type:", event.type);
     
     if (event.isRecurring && event.recurrencePattern) {
       console.log("Recurrence pattern:", {
@@ -175,6 +177,7 @@ export function useCalendarPage() {
       else {
         console.log("Updating existing event with ID:", event.id);
         console.log("Event calendar ID:", event.calendar);
+        console.log("Event type for update:", event.type);
         
         if (!event.id) {
           console.error("Missing event ID for update");

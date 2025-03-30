@@ -323,6 +323,7 @@ export const createEventInDb = async (event: Omit<Event, 'id'>) => {
     // Find event type id if needed
     let eventTypeId = null;
     if (event.type) {
+      console.log(`Looking for event type: "${event.type}"`);
       // First try to find by exact name
       const { data: eventTypesByName } = await supabase
         .from('event_types')
@@ -483,6 +484,8 @@ export const updateEventInDb = async (event: Event) => {
     // Get event type id
     let eventTypeId = null;
     if (event.type) {
+      console.log(`Looking for event type to update: "${event.type}"`);
+      
       // First try to find by exact name
       const { data: eventTypesByName } = await supabase
         .from('event_types')
@@ -511,6 +514,8 @@ export const updateEventInDb = async (event: Event) => {
         }
       }
     }
+    
+    console.log(`Final event_type_id for update: ${eventTypeId}`);
     
     // Create database event object for update
     const dbEvent = {
@@ -618,6 +623,7 @@ export const updateEventInDb = async (event: Event) => {
     updatedEvent.attendees = event.attendees || [];
     updatedEvent.reminder = event.reminder || 'none';
     
+    console.log('Event updated:', updatedEvent);
     return updatedEvent;
   } catch (err) {
     console.error('Error updating event:', err);

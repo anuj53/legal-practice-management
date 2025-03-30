@@ -42,14 +42,16 @@ export function CalendarMain({
   console.log('CalendarMain: Events with details:', events.map(event => ({
     id: event.id,
     title: event.title,
+    type: event.type,
+    eventTypeDetails: {type: event.type, color: event.color},
     attendees: event.attendees?.length || 0,
     reminder: event.reminder,
     caseId: event.caseId,
     clientName: event.clientName,
     courtInfo: event.courtInfo,
-    type: event.type,
     calendar: event.calendar,
-    calendars: myCalendars.find(cal => cal.id === event.calendar)?.name
+    calendarName: myCalendars.find(cal => cal.id === event.calendar)?.name || 
+                 otherCalendars.find(cal => cal.id === event.calendar)?.name
   })));
 
   return (
