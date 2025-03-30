@@ -7,6 +7,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { Calendar } from '@/types/calendar';
 
 interface CalendarItem {
   id: string;
@@ -20,9 +21,16 @@ interface CalendarListProps {
   calendars: CalendarItem[];
   category: 'my' | 'other';
   onCalendarToggle: (id: string, category: 'my' | 'other') => void;
+  onEditCalendar?: (calendar: Calendar) => void;
 }
 
-export function CalendarList({ title, calendars, category, onCalendarToggle }: CalendarListProps) {
+export function CalendarList({ 
+  title, 
+  calendars, 
+  category, 
+  onCalendarToggle,
+  onEditCalendar 
+}: CalendarListProps) {
   return (
     <Collapsible defaultOpen className="mb-4">
       <CollapsibleTrigger className="flex w-full items-center justify-between px-1 py-2 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors group">
@@ -42,6 +50,7 @@ export function CalendarList({ title, calendars, category, onCalendarToggle }: C
               checked={calendar.checked}
               category={category}
               onClick={onCalendarToggle}
+              onEdit={onEditCalendar ? () => onEditCalendar(calendar as Calendar) : undefined}
             />
           ))}
           {calendars.length === 0 && (
