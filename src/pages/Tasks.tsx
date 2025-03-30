@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -12,8 +11,7 @@ import {
   CheckSquare, 
   ClipboardList, 
   Plus, 
-  ListChecks,
-  Clock
+  ListChecks
 } from 'lucide-react';
 import { TaskList, Task } from '@/components/tasks/TaskList';
 import { TaskBoard } from '@/components/tasks/TaskBoard';
@@ -128,8 +126,7 @@ export default function Tasks() {
       
       const matchesTab = 
         (activeTab === 'my-tasks' && task.assignee === 'John Doe' && task.status !== 'Completed') ||
-        (activeTab === 'all-tasks' && task.status !== 'Completed') ||
-        (activeTab === 'overdue' && task.status === 'Overdue');
+        (activeTab === 'all-tasks' && task.status !== 'Completed');
       
       const matchesPriority = filters.priority.length === 0 || 
         filters.priority.includes(task.priority);
@@ -232,13 +229,9 @@ export default function Tasks() {
             value={activeTab}
             onValueChange={setActiveTab}
           >
-            <TabsList className="grid grid-cols-3 w-full md:w-fit">
+            <TabsList className="grid grid-cols-2 w-full md:w-fit">
               <TabsTrigger value="my-tasks">My Tasks</TabsTrigger>
               <TabsTrigger value="all-tasks">All Tasks</TabsTrigger>
-              <TabsTrigger value="overdue" className="flex items-center">
-                <Clock className="mr-1 h-4 w-4 text-red-500" />
-                Overdue
-              </TabsTrigger>
             </TabsList>
             
             <TabsContent value="my-tasks" className="mt-4">
@@ -250,14 +243,6 @@ export default function Tasks() {
             </TabsContent>
             
             <TabsContent value="all-tasks" className="mt-4">
-              {viewMode === 'list' ? (
-                <TaskList tasks={filteredTasks} onCloseTask={handleCloseTask} />
-              ) : (
-                <TaskBoard tasks={filteredTasks} onCloseTask={handleCloseTask} />
-              )}
-            </TabsContent>
-            
-            <TabsContent value="overdue" className="mt-4">
               {viewMode === 'list' ? (
                 <TaskList tasks={filteredTasks} onCloseTask={handleCloseTask} />
               ) : (
