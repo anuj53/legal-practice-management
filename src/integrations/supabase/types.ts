@@ -267,6 +267,126 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          created_at: string | null
+          email_alias: string | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email_alias?: string | null
+          first_name?: string | null
+          id: string
+          last_name?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email_alias?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+        }
+        Relationships: []
+      }
+      task_templates: {
+        Row: {
+          created_at: string | null
+          default_assignee: string | null
+          depends_on_task_id: string | null
+          description: string | null
+          due_date_offset: number
+          due_date_type: string
+          id: string
+          is_private: boolean
+          name: string
+          position: number
+          priority: string
+          task_type: string | null
+          time_estimate: string | null
+          updated_at: string | null
+          workflow_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          default_assignee?: string | null
+          depends_on_task_id?: string | null
+          description?: string | null
+          due_date_offset?: number
+          due_date_type?: string
+          id?: string
+          is_private?: boolean
+          name: string
+          position?: number
+          priority?: string
+          task_type?: string | null
+          time_estimate?: string | null
+          updated_at?: string | null
+          workflow_id: string
+        }
+        Update: {
+          created_at?: string | null
+          default_assignee?: string | null
+          depends_on_task_id?: string | null
+          description?: string | null
+          due_date_offset?: number
+          due_date_type?: string
+          id?: string
+          is_private?: boolean
+          name?: string
+          position?: number
+          priority?: string
+          task_type?: string | null
+          time_estimate?: string | null
+          updated_at?: string | null
+          workflow_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_templates_depends_on_task_id_fkey"
+            columns: ["depends_on_task_id"]
+            isOneToOne: false
+            referencedRelation: "task_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_templates_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflow_templates: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          practice_area: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          practice_area?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          practice_area?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

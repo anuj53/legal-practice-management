@@ -41,13 +41,14 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { Profile, TaskTemplate } from '@/types/workflow';
 
 interface AssignWorkflowDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   workflowId: string;
   workflowName?: string;
-  tasks: any[];
+  tasks: TaskTemplate[];
 }
 
 const formSchema = z.object({
@@ -67,7 +68,7 @@ export function AssignWorkflowDialog({
   workflowName,
   tasks
 }: AssignWorkflowDialogProps) {
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<Profile[]>([]);
   const [matters, setMatters] = useState<any[]>([]);
   const { toast } = useToast();
   

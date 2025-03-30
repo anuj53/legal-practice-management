@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -52,15 +51,7 @@ import { NewWorkflowTemplateDialog } from './NewWorkflowTemplateDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { WorkflowTemplateDetailView } from './WorkflowTemplateDetailView';
-
-interface WorkflowTemplate {
-  id: string;
-  name: string;
-  description: string;
-  practice_area: string;
-  created_at: string;
-  taskCount: number;
-}
+import { WorkflowTemplate, TaskTemplate } from '@/types/workflow';
 
 export function WorkflowTemplatesView() {
   const [workflowTemplates, setWorkflowTemplates] = useState<WorkflowTemplate[]>([]);

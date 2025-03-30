@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -48,6 +47,7 @@ import { TaskTemplateDialog } from './TaskTemplateDialog';
 import { AssignWorkflowDialog } from './AssignWorkflowDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { WorkflowTemplate, TaskTemplate } from '@/types/workflow';
 
 interface WorkflowTemplateDetailViewProps {
   templateId: string;
@@ -60,22 +60,20 @@ export function WorkflowTemplateDetailView({
   open, 
   onOpenChange 
 }: WorkflowTemplateDetailViewProps) {
-  const [template, setTemplate] = useState<any>(null);
-  const [tasks, setTasks] = useState<any[]>([]);
+  const [template, setTemplate] = useState<WorkflowTemplate | null>(null);
+  const [tasks, setTasks] = useState<TaskTemplate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState<any>(null);
+  const [editingTask, setEditingTask] = useState<TaskTemplate | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const { toast } = useToast();
   
-  // Fetch workflow template details and tasks
   const fetchTemplateDetails = async () => {
     setIsLoading(true);
     try {
-      // Fetch template
       const { data: templateData, error: templateError } = await supabase
         .from('workflow_templates')
         .select('*')
@@ -85,7 +83,6 @@ export function WorkflowTemplateDetailView({
       if (templateError) throw templateError;
       setTemplate(templateData);
       
-      // Fetch tasks
       const { data: tasksData, error: tasksError } = await supabase
         .from('task_templates')
         .select(`
@@ -101,6 +98,7 @@ export function WorkflowTemplateDetailView({
           due_date_offset,
           depends_on_task_id,
           position,
+          workflow_id,
           profiles(first_name, last_name)
         `)
         .eq('workflow_id', templateId)
@@ -131,7 +129,7 @@ export function WorkflowTemplateDetailView({
     setIsTaskDialogOpen(true);
   };
   
-  const handleEditTask = (task: any) => {
+  const handleEditTask = (task: TaskTemplate) => {
     setEditingTask(task);
     setIsTaskDialogOpen(true);
   };
@@ -147,7 +145,6 @@ export function WorkflowTemplateDetailView({
       
       if (error) throw error;
       
-      // Update tasks state
       setTasks(tasks.filter(task => task.id !== taskToDelete));
       
       toast({
@@ -178,7 +175,6 @@ export function WorkflowTemplateDetailView({
       const currentTask = tasks[taskIndex];
       const targetTask = tasks[newIndex];
       
-      // Swap positions in the database
       const updates = [
         supabase
           .from('task_templates')
@@ -193,11 +189,9 @@ export function WorkflowTemplateDetailView({
       
       await Promise.all(updates);
       
-      // Update local state
       const newTasks = [...tasks];
       [newTasks[taskIndex], newTasks[newIndex]] = [newTasks[newIndex], newTasks[taskIndex]];
       
-      // Update the position values to match the new order
       newTasks.forEach((task, index) => {
         task.position = index;
       });

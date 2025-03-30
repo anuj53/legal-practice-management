@@ -64,6 +64,7 @@ export function NewWorkflowTemplateDialog({
 
   async function onSubmit(data: FormData, action: 'close' | 'add-tasks') {
     try {
+      // Insert workflow template into database
       const { data: workflowData, error } = await supabase
         .from('workflow_templates')
         .insert({

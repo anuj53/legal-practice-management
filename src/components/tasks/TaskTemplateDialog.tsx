@@ -10,7 +10,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
@@ -36,13 +35,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useTaskTypes } from '@/contexts/TaskTypeContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { TaskTemplate, Profile } from '@/types/workflow';
 
 interface TaskTemplateDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   workflowId: string;
-  existingTaskTemplates: any[];
-  editTask?: any;
+  existingTaskTemplates: TaskTemplate[];
+  editTask?: TaskTemplate;
   onSuccess?: () => void;
 }
 
@@ -71,7 +71,7 @@ export function TaskTemplateDialog({
 }: TaskTemplateDialogProps) {
   const { taskTypes } = useTaskTypes();
   const { toast } = useToast();
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<Profile[]>([]);
   
   const activeTaskTypes = taskTypes.filter(type => type.active);
   
