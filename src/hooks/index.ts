@@ -5,3 +5,4 @@ export * from './useCalendarPage';
 export * from './use-mobile';
 export * from './use-toast';
 export * from './useAuth';
+export * from './useMockCalendar';

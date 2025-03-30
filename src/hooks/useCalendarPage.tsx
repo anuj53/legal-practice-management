@@ -1,11 +1,12 @@
-
 import { useState, useEffect } from 'react';
 import { CalendarViewType } from '@/types/calendar';
 import { Calendar, Event } from '@/utils/calendarUtils';
-import { useCalendar } from '@/hooks/useCalendar'; // Remove explicit .tsx extension to ensure proper importing
+import { useCalendar } from '@/hooks/useCalendar';
 import { toast } from 'sonner';
 
 export function useCalendarPage() {
+  console.log('Using useCalendarPage with real database hook');
+  
   const [currentDate, setCurrentDate] = useState(new Date());
   const [currentView, setCurrentView] = useState<CalendarViewType>('week');
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
@@ -24,6 +25,8 @@ export function useCalendarPage() {
     updateCalendar,
     deleteCalendar
   } = useCalendar();
+  
+  console.log('useCalendarPage: myCalendars received from useCalendar hook:', myCalendars);
   
   const filteredEvents = events.filter(event => {
     const calendar = [...(myCalendars || []), ...(otherCalendars || [])].find(cal => cal.id === event.calendar);

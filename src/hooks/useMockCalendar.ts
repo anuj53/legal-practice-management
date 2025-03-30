@@ -1,10 +1,11 @@
+
 import { useState, useEffect } from 'react';
 import { addDays, addMonths, subMonths, startOfMonth, isSameDay } from 'date-fns';
 import { CalendarEvent, Calendar, CalendarViewType, CalendarShare } from '@/types/calendar';
 
 // Sample data - in a real app, this would come from an API or database
 const generateSampleEvents = (calendars: Calendar[]): CalendarEvent[] => {
-  console.log('WARNING: Using mock data from useCalendarMock.ts');
+  console.log('WARNING: Using mock data from useMockCalendar.ts');
   
   const now = new Date();
   const events: CalendarEvent[] = [];
@@ -86,7 +87,7 @@ const generateSampleCalendars = (): Calendar[] => {
   ];
 };
 
-export const useCalendar = () => {
+export const useMockCalendar = () => {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [view, setView] = useState<CalendarViewType>('week');
