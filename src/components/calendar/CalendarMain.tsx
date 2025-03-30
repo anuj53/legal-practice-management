@@ -21,6 +21,7 @@ interface CalendarMainProps {
   otherCalendars?: any[];
   onCalendarToggle?: (id: string, category: 'my' | 'other') => void;
   onEditCalendar?: (calendar: any) => void;
+  sidebarCollapsed?: boolean; // Add this prop to trigger re-rendering
 }
 
 export function CalendarMain({ 
@@ -34,7 +35,8 @@ export function CalendarMain({
   myCalendars = [],
   otherCalendars = [],
   onCalendarToggle,
-  onEditCalendar
+  onEditCalendar,
+  sidebarCollapsed // Use this prop in component to trigger re-rendering
 }: CalendarMainProps) {
   const isMobile = useIsMobile();
 
@@ -70,6 +72,7 @@ export function CalendarMain({
         onDateClick={null}
         onCreateEvent={onCreateEvent}
         showFullDay={showFullDay}
+        key={`calendar-view-${sidebarCollapsed ? 'collapsed' : 'expanded'}`} // Force re-render on sidebar state change
         onDateSelect={(start, end) => {
           if (!onCreateEvent) {
             onDayClick(start);
