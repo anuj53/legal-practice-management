@@ -217,7 +217,6 @@ export default function Calendar() {
         mode={modalMode}
         onSave={handleSaveEvent}
         onDelete={handleDeleteEvent}
-        myCalendars={myCalendars}
       />
       
       <Dialog open={calendarDialogOpen} onOpenChange={setCalendarDialogOpen}>

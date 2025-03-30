@@ -22,9 +22,8 @@ function App() {
               <Route path="/" element={<Index />} />
               <Route path="/calendar" element={<Calendar />} />
               <Route path="/tasks" element={<Tasks />} />
+              <Route path="*" element={<NotFound />} />
             </Route>
-            {/* NotFound route moved outside the AuthRoute */}
-            <Route path="*" element={<NotFound />} />
           </Routes>
         </Router>
       </AuthProvider>

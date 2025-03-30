@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from 'react';
 import { CalendarViewType } from '@/types/calendar';
-import { Calendar, Event, isValidUUID } from '@/utils/calendarUtils';
+import { Calendar, Event } from '@/utils/calendarUtils';
 import { useCalendar } from '@/hooks/useCalendar';
 import { toast } from 'sonner';
 
@@ -58,15 +59,12 @@ export function useCalendarPage() {
   const handleCreateEvent = () => {
     console.log("Create event clicked");
     
-    // Use the first available calendar from myCalendars
     const defaultCalendarId = myCalendars.length > 0 ? myCalendars[0].id : '';
     
     if (!defaultCalendarId) {
       toast.error("Cannot create event: No calendars available");
       return;
     }
-    
-    console.log("Using default calendar ID:", defaultCalendarId);
     
     const now = new Date();
     const defaultEvent: Omit<Event, 'id'> = {
@@ -127,7 +125,6 @@ export function useCalendarPage() {
   const handleSaveEvent = async (event: Event) => {
     console.log("handleSaveEvent called with event:", event);
     console.log("Current modal mode:", modalMode);
-    console.log("Event calendar ID:", event.calendar);
     
     if (event.isRecurring && event.recurrencePattern) {
       console.log("Recurrence pattern:", {
@@ -138,16 +135,15 @@ export function useCalendarPage() {
       });
     }
     
-    // Validate calendar ID is a valid UUID before proceeding
-    if (!isValidUUID(event.calendar)) {
-      console.error("Invalid calendar ID format:", event.calendar);
-      toast.error("Invalid calendar format. Please select a valid calendar.");
-      return;
-    }
-    
     try {
       if (modalMode === 'create') {
-        console.log("Creating new event with calendar ID:", event.calendar);
+        console.log("Creating new event");
+        
+        if (!event.calendar) {
+          console.error("Missing calendar ID for new event");
+          toast.error("Cannot save: Missing calendar ID");
+          return;
+        }
         
         const { id, ...eventWithoutId } = event;
         
@@ -164,10 +160,17 @@ export function useCalendarPage() {
       } 
       else {
         console.log("Updating existing event with ID:", event.id);
+        console.log("Event calendar ID:", event.calendar);
         
         if (!event.id) {
           console.error("Missing event ID for update");
           toast.error("Cannot update event: Missing ID");
+          return;
+        }
+        
+        if (!event.calendar) {
+          console.error("Missing calendar ID for event update");
+          toast.error("Cannot update event: Missing calendar ID");
           return;
         }
         
