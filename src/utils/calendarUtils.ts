@@ -110,7 +110,7 @@ export function expandRecurringEvents(events: Event[]): Event[] {
 }
 
 // Convert database event format to app event format
-export const convertDbEventToEvent = (dbEvent: any): Event => {
+export const convertDbEventToEvent = (dbEvent: any, eventTypeMap?: any): Event => {
   return {
     id: dbEvent.id,
     title: dbEvent.title,
@@ -123,6 +123,7 @@ export const convertDbEventToEvent = (dbEvent: any): Event => {
     calendar: dbEvent.calendar_id,
     description: dbEvent.description || '',
     location: dbEvent.location || '',
+    color: eventTypeMap && dbEvent.event_type_id ? eventTypeMap[dbEvent.event_type_id]?.color : undefined
   };
 };
 
