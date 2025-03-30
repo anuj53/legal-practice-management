@@ -1,3 +1,4 @@
+
 import { addHours, addDays, subDays, startOfDay, addMonths, addWeeks, addYears } from 'date-fns';
 import { CalendarShare } from '@/types/calendar';
 
@@ -88,11 +89,19 @@ export const convertDbEventToEvent = (dbEvent: any, eventTypeMap: any = {}): Eve
   }
   
   // Get event type info
-  let eventType = 'default';
+  let eventType: 'client-meeting' | 'internal-meeting' | 'court' | 'deadline' | 'personal' = 'client-meeting';
   let eventColor = null;
   
   if (dbEvent.event_type_id && eventTypeMap && eventTypeMap[dbEvent.event_type_id]) {
-    eventType = eventTypeMap[dbEvent.event_type_id].name;
+    const typeName = eventTypeMap[dbEvent.event_type_id].name;
+    // Ensure the type is one of the allowed types
+    if (typeName === 'client-meeting' || 
+        typeName === 'internal-meeting' || 
+        typeName === 'court' || 
+        typeName === 'deadline' || 
+        typeName === 'personal') {
+      eventType = typeName;
+    }
     eventColor = eventTypeMap[dbEvent.event_type_id].color;
   }
   
