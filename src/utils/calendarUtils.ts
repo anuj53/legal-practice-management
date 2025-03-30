@@ -1,3 +1,4 @@
+
 import { v4 as uuidv4 } from 'uuid';
 
 export interface Event {
@@ -35,6 +36,8 @@ export interface Event {
     name: string;
     url: string;
   }>;
+  // Store the original event_type_id when available
+  event_type_id?: string;
 }
 
 export interface Calendar {
@@ -122,7 +125,9 @@ export const convertDbEventToEvent = (dbEvent: any, eventTypeMap?: Record<string
     caseId: dbEvent.case_id || undefined,
     clientName: dbEvent.client_name || undefined,
     assignedLawyer: dbEvent.assigned_lawyer || undefined,
-    courtInfo: courtInfo
+    courtInfo: courtInfo,
+    // Store the original event_type_id to help with updates
+    event_type_id: dbEvent.event_type_id || undefined
   };
 
   console.log(`Converted event ${event.id}: type=${event.type}, color=${event.color}, from db_event_type_id=${dbEvent.event_type_id}`);
@@ -131,6 +136,7 @@ export const convertDbEventToEvent = (dbEvent: any, eventTypeMap?: Record<string
 
 // Convert app event to database event
 export const convertEventToDbEvent = (event: Event) => {
+  // Use the stored event_type_id if available, otherwise leave it to the API to resolve
   return {
     title: event.title,
     start_time: event.start.toISOString(),
@@ -145,7 +151,8 @@ export const convertEventToDbEvent = (event: Event) => {
     assigned_lawyer: event.assignedLawyer || null,
     court_name: event.courtInfo?.courtName || null,
     judge_details: event.courtInfo?.judgeDetails || null,
-    docket_number: event.courtInfo?.docketNumber || null
+    docket_number: event.courtInfo?.docketNumber || null,
+    event_type_id: event.event_type_id || null // Preserve the original event_type_id if it exists
   };
 };
 

@@ -43,7 +43,7 @@ export function CalendarMain({
     id: event.id,
     title: event.title,
     type: event.type,
-    eventTypeDetails: {type: event.type, color: event.color},
+    eventTypeDetails: {type: event.type, color: event.color, event_type_id: event.event_type_id},
     attendees: event.attendees?.length || 0,
     reminder: event.reminder,
     caseId: event.caseId,
