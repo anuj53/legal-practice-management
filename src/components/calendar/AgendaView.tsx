@@ -8,12 +8,16 @@ interface AgendaViewProps {
   currentDate: Date;
   events: CalendarEvent[];
   onEventClick: (event: CalendarEvent) => void;
+  myCalendars?: any[];
+  otherCalendars?: any[];
 }
 
 export const AgendaView: React.FC<AgendaViewProps> = ({
   currentDate,
   events,
   onEventClick,
+  myCalendars = [],
+  otherCalendars = []
 }) => {
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
   const weekEnd = endOfWeek(currentDate, { weekStartsOn: 0 });
@@ -34,7 +38,25 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
   
   const sortedDateKeys = Object.keys(eventsByDate).sort();
 
-  const eventColors = {
+  // Function to get calendar color based on calendar ID
+  const getCalendarColor = (calendarId: string): string => {
+    // First check in myCalendars
+    const myCalendar = myCalendars.find(cal => cal.id === calendarId);
+    if (myCalendar) {
+      return myCalendar.color;
+    }
+    
+    // Then check in otherCalendars
+    const otherCalendar = otherCalendars.find(cal => cal.id === calendarId);
+    if (otherCalendar) {
+      return otherCalendar.color;
+    }
+    
+    return null;
+  };
+
+  // Fallback event colors by type (used only if calendar color isn't available)
+  const eventTypeColors = {
     'event': 'bg-orange-500 text-white',
     'client': 'bg-green-500 text-white',
     'plan': 'bg-orange-500 text-white',
@@ -69,26 +91,36 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
               </div>
               
               <div className="space-y-2">
-                {eventsByDate[dateKey].map(event => (
-                  <div
-                    key={event.id}
-                    className={cn(
-                      "p-3 rounded cursor-pointer",
-                      eventColors[event.type] || "bg-gray-500 text-white"
-                    )}
-                    onClick={() => onEventClick(event)}
-                  >
-                    <div className="flex justify-between items-center">
-                      <span className="font-medium">{event.title}</span>
-                      <span className="text-sm">
-                        {format(new Date(event.start), 'h:mm a')} - {format(new Date(event.end), 'h:mm a')}
-                      </span>
+                {eventsByDate[dateKey].map(event => {
+                  // Get calendar color as custom style
+                  const calendarColor = event.calendar ? getCalendarColor(event.calendar) : null;
+                  const customStyle = calendarColor ? { 
+                    backgroundColor: calendarColor,
+                    color: 'white'
+                  } : {};
+                  
+                  return (
+                    <div
+                      key={event.id}
+                      className={cn(
+                        "p-3 rounded cursor-pointer",
+                        !calendarColor && (eventTypeColors[event.type] || "bg-gray-500 text-white")
+                      )}
+                      style={calendarColor ? customStyle : {}}
+                      onClick={() => onEventClick(event)}
+                    >
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">{event.title}</span>
+                        <span className="text-sm">
+                          {format(new Date(event.start), 'h:mm a')} - {format(new Date(event.end), 'h:mm a')}
+                        </span>
+                      </div>
+                      {event.location && (
+                        <div className="text-sm mt-1">📍 {event.location}</div>
+                      )}
                     </div>
-                    {event.location && (
-                      <div className="text-sm mt-1">📍 {event.location}</div>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           );

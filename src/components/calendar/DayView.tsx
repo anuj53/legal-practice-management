@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { format } from 'date-fns';
 import { CalendarEvent } from '@/types/calendar';
@@ -12,6 +11,8 @@ interface DayViewProps {
   events: CalendarEvent[];
   onEventClick: (event: CalendarEvent) => void;
   onTimeSlotClick: (date: Date) => void;
+  myCalendars?: any[];
+  otherCalendars?: any[];
 }
 
 export const DayView: React.FC<DayViewProps> = ({
@@ -19,35 +20,30 @@ export const DayView: React.FC<DayViewProps> = ({
   events,
   onEventClick,
   onTimeSlotClick,
+  myCalendars = [],
+  otherCalendars = []
 }) => {
   const hours = getHours();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [currentTimePosition, setCurrentTimePosition] = useState<number>(0);
   
-  // Calculate current time indicator position and set up auto-scroll
   useEffect(() => {
     const updateCurrentTimePosition = () => {
       const now = new Date();
       const hours = now.getHours();
       const minutes = now.getMinutes();
-      // Calculate position (each hour is 60px height)
       const position = (hours * 60) + minutes;
       setCurrentTimePosition(position);
       
-      // If it's today, scroll to current time - 1 hour
       const isToday = new Date(currentDate).setHours(0,0,0,0) === new Date().setHours(0,0,0,0);
       if (isToday && scrollContainerRef.current) {
-        // Scroll to 100px above the current time
         scrollContainerRef.current.scrollTop = position - 100;
       }
     };
     
-    // Update position immediately
     updateCurrentTimePosition();
     
-    // Set timer to update position
-    const timer = setInterval(updateCurrentTimePosition, 60000); // every minute
-    
+    const timer = setInterval(updateCurrentTimePosition, 60000);
     return () => clearInterval(timer);
   }, [currentDate]);
   
@@ -68,7 +64,21 @@ export const DayView: React.FC<DayViewProps> = ({
     });
   };
 
-  const eventColors = {
+  const getCalendarColor = (calendarId: string): string => {
+    const myCalendar = myCalendars.find(cal => cal.id === calendarId);
+    if (myCalendar) {
+      return myCalendar.color;
+    }
+    
+    const otherCalendar = otherCalendars.find(cal => cal.id === calendarId);
+    if (otherCalendar) {
+      return otherCalendar.color;
+    }
+    
+    return '#6B7280';
+  };
+
+  const eventTypeColors = {
     'event': 'bg-orange-500 text-white',
     'client': 'bg-green-500 text-white',
     'plan': 'bg-orange-500 text-white',
@@ -79,7 +89,6 @@ export const DayView: React.FC<DayViewProps> = ({
     'personal': 'bg-yellow-500 text-black border-l-4 border-yellow-600',
   };
 
-  // Check if it's today to show the current time indicator
   const isToday = new Date(currentDate).setHours(0,0,0,0) === new Date().setHours(0,0,0,0);
 
   return (
@@ -123,38 +132,47 @@ export const DayView: React.FC<DayViewProps> = ({
                     onTimeSlotClick(newDate);
                   }}
                 >
-                  {hourEvents.map((event) => (
-                    <div
-                      key={event.id}
-                      className={cn(
-                        "p-2 rounded-md my-1 cursor-pointer shadow-sm hover:shadow-md transition-shadow",
-                        eventColors[event.type] || "bg-gray-500 text-white"
-                      )}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEventClick(event);
-                      }}
-                    >
-                      <div className="flex justify-between items-center">
-                        <span className="font-medium">{event.title}</span>
-                        <span className="text-xs opacity-80">
-                          {format(event.start, 'h:mm a')}
-                        </span>
-                      </div>
-                      {event.location && (
-                        <div className="mt-1 text-xs flex items-center opacity-90">
-                          <MapPin className="h-3 w-3 mr-1" />
-                          {event.location}
+                  {hourEvents.map((event) => {
+                    const calendarColor = event.calendar ? getCalendarColor(event.calendar) : '';
+                    const customStyle = calendarColor ? {
+                      backgroundColor: calendarColor,
+                      color: 'white',
+                      borderLeft: `4px solid ${calendarColor}`
+                    } : {};
+                    
+                    return (
+                      <div
+                        key={event.id}
+                        className={cn(
+                          "p-2 rounded-md my-1 cursor-pointer shadow-sm hover:shadow-md transition-shadow",
+                          !calendarColor && (eventTypeColors[event.type] || "bg-gray-500 text-white")
+                        )}
+                        style={calendarColor ? customStyle : {}}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEventClick(event);
+                        }}
+                      >
+                        <div className="flex justify-between items-center">
+                          <span className="font-medium">{event.title}</span>
+                          <span className="text-xs opacity-80">
+                            {format(event.start, 'h:mm a')}
+                          </span>
                         </div>
-                      )}
-                    </div>
-                  ))}
+                        {event.location && (
+                          <div className="mt-1 text-xs flex items-center opacity-90">
+                            <MapPin className="h-3 w-3 mr-1" />
+                            {event.location}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             );
           })}
           
-          {/* Current time indicator */}
           {isToday && (
             <div 
               className="absolute left-0 right-0 border-t-2 border-red-500 z-20 flex items-center"

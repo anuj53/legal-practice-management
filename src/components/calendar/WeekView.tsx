@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { format, addDays, startOfWeek, isToday } from 'date-fns';
 import { CalendarEvent } from '@/types/calendar';
@@ -11,6 +10,8 @@ interface WeekViewProps {
   events: CalendarEvent[];
   onEventClick: (event: CalendarEvent) => void;
   onTimeSlotClick?: (date: Date) => void;
+  myCalendars?: any[];
+  otherCalendars?: any[];
 }
 
 export const WeekView: React.FC<WeekViewProps> = ({
@@ -18,6 +19,8 @@ export const WeekView: React.FC<WeekViewProps> = ({
   events,
   onEventClick,
   onTimeSlotClick,
+  myCalendars = [],
+  otherCalendars = []
 }) => {
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -25,19 +28,15 @@ export const WeekView: React.FC<WeekViewProps> = ({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [currentTimePosition, setCurrentTimePosition] = useState<number>(0);
   
-  // Calculate current time indicator position and set up auto-scroll
   useEffect(() => {
     const updateCurrentTimePosition = () => {
       const now = new Date();
       const hours = now.getHours();
       const minutes = now.getMinutes();
-      // Calculate position (each hour is 60px height)
       const position = (hours * 60) + minutes;
       setCurrentTimePosition(position);
       
-      // Scroll to current time with offset (100px up from the current time)
       if (scrollContainerRef.current) {
-        // Delay the scroll slightly to ensure the container is fully rendered
         setTimeout(() => {
           if (scrollContainerRef.current) {
             scrollContainerRef.current.scrollTop = position - 120;
@@ -46,12 +45,9 @@ export const WeekView: React.FC<WeekViewProps> = ({
       }
     };
     
-    // Update position immediately
     updateCurrentTimePosition();
     
-    // Set timer to update position
-    const timer = setInterval(updateCurrentTimePosition, 60000); // every minute
-    
+    const timer = setInterval(updateCurrentTimePosition, 60000);
     return () => clearInterval(timer);
   }, []);
 
@@ -72,6 +68,20 @@ export const WeekView: React.FC<WeekViewProps> = ({
     });
   };
 
+  const getCalendarColor = (calendarId: string): string => {
+    const myCalendar = myCalendars.find(cal => cal.id === calendarId);
+    if (myCalendar) {
+      return myCalendar.color;
+    }
+    
+    const otherCalendar = otherCalendars.find(cal => cal.id === calendarId);
+    if (otherCalendar) {
+      return otherCalendar.color;
+    }
+    
+    return null;
+  };
+
   const eventColors = {
     'event': 'bg-orange-500 text-white',
     'client': 'bg-green-500 text-white',
@@ -83,7 +93,6 @@ export const WeekView: React.FC<WeekViewProps> = ({
     'personal': 'bg-gradient-to-r from-yellow-400 to-yellow-500 text-black',
   };
 
-  // Check if today falls within this week
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const todayIndex = days.findIndex(day => {
@@ -94,14 +103,11 @@ export const WeekView: React.FC<WeekViewProps> = ({
 
   return (
     <div className="week-view h-full flex flex-col overflow-hidden">
-      {/* Headers row - always visible at the top */}
       <div className="grid grid-cols-8 border-b border-gray-200 bg-white sticky top-0 z-20 shadow-sm flex-shrink-0">
-        {/* Corner cell - top left empty cell */}
         <div className="col-span-1 border-r border-gray-200 p-2 text-center font-medium bg-gradient-to-r from-gray-50 to-white">
           Hour
         </div>
         
-        {/* Day headers */}
         {days.map((day, index) => (
           <div key={index} className={cn(
             "col-span-1 p-2 text-center border-r border-gray-200",
@@ -118,7 +124,6 @@ export const WeekView: React.FC<WeekViewProps> = ({
         ))}
       </div>
       
-      {/* Scrollable content area with fixed hour column */}
       <div className="flex-1 overflow-hidden">
         <div 
           className="h-full overflow-y-auto scrollbar-thin"
@@ -131,7 +136,6 @@ export const WeekView: React.FC<WeekViewProps> = ({
               
               return (
                 <React.Fragment key={hourIndex}>
-                  {/* Hour label - left side - fixed */}
                   <div className={cn(
                     "col-span-1 border-r border-b border-gray-200 p-2 text-center sticky left-0 h-[60px] z-10",
                     isBusinessHour ? "bg-gray-50" : "bg-white"
@@ -141,7 +145,6 @@ export const WeekView: React.FC<WeekViewProps> = ({
                     </div>
                   </div>
                   
-                  {/* Days columns */}
                   {days.map((day, dayIndex) => {
                     const dayEvents = getEventsForDayAndHour(day, hour);
                     const isDayToday = isToday(day);
@@ -163,28 +166,37 @@ export const WeekView: React.FC<WeekViewProps> = ({
                           }
                         }}
                       >
-                        {dayEvents.map((event) => (
-                          <div
-                            key={event.id}
-                            className={cn(
-                              "p-1 rounded text-xs cursor-pointer truncate shadow-sm hover:shadow-md transition-shadow",
-                              eventColors[event.type] || "bg-gray-500 text-white"
-                            )}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onEventClick(event);
-                            }}
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="font-medium">
-                                {format(event.start, 'h:mm')} {event.title}
-                              </span>
-                              {event.location && (
-                                <MapPin className="h-3 w-3 ml-1 opacity-80" />
+                        {dayEvents.map((event) => {
+                          const calendarColor = event.calendar ? getCalendarColor(event.calendar) : null;
+                          const customStyle = calendarColor ? {
+                            background: calendarColor,
+                            color: 'white'
+                          } : {};
+                          
+                          return (
+                            <div
+                              key={event.id}
+                              className={cn(
+                                "p-1 rounded text-xs cursor-pointer truncate shadow-sm hover:shadow-md transition-shadow",
+                                !calendarColor && (eventColors[event.type] || "bg-gray-500 text-white")
                               )}
+                              style={calendarColor ? customStyle : {}}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onEventClick(event);
+                              }}
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="font-medium">
+                                  {format(event.start, 'h:mm')} {event.title}
+                                </span>
+                                {event.location && (
+                                  <MapPin className="h-3 w-3 ml-1 opacity-80" />
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     );
                   })}
@@ -192,7 +204,6 @@ export const WeekView: React.FC<WeekViewProps> = ({
               );
             })}
             
-            {/* Current time indicator */}
             {todayIndex !== -1 && (
               <div 
                 className="absolute border-t-2 border-red-500 z-20 flex items-center"

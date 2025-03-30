@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -21,6 +20,8 @@ interface FullCalendarViewProps {
   onDateSelect?: (start: Date, end: Date) => void;
   onCreateEvent?: (start: Date, end: Date) => void;
   showFullDay?: boolean;
+  myCalendars?: any[];
+  otherCalendars?: any[];
 }
 
 export function FullCalendarView({
@@ -31,25 +32,41 @@ export function FullCalendarView({
   onDateClick,
   onDateSelect,
   onCreateEvent,
-  showFullDay = true
+  showFullDay = true,
+  myCalendars = [],
+  otherCalendars = []
 }: FullCalendarViewProps) {
   const calendarRef = useRef<FullCalendar | null>(null);
   const isMobile = useIsMobile();
 
+  const getCalendarColor = (calendarId: string): string => {
+    const myCalendar = myCalendars.find(cal => cal.id === calendarId);
+    if (myCalendar) {
+      return myCalendar.color;
+    }
+    
+    const otherCalendar = otherCalendars.find(cal => cal.id === calendarId);
+    if (otherCalendar) {
+      return otherCalendar.color;
+    }
+    
+    return '#6B7280';
+  };
+
   const getDefaultColor = (type: string): string => {
     switch (type) {
       case 'client-meeting':
-        return '#F97316'; // Bright Orange
+        return '#F97316';
       case 'internal-meeting':
-        return '#0EA5E9'; // Ocean Blue
+        return '#0EA5E9';
       case 'court':
-        return '#8B5CF6'; // Vivid Purple
+        return '#8B5CF6';
       case 'deadline':
-        return '#EF4444'; // Bright Red
+        return '#EF4444';
       case 'personal':
-        return '#10B981'; // Vibrant Green
+        return '#10B981';
       default:
-        return '#6B7280'; // Default Gray
+        return '#6B7280';
     }
   };
 
@@ -132,22 +149,26 @@ export function FullCalendarView({
       'occurrences:', e.recurrencePattern?.occurrences);
   });
   
-  const calendarEvents = expandedEvents.map(event => ({
-    id: event.id,
-    title: event.title,
-    start: formatISO(event.start),
-    end: formatISO(event.end),
-    allDay: event.isAllDay,
-    backgroundColor: event.color || getDefaultColor(event.type),
-    borderColor: event.color || getDefaultColor(event.type),
-    textColor: 'white',
-    extendedProps: {
-      isRecurring: event.isRecurring,
-      recurrencePattern: event.recurrencePattern,
-      type: event.type,
-      calendar: event.calendar
-    }
-  }));
+  const calendarEvents = expandedEvents.map(event => {
+    const calendarColor = event.calendar ? getCalendarColor(event.calendar) : getDefaultColor(event.type);
+    
+    return {
+      id: event.id,
+      title: event.title,
+      start: formatISO(event.start),
+      end: formatISO(event.end),
+      allDay: event.isAllDay,
+      backgroundColor: calendarColor,
+      borderColor: calendarColor,
+      textColor: 'white',
+      extendedProps: {
+        isRecurring: event.isRecurring,
+        recurrencePattern: event.recurrencePattern,
+        type: event.type,
+        calendar: event.calendar
+      }
+    };
+  });
 
   return (
     <div className="h-full w-full rounded-lg overflow-hidden">

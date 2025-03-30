@@ -9,13 +9,38 @@ interface TodaysEventsListProps {
   events: Event[];
   collapsed?: boolean;
   onEventClick?: (event: Event) => void;
+  myCalendars?: any[];
+  otherCalendars?: any[];
 }
 
-export function TodaysEventsList({ events, collapsed = false, onEventClick }: TodaysEventsListProps) {
+export function TodaysEventsList({ 
+  events, 
+  collapsed = false, 
+  onEventClick,
+  myCalendars = [],
+  otherCalendars = []
+}: TodaysEventsListProps) {
   // Sort events by start time
   const sortedEvents = [...events].sort((a, b) => 
     new Date(a.start).getTime() - new Date(b.start).getTime()
   );
+
+  // Function to get calendar color based on calendar ID
+  const getCalendarColor = (calendarId: string): string => {
+    // First check in myCalendars
+    const myCalendar = myCalendars.find(cal => cal.id === calendarId);
+    if (myCalendar) {
+      return myCalendar.color;
+    }
+    
+    // Then check in otherCalendars
+    const otherCalendar = otherCalendars.find(cal => cal.id === calendarId);
+    if (otherCalendar) {
+      return otherCalendar.color;
+    }
+    
+    return null;
+  };
 
   if (collapsed) {
     return (
@@ -41,31 +66,42 @@ export function TodaysEventsList({ events, collapsed = false, onEventClick }: To
       ) : (
         <ScrollArea className="h-48 pr-3 -mr-3">
           <div className="space-y-2">
-            {sortedEvents.map((event) => (
-              <div 
-                key={event.id} 
-                className="p-2 rounded-lg bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors border border-gray-200/50 shadow-sm"
-                onClick={() => onEventClick && onEventClick(event)}
-              >
-                <div className="text-sm font-medium text-gray-800 line-clamp-1">{event.title}</div>
-                <div className="flex items-center text-xs text-gray-500 mt-1 gap-1">
-                  <Clock className="h-3 w-3" />
-                  <span>{format(new Date(event.start), 'h:mm a')}</span>
-                  {event.end && (
-                    <>
-                      <span>-</span>
-                      <span>{format(new Date(event.end), 'h:mm a')}</span>
-                    </>
+            {sortedEvents.map((event) => {
+              // Get calendar color for custom styling
+              const calendarColor = event.calendar ? getCalendarColor(event.calendar) : null;
+              const customStyle = calendarColor ? {
+                backgroundColor: calendarColor,
+                color: 'white',
+                borderLeft: `3px solid ${calendarColor}`
+              } : {};
+              
+              return (
+                <div 
+                  key={event.id} 
+                  className="p-2 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors border border-gray-200/50 shadow-sm"
+                  style={calendarColor ? customStyle : { backgroundColor: 'rgb(249 250 251)' }} // default bg-gray-50
+                  onClick={() => onEventClick && onEventClick(event)}
+                >
+                  <div className="text-sm font-medium line-clamp-1">{event.title}</div>
+                  <div className="flex items-center text-xs mt-1 gap-1" style={{ opacity: 0.9 }}>
+                    <Clock className="h-3 w-3" />
+                    <span>{format(new Date(event.start), 'h:mm a')}</span>
+                    {event.end && (
+                      <>
+                        <span>-</span>
+                        <span>{format(new Date(event.end), 'h:mm a')}</span>
+                      </>
+                    )}
+                  </div>
+                  {event.location && (
+                    <div className="flex items-center text-xs mt-1 gap-1" style={{ opacity: 0.9 }}>
+                      <MapPin className="h-3 w-3" />
+                      <span className="line-clamp-1">{event.location}</span>
+                    </div>
                   )}
                 </div>
-                {event.location && (
-                  <div className="flex items-center text-xs text-gray-500 mt-1 gap-1">
-                    <MapPin className="h-3 w-3" />
-                    <span className="line-clamp-1">{event.location}</span>
-                  </div>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </ScrollArea>
       )}
