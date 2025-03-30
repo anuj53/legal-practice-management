@@ -42,17 +42,20 @@ export function TaskBoard({ tasks: initialTasks, onCloseTask }: TaskBoardProps) 
     .filter(type => type.active)
     .map(type => type.name);
 
-  const tasksByType = tasks.reduce((acc: Record<string, Task[]>, task) => {
-    if (!acc[task.taskType]) {
-      acc[task.taskType] = [];
+  const statusList = ['Pending', 'In Progress', 'In Review', 'Completed'];
+  
+  const tasksByStatus = tasks.reduce((acc: Record<string, Task[]>, task) => {
+    const status = statusList.includes(task.status) ? task.status : 'Pending';
+    if (!acc[status]) {
+      acc[status] = [];
     }
-    acc[task.taskType].push(task);
+    acc[status].push(task);
     return acc;
   }, {});
 
-  activeTaskTypes.forEach(type => {
-    if (!tasksByType[type]) {
-      tasksByType[type] = [];
+  statusList.forEach(status => {
+    if (!tasksByStatus[status]) {
+      tasksByStatus[status] = [];
     }
   });
 
@@ -91,14 +94,14 @@ export function TaskBoard({ tasks: initialTasks, onCloseTask }: TaskBoardProps) 
     const draggedTask = updatedTasks.find(task => task.id === draggableId);
     
     if (draggedTask) {
-      const newTaskType = destination.droppableId;
-      const oldTaskType = draggedTask.taskType;
+      const newStatus = destination.droppableId;
+      const oldStatus = draggedTask.status;
       
-      if (oldTaskType !== newTaskType) {
-        draggedTask.taskType = newTaskType;
+      if (oldStatus !== newStatus) {
+        draggedTask.status = newStatus as Task['status'];
         toast({
           title: "Task Updated",
-          description: `Task moved to ${newTaskType}`,
+          description: `Task moved to ${newStatus}`,
         });
       }
       
@@ -135,33 +138,33 @@ export function TaskBoard({ tasks: initialTasks, onCloseTask }: TaskBoardProps) 
     });
   };
 
-  const getTaskTypeColor = (taskType: string) => {
+  const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      'Onboarding': 'bg-purple-500',
-      'Documentation': 'bg-blue-500',
-      'Follow Up': 'bg-indigo-500',
-      'Meeting': 'bg-emerald-500',
-      'Invoicing': 'bg-amber-500',
+      'Pending': 'bg-gray-500',
+      'In Progress': 'bg-blue-500',
+      'In Review': 'bg-purple-500',
+      'Completed': 'bg-green-500',
+      'Overdue': 'bg-red-500',
     };
     
-    return colors[taskType] || 'bg-gray-500';
+    return colors[status] || 'bg-gray-500';
   };
 
   return (
     <>
       <DragDropContext onDragEnd={onDragEnd}>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          {activeTaskTypes.map((taskType) => (
-            <div key={taskType} className="flex flex-col">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {statusList.map((status) => (
+            <div key={status} className="flex flex-col">
               <div className="flex items-center mb-3 pl-2">
-                <div className={`h-3 w-3 rounded-full ${getTaskTypeColor(taskType)} mr-2`}></div>
-                <h3 className="font-medium text-gray-700">{taskType}</h3>
+                <div className={`h-3 w-3 rounded-full ${getStatusColor(status)} mr-2`}></div>
+                <h3 className="font-medium text-gray-700">{status}</h3>
                 <Badge variant="outline" className="ml-2 bg-gray-100">
-                  {tasksByType[taskType]?.length || 0}
+                  {tasksByStatus[status]?.length || 0}
                 </Badge>
               </div>
               
-              <Droppable droppableId={taskType}>
+              <Droppable droppableId={status}>
                 {(provided, snapshot) => (
                   <div 
                     className={`bg-gray-50 rounded-lg p-2 flex-1 min-h-[50vh] ${
@@ -170,13 +173,13 @@ export function TaskBoard({ tasks: initialTasks, onCloseTask }: TaskBoardProps) 
                     ref={provided.innerRef}
                     {...provided.droppableProps}
                   >
-                    {!tasksByType[taskType] || tasksByType[taskType].length === 0 ? (
+                    {!tasksByStatus[status] || tasksByStatus[status].length === 0 ? (
                       <div className="flex items-center justify-center h-20 border border-dashed border-gray-300 rounded-md bg-white mt-2">
                         <p className="text-gray-500 text-sm">No tasks</p>
                       </div>
                     ) : (
                       <div className="space-y-2">
-                        {tasksByType[taskType].map((task, index) => (
+                        {tasksByStatus[status].map((task, index) => (
                           <Draggable key={task.id} draggableId={task.id} index={index}>
                             {(provided, snapshot) => (
                               <Card 

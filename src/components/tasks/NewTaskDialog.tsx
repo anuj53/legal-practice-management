@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -49,6 +50,7 @@ export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
       name: '',
       description: '',
       priority: 'Normal',
+      status: 'Pending',
       assignee: '',
       isPrivate: false,
       taskType: '',
@@ -178,6 +180,31 @@ export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
               
               <FormField
                 control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Task Status</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Pending">Pending</SelectItem>
+                        <SelectItem value="In Progress">In Progress</SelectItem>
+                        <SelectItem value="In Review">In Review</SelectItem>
+                        <SelectItem value="Completed">Completed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
                 name="timeEstimate"
                 render={({ field }) => (
                   <FormItem>
@@ -188,9 +215,7 @@ export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
                   </FormItem>
                 )}
               />
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              
               <FormField
                 control={form.control}
                 name="matter"
@@ -213,7 +238,9 @@ export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
                   </FormItem>
                 )}
               />
-              
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="dueDate"
@@ -251,28 +278,28 @@ export function NewTaskDialog({ open, onOpenChange }: NewTaskDialogProps) {
                   </FormItem>
                 )}
               />
+
+              <FormField
+                control={form.control}
+                name="isPrivate"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                    <div className="space-y-0.5">
+                      <FormLabel>Private Task</FormLabel>
+                      <FormDescription>
+                        Only you and the assignee will be able to see this task
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
             </div>
-            
-            <FormField
-              control={form.control}
-              name="isPrivate"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                  <div className="space-y-0.5">
-                    <FormLabel>Private Task</FormLabel>
-                    <FormDescription>
-                      Only you and the assignee will be able to see this task
-                    </FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
             
             <div className="border-t pt-4">
               <FormLabel>Reminders</FormLabel>

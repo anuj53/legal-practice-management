@@ -45,6 +45,7 @@ const formSchema = z.object({
   name: z.string().min(1, "Task name is required"),
   description: z.string().optional(),
   priority: z.enum(["High", "Normal", "Low"]),
+  status: z.enum(["Pending", "In Progress", "In Review", "Completed", "Overdue"]),
   assignee: z.string().min(1, "Assignee is required"),
   dueDate: z.string().min(1, "Due date is required"),
   taskType: z.string().min(1, "Task type is required"),
@@ -63,6 +64,7 @@ export function EditTaskDialog({ open, onOpenChange, task, onSave, onCompleteTas
       name: task?.name || "",
       description: task?.description || "",
       priority: (task?.priority || "Normal") as "High" | "Normal" | "Low",
+      status: (task?.status || "Pending") as "Pending" | "In Progress" | "In Review" | "Completed" | "Overdue",
       assignee: task?.assignee || "",
       dueDate: task?.dueDate || "",
       taskType: task?.taskType || "",
@@ -78,6 +80,7 @@ export function EditTaskDialog({ open, onOpenChange, task, onSave, onCompleteTas
         name: task.name,
         description: task.description,
         priority: task.priority as "High" | "Normal" | "Low",
+        status: task.status,
         assignee: task.assignee,
         dueDate: task.dueDate,
         taskType: task.taskType,
@@ -203,8 +206,35 @@ export function EditTaskDialog({ open, onOpenChange, task, onSave, onCompleteTas
                 )}
               />
             </div>
-            
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Task Status</FormLabel>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Pending">Pending</SelectItem>
+                        <SelectItem value="In Progress">In Progress</SelectItem>
+                        <SelectItem value="In Review">In Review</SelectItem>
+                        <SelectItem value="Completed">Completed</SelectItem>
+                        <SelectItem value="Overdue">Overdue</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
+              
               <FormField
                 control={form.control}
                 name="assignee"
@@ -217,7 +247,9 @@ export function EditTaskDialog({ open, onOpenChange, task, onSave, onCompleteTas
                   </FormItem>
                 )}
               />
-              
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">              
               <FormField
                 control={form.control}
                 name="dueDate"
@@ -230,9 +262,7 @@ export function EditTaskDialog({ open, onOpenChange, task, onSave, onCompleteTas
                   </FormItem>
                 )}
               />
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              
               <FormField
                 control={form.control}
                 name="timeEstimate"
@@ -245,20 +275,20 @@ export function EditTaskDialog({ open, onOpenChange, task, onSave, onCompleteTas
                   </FormItem>
                 )}
               />
-              
-              <FormField
-                control={form.control}
-                name="matter"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Matter</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Associated matter" {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
             </div>
+            
+            <FormField
+              control={form.control}
+              name="matter"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Matter</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Associated matter" {...field} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
 
             <DialogFooter className="pt-4">
               <div className="flex gap-2 w-full justify-between sm:justify-end">

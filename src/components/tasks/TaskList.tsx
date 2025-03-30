@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   Check, 
@@ -44,7 +43,7 @@ export interface Task {
   timeEstimate: string;
   matter: string;
   isPrivate: boolean;
-  status?: 'Pending' | 'Completed' | 'Overdue';
+  status: 'Pending' | 'In Progress' | 'In Review' | 'Completed' | 'Overdue';
 }
 
 interface TaskListProps {
@@ -124,6 +123,32 @@ export function TaskList({ tasks: initialTasks, onCloseTask }: TaskListProps) {
     setTasks(updatedTasks);
   };
 
+  const getStatusBadge = (status: string) => {
+    let className = "";
+    
+    switch (status) {
+      case 'Pending':
+        className = "bg-gray-100 text-gray-800 hover:bg-gray-100";
+        break;
+      case 'In Progress':
+        className = "bg-blue-100 text-blue-800 hover:bg-blue-100";
+        break;
+      case 'In Review':
+        className = "bg-purple-100 text-purple-800 hover:bg-purple-100";
+        break;
+      case 'Completed':
+        className = "bg-green-100 text-green-800 hover:bg-green-100";
+        break;
+      case 'Overdue':
+        className = "bg-red-100 text-red-800 hover:bg-red-100";
+        break;
+      default:
+        className = "bg-gray-100 text-gray-800 hover:bg-gray-100";
+    }
+    
+    return <Badge variant="outline" className={className}>{status}</Badge>;
+  };
+
   const handleCompleteTask = (taskId: string) => {
     if (onCloseTask) {
       onCloseTask(taskId);
@@ -132,9 +157,8 @@ export function TaskList({ tasks: initialTasks, onCloseTask }: TaskListProps) {
         description: "Task marked as complete",
       });
     } else {
-      // Fix here: Specify the exact status value that matches the Task interface
       const updatedTasks = tasks.map(task => 
-        task.id === taskId ? { ...task, status: 'Completed' as const } : task
+        task.id === taskId ? { ...task, status: 'Completed' } : task
       );
       setTasks(updatedTasks);
       toast({
@@ -142,20 +166,6 @@ export function TaskList({ tasks: initialTasks, onCloseTask }: TaskListProps) {
         description: "Task marked as complete",
       });
     }
-  };
-
-  const getStatusBadge = (status?: string) => {
-    if (!status || status === 'Pending') return null;
-    
-    if (status === 'Overdue') {
-      return <Badge variant="outline" className="bg-red-100 text-red-800 hover:bg-red-100">Overdue</Badge>;
-    }
-    
-    if (status === 'Completed') {
-      return <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100">Completed</Badge>;
-    }
-    
-    return null;
   };
 
   return (

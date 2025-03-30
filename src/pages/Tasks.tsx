@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -65,7 +66,7 @@ export default function Tasks() {
       timeEstimate: '45m',
       matter: 'Smith Contract',
       isPrivate: false,
-      status: 'Pending'
+      status: 'In Progress'
     },
     {
       id: '3',
@@ -78,7 +79,7 @@ export default function Tasks() {
       timeEstimate: '10m',
       matter: 'Johnson Estate',
       isPrivate: false,
-      status: 'Pending'
+      status: 'In Review'
     },
     {
       id: '4',
@@ -104,7 +105,7 @@ export default function Tasks() {
       timeEstimate: '60m',
       matter: 'New Corp. LLC',
       isPrivate: false,
-      status: 'Pending'
+      status: 'Completed'
     }
   ]);
 
