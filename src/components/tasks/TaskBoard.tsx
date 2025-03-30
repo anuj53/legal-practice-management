@@ -1,12 +1,13 @@
-
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
   Clock, 
   FileText, 
   MoreHorizontal,
-  Edit
+  Edit,
+  Check,
+  XCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,31 +24,25 @@ import { useTaskTypes } from '@/contexts/TaskTypeContext';
 
 interface TaskBoardProps {
   tasks: Task[];
+  onCloseTask?: (taskId: string) => void;
 }
 
-export function TaskBoard({ tasks: initialTasks }: TaskBoardProps) {
-  // State to track tasks after drag and drop operations
+export function TaskBoard({ tasks: initialTasks, onCloseTask }: TaskBoardProps) {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
-  // Get task types from context
   const { taskTypes } = useTaskTypes();
   
-  // Update tasks when initialTasks changes
   useEffect(() => {
     setTasks(initialTasks);
   }, [initialTasks]);
   
-  // Filter active task types only
   const activeTaskTypes = taskTypes
     .filter(type => type.active)
     .map(type => type.name);
 
-  // Group tasks by task type
   const tasksByType = tasks.reduce((acc: Record<string, Task[]>, task) => {
-    // If the task's type isn't in our active types, we still want to show it
-    // This avoids losing tasks when their type is disabled
     if (!acc[task.taskType]) {
       acc[task.taskType] = [];
     }
@@ -55,7 +50,6 @@ export function TaskBoard({ tasks: initialTasks }: TaskBoardProps) {
     return acc;
   }, {});
 
-  // Make sure we have an empty array for each active task type, even if no tasks
   activeTaskTypes.forEach(type => {
     if (!tasksByType[type]) {
       tasksByType[type] = [];
@@ -124,6 +118,23 @@ export function TaskBoard({ tasks: initialTasks }: TaskBoardProps) {
     setTasks(updatedTasks);
   };
 
+  const handleCompleteTask = (taskId: string) => {
+    if (onCloseTask) {
+      onCloseTask(taskId);
+    } else {
+      setTasks(currentTasks => 
+        currentTasks.map(task => 
+          task.id === taskId ? { ...task, status: 'Completed' } : task
+        )
+      );
+    }
+    
+    toast({
+      title: "Task Completed",
+      description: "Task marked as complete and removed from view",
+    });
+  };
+
   const getTaskTypeColor = (taskType: string) => {
     const colors: Record<string, string> = {
       'Onboarding': 'bg-purple-500',
@@ -135,9 +146,6 @@ export function TaskBoard({ tasks: initialTasks }: TaskBoardProps) {
     
     return colors[taskType] || 'bg-gray-500';
   };
-
-  console.log('Active task types:', activeTaskTypes);
-  console.log('Task types from context:', taskTypes);
 
   return (
     <>
@@ -177,7 +185,7 @@ export function TaskBoard({ tasks: initialTasks }: TaskBoardProps) {
                                 {...provided.dragHandleProps} 
                                 className={`border shadow-sm transition-shadow cursor-grab ${
                                   snapshot.isDragging ? 'shadow-lg' : 'hover:shadow-md'
-                                }`}
+                                } ${task.status === 'Overdue' ? 'border-red-300 bg-red-50' : ''}`}
                                 onClick={() => handleEditTask(task)}
                               >
                                 <CardHeader className="p-3 pb-0">
@@ -204,6 +212,13 @@ export function TaskBoard({ tasks: initialTasks }: TaskBoardProps) {
                                           <Edit className="h-4 w-4 mr-2" />
                                           Edit Task
                                         </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleCompleteTask(task.id);
+                                        }}>
+                                          <Check className="h-4 w-4 mr-2 text-green-500" />
+                                          Complete Task
+                                        </DropdownMenuItem>
                                       </DropdownMenuContent>
                                     </DropdownMenu>
                                   </div>
@@ -214,7 +229,9 @@ export function TaskBoard({ tasks: initialTasks }: TaskBoardProps) {
                                   <div className="flex justify-between items-center mt-2 text-xs">
                                     <div className="flex items-center">
                                       <Clock className="h-3.5 w-3.5 mr-1 text-gray-500" />
-                                      <span>{formatDate(task.dueDate)}</span>
+                                      <span className={task.status === 'Overdue' ? 'text-red-600 font-medium' : ''}>
+                                        {formatDate(task.dueDate)}
+                                      </span>
                                     </div>
                                     <span className={`font-medium ${getPriorityColor(task.priority)}`}>
                                       {task.priority}
@@ -228,6 +245,20 @@ export function TaskBoard({ tasks: initialTasks }: TaskBoardProps) {
                                     </div>
                                   </div>
                                 </CardContent>
+                                <CardFooter className="p-1 pt-0 flex justify-end">
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    className="h-6"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleCompleteTask(task.id);
+                                    }}
+                                  >
+                                    <Check className="h-3.5 w-3.5 mr-1 text-green-500" />
+                                    <span className="text-xs">Complete</span>
+                                  </Button>
+                                </CardFooter>
                               </Card>
                             )}
                           </Draggable>

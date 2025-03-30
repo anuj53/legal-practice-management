@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   Check, 
@@ -6,7 +7,8 @@ import {
   MoreHorizontal, 
   Trash2, 
   FileText,
-  PlayCircle
+  PlayCircle,
+  XCircle
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -42,13 +44,15 @@ export interface Task {
   timeEstimate: string;
   matter: string;
   isPrivate: boolean;
+  status?: 'Pending' | 'Completed' | 'Overdue';
 }
 
 interface TaskListProps {
   tasks: Task[];
+  onCloseTask?: (taskId: string) => void;
 }
 
-export function TaskList({ tasks: initialTasks }: TaskListProps) {
+export function TaskList({ tasks: initialTasks, onCloseTask }: TaskListProps) {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -121,14 +125,36 @@ export function TaskList({ tasks: initialTasks }: TaskListProps) {
   };
 
   const handleCompleteTask = (taskId: string) => {
-    const updatedTasks = tasks.map(task => 
-      task.id === taskId ? { ...task, status: 'Completed' } : task
-    );
-    setTasks(updatedTasks);
-    toast({
-      title: "Task Completed",
-      description: "Task marked as complete",
-    });
+    if (onCloseTask) {
+      onCloseTask(taskId);
+      toast({
+        title: "Task Completed",
+        description: "Task marked as complete",
+      });
+    } else {
+      const updatedTasks = tasks.map(task => 
+        task.id === taskId ? { ...task, status: 'Completed' } : task
+      );
+      setTasks(updatedTasks);
+      toast({
+        title: "Task Completed",
+        description: "Task marked as complete",
+      });
+    }
+  };
+
+  const getStatusBadge = (status?: string) => {
+    if (!status || status === 'Pending') return null;
+    
+    if (status === 'Overdue') {
+      return <Badge variant="outline" className="bg-red-100 text-red-800 hover:bg-red-100">Overdue</Badge>;
+    }
+    
+    if (status === 'Completed') {
+      return <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100">Completed</Badge>;
+    }
+    
+    return null;
   };
 
   return (
@@ -138,9 +164,10 @@ export function TaskList({ tasks: initialTasks }: TaskListProps) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[300px]">Task Name</TableHead>
+                <TableHead className="w-[280px]">Task Name</TableHead>
                 <TableHead>Priority</TableHead>
                 <TableHead>Type</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Assignee</TableHead>
                 <TableHead>Due Date</TableHead>
                 <TableHead>Matter</TableHead>
@@ -150,12 +177,12 @@ export function TaskList({ tasks: initialTasks }: TaskListProps) {
             <TableBody>
               {tasks.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                     No tasks found. Create a new task to get started.
                   </TableCell>
                 </TableRow>
               ) : (
-                tasks.map((task) => (
+                initialTasks.map((task) => (
                   <TableRow key={task.id} className="hover:bg-gray-50" onDoubleClick={() => handleEditTask(task)}>
                     <TableCell className="font-medium">
                       <div className="flex flex-col">
@@ -165,6 +192,7 @@ export function TaskList({ tasks: initialTasks }: TaskListProps) {
                     </TableCell>
                     <TableCell>{getPriorityBadge(task.priority)}</TableCell>
                     <TableCell>{getTaskTypeBadge(task.taskType)}</TableCell>
+                    <TableCell>{getStatusBadge(task.status)}</TableCell>
                     <TableCell>{task.assignee}</TableCell>
                     <TableCell>{formatDate(task.dueDate)}</TableCell>
                     <TableCell>
@@ -175,6 +203,14 @@ export function TaskList({ tasks: initialTasks }: TaskListProps) {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          title="Complete task"
+                          onClick={() => handleCompleteTask(task.id)}
+                        >
+                          <Check className="h-4 w-4 text-green-500" />
+                        </Button>
                         <Button 
                           variant="ghost" 
                           size="icon"

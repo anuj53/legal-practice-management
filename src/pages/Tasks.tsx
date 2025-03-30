@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -11,7 +12,8 @@ import {
   CheckSquare, 
   ClipboardList, 
   Plus, 
-  ListChecks
+  ListChecks,
+  Clock
 } from 'lucide-react';
 import { TaskList, Task } from '@/components/tasks/TaskList';
 import { TaskBoard } from '@/components/tasks/TaskBoard';
@@ -40,7 +42,7 @@ export default function Tasks() {
     direction: 'asc'
   });
   
-  const tasks: Task[] = [
+  const [tasks, setTasks] = useState<Task[]>([
     {
       id: '1',
       name: 'Send monthly invoice to client',
@@ -51,7 +53,8 @@ export default function Tasks() {
       taskType: 'Invoicing',
       timeEstimate: '15m',
       matter: 'A vs B client matter',
-      isPrivate: true
+      isPrivate: true,
+      status: 'Pending'
     },
     {
       id: '2',
@@ -63,7 +66,8 @@ export default function Tasks() {
       taskType: 'Documentation',
       timeEstimate: '45m',
       matter: 'Smith Contract',
-      isPrivate: false
+      isPrivate: false,
+      status: 'Pending'
     },
     {
       id: '3',
@@ -75,7 +79,8 @@ export default function Tasks() {
       taskType: 'Meeting',
       timeEstimate: '10m',
       matter: 'Johnson Estate',
-      isPrivate: false
+      isPrivate: false,
+      status: 'Pending'
     },
     {
       id: '4',
@@ -87,7 +92,8 @@ export default function Tasks() {
       taskType: 'Documentation',
       timeEstimate: '30m',
       matter: 'Williams v. City',
-      isPrivate: false
+      isPrivate: false,
+      status: 'Overdue'
     },
     {
       id: '5',
@@ -99,9 +105,18 @@ export default function Tasks() {
       taskType: 'Onboarding',
       timeEstimate: '60m',
       matter: 'New Corp. LLC',
-      isPrivate: false
+      isPrivate: false,
+      status: 'Pending'
     }
-  ];
+  ]);
+
+  const handleCloseTask = (taskId: string) => {
+    setTasks(currentTasks => currentTasks.map(task => 
+      task.id === taskId 
+        ? { ...task, status: 'Completed' } 
+        : task
+    ));
+  };
 
   const filteredTasks = useMemo(() => {
     return tasks.filter(task => {
@@ -112,8 +127,9 @@ export default function Tasks() {
         true;
       
       const matchesTab = 
-        (activeTab === 'my-tasks' && task.assignee === 'John Doe') ||
-        (activeTab === 'all-tasks');
+        (activeTab === 'my-tasks' && task.assignee === 'John Doe' && task.status !== 'Completed') ||
+        (activeTab === 'all-tasks' && task.status !== 'Completed') ||
+        (activeTab === 'overdue' && task.status === 'Overdue');
       
       const matchesPriority = filters.priority.length === 0 || 
         filters.priority.includes(task.priority);
@@ -216,24 +232,36 @@ export default function Tasks() {
             value={activeTab}
             onValueChange={setActiveTab}
           >
-            <TabsList className="grid grid-cols-2 w-full md:w-fit">
+            <TabsList className="grid grid-cols-3 w-full md:w-fit">
               <TabsTrigger value="my-tasks">My Tasks</TabsTrigger>
               <TabsTrigger value="all-tasks">All Tasks</TabsTrigger>
+              <TabsTrigger value="overdue" className="flex items-center">
+                <Clock className="mr-1 h-4 w-4 text-red-500" />
+                Overdue
+              </TabsTrigger>
             </TabsList>
             
             <TabsContent value="my-tasks" className="mt-4">
               {viewMode === 'list' ? (
-                <TaskList tasks={filteredTasks} />
+                <TaskList tasks={filteredTasks} onCloseTask={handleCloseTask} />
               ) : (
-                <TaskBoard tasks={filteredTasks} />
+                <TaskBoard tasks={filteredTasks} onCloseTask={handleCloseTask} />
               )}
             </TabsContent>
             
             <TabsContent value="all-tasks" className="mt-4">
               {viewMode === 'list' ? (
-                <TaskList tasks={filteredTasks} />
+                <TaskList tasks={filteredTasks} onCloseTask={handleCloseTask} />
               ) : (
-                <TaskBoard tasks={filteredTasks} />
+                <TaskBoard tasks={filteredTasks} onCloseTask={handleCloseTask} />
+              )}
+            </TabsContent>
+            
+            <TabsContent value="overdue" className="mt-4">
+              {viewMode === 'list' ? (
+                <TaskList tasks={filteredTasks} onCloseTask={handleCloseTask} />
+              ) : (
+                <TaskBoard tasks={filteredTasks} onCloseTask={handleCloseTask} />
               )}
             </TabsContent>
           </Tabs>
