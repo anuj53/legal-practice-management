@@ -44,15 +44,15 @@ export function TaskBoard({ tasks: initialTasks }: TaskBoardProps) {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
-  // Define status columns in order
-  const statuses = ['Pending', 'In Progress', 'Completed', 'Overdue'];
+  // Extract unique task types from tasks
+  const taskTypes = Array.from(new Set(tasks.map(task => task.taskType)));
 
-  // Group tasks by status
-  const tasksByStatus = tasks.reduce((acc: Record<string, Task[]>, task) => {
-    if (!acc[task.status]) {
-      acc[task.status] = [];
+  // Group tasks by task type
+  const tasksByType = tasks.reduce((acc: Record<string, Task[]>, task) => {
+    if (!acc[task.taskType]) {
+      acc[task.taskType] = [];
     }
-    acc[task.status].push(task);
+    acc[task.taskType].push(task);
     return acc;
   }, {});
 
@@ -94,7 +94,7 @@ export function TaskBoard({ tasks: initialTasks }: TaskBoardProps) {
 
   // Handle drag end event
   const onDragEnd = (result: any) => {
-    const { destination, source } = result;
+    const { destination, source, draggableId } = result;
 
     // Return if dropped outside a droppable area or dropped in the same place
     if (!destination || 
@@ -107,19 +107,19 @@ export function TaskBoard({ tasks: initialTasks }: TaskBoardProps) {
     const updatedTasks = [...tasks];
     
     // Find the task that was dragged
-    const draggedTask = updatedTasks.find(task => task.id === result.draggableId);
+    const draggedTask = updatedTasks.find(task => task.id === draggableId);
     
     if (draggedTask) {
-      // Update the task's status to the new column
-      const newStatus = destination.droppableId;
-      const oldStatus = draggedTask.status;
+      // Update the task's type to the new column
+      const newTaskType = destination.droppableId;
+      const oldTaskType = draggedTask.taskType;
       
-      // If status changed, update it and show a toast
-      if (oldStatus !== newStatus) {
-        draggedTask.status = newStatus;
+      // If task type changed, update it and show a toast
+      if (oldTaskType !== newTaskType) {
+        draggedTask.taskType = newTaskType;
         toast({
           title: "Task Updated",
-          description: `Task moved to ${newStatus}`,
+          description: `Task moved to ${newTaskType}`,
         });
       }
       
@@ -142,21 +142,34 @@ export function TaskBoard({ tasks: initialTasks }: TaskBoardProps) {
     setTasks(updatedTasks);
   };
 
+  // Get specific color for each task type column
+  const getTaskTypeColor = (taskType: string) => {
+    const colors = {
+      'Onboarding': 'bg-purple-500',
+      'Documentation': 'bg-blue-500',
+      'Follow Up': 'bg-indigo-500',
+      'Meeting': 'bg-emerald-500',
+      'Invoicing': 'bg-amber-500',
+    };
+    
+    return (colors as Record<string, string>)[taskType] || 'bg-gray-500';
+  };
+
   return (
     <>
       <DragDropContext onDragEnd={onDragEnd}>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {statuses.map((status) => (
-            <div key={status} className="flex flex-col">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          {taskTypes.map((taskType) => (
+            <div key={taskType} className="flex flex-col">
               <div className="flex items-center mb-3 pl-2">
-                <div className={`h-3 w-3 rounded-full ${getStatusColor(status)} mr-2`}></div>
-                <h3 className="font-medium text-gray-700">{status}</h3>
+                <div className={`h-3 w-3 rounded-full ${getTaskTypeColor(taskType)} mr-2`}></div>
+                <h3 className="font-medium text-gray-700">{taskType}</h3>
                 <Badge variant="outline" className="ml-2 bg-gray-100">
-                  {tasksByStatus[status]?.length || 0}
+                  {tasksByType[taskType]?.length || 0}
                 </Badge>
               </div>
               
-              <Droppable droppableId={status}>
+              <Droppable droppableId={taskType}>
                 {(provided, snapshot) => (
                   <div 
                     className={`bg-gray-50 rounded-lg p-2 flex-1 min-h-[50vh] ${
@@ -165,13 +178,13 @@ export function TaskBoard({ tasks: initialTasks }: TaskBoardProps) {
                     ref={provided.innerRef}
                     {...provided.droppableProps}
                   >
-                    {!tasksByStatus[status] || tasksByStatus[status].length === 0 ? (
+                    {!tasksByType[taskType] || tasksByType[taskType].length === 0 ? (
                       <div className="flex items-center justify-center h-20 border border-dashed border-gray-300 rounded-md bg-white mt-2">
                         <p className="text-gray-500 text-sm">No tasks</p>
                       </div>
                     ) : (
                       <div className="space-y-2">
-                        {tasksByStatus[status].map((task, index) => (
+                        {tasksByType[taskType].map((task, index) => (
                           <Draggable key={task.id} draggableId={task.id} index={index}>
                             {(provided, snapshot) => (
                               <Card 
@@ -241,8 +254,8 @@ export function TaskBoard({ tasks: initialTasks }: TaskBoardProps) {
                                       <FileText className="h-3.5 w-3.5 mr-1 text-gray-500" />
                                       <span className="truncate max-w-[120px]">{task.matter}</span>
                                     </div>
-                                    <div className="bg-gray-200 text-gray-800 rounded-full px-2 py-0.5 text-xs">
-                                      {task.assignee.split(' ').map(name => name[0]).join('')}
+                                    <div className={`text-white rounded-full px-2 py-0.5 text-xs ${getStatusColor(task.status)}`}>
+                                      {task.status}
                                     </div>
                                   </div>
                                 </CardContent>
