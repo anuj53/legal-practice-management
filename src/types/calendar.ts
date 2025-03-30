@@ -16,13 +16,3 @@ export interface ReminderType {
   type: 'email' | 'notification';
   time: number; // minutes before event
 }
-
-// Add missing RecurrenceFrequency and RecurrencePattern
-export type RecurrenceFrequency = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY';
-
-export interface RecurrencePattern {
-  frequency: RecurrenceFrequency;
-  interval?: number;
-  occurrences?: number;
-  endDate?: Date;
-}
