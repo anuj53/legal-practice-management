@@ -27,7 +27,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const isInitialized = useRef(false);
   const isMounted = useRef(true);
-  const authCheckCompleted = useRef(false);
 
   // Separate function to safely update state only if component is still mounted
   const safeSetState = useCallback((
@@ -41,9 +40,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(userData);
     setLoading(isLoading);
     
-    if (!isLoading && !authCheckCompleted.current) {
-      authCheckCompleted.current = true;
-      console.log('Auth check completed with user:', userData?.email || 'No user');
+    if (!isLoading) {
+      console.log('Auth state updated:', userData?.email || 'No user');
     }
   }, []);
 
@@ -53,7 +51,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Reset mounted state on mount
     isMounted.current = true;
     
-    // Function to check the initial session
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, currentSession) => {
+        console.log('Auth state changed:', event, currentSession?.user?.email);
+        
+        if (currentSession) {
+          safeSetState(currentSession, currentSession.user, false);
+        } else {
+          safeSetState(null, null, false);
+        }
+      }
+    );
+    
+    // THEN check initial session
     const checkSession = async () => {
       try {
         console.log('Checking initial session...');
@@ -78,19 +89,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     };
     
-    // Set up auth state listener before checking session
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, currentSession) => {
-        console.log('Auth state changed:', event, currentSession?.user?.email);
-        
-        if (currentSession) {
-          safeSetState(currentSession, currentSession.user, false);
-        } else {
-          safeSetState(null, null, false);
-        }
-      }
-    );
-    
     // Check session if not already initialized
     if (!isInitialized.current) {
       isInitialized.current = true;
@@ -107,11 +105,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // Sign out function
   const signOut = async () => {
     try {
+      setLoading(true);
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       safeSetState(null, null, false);
     } catch (error) {
       console.error('Error signing out:', error);
+      setLoading(false);
     }
   };
   
@@ -126,6 +126,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       if (error) {
         console.error('Error signing in:', error);
+        setLoading(false);
         return { error };
       }
       
@@ -149,6 +150,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       if (error) {
         console.error('Error signing up:', error);
+        setLoading(false);
         return { error };
       }
       

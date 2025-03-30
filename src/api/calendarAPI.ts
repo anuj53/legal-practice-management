@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Calendar, Event, isValidUUID, convertDbEventToEvent, convertEventToDbEvent } from '@/utils/calendarUtils';
@@ -7,6 +6,13 @@ import { Calendar, Event, isValidUUID, convertDbEventToEvent, convertEventToDbEv
 export const fetchCalendars = async () => {
   try {
     console.log('Fetching calendars from database...');
+    // First check if user is authenticated
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      console.log('User not authenticated, returning empty calendars');
+      return { myCalendars: [], otherCalendars: [] };
+    }
+
     // Fetch calendars from database
     const { data: calendarsData, error: calendarsError } = await supabase
       .from('calendars')
@@ -18,7 +24,6 @@ export const fetchCalendars = async () => {
     }
 
     // Get current user
-    const { data: { user } } = await supabase.auth.getUser();
     const currentUserId = user?.id;
     
     if (calendarsData && calendarsData.length > 0) {
@@ -39,7 +44,7 @@ export const fetchCalendars = async () => {
         }));
       
       const otherCalendars = calendarsData
-        .filter(cal => cal.user_id !== currentUserId && cal.is_public)
+        .filter(cal => cal.user_id !== currentUserId && (cal.is_public || cal.is_firm))
         .map(cal => ({
           id: cal.id,
           name: cal.name,
@@ -167,6 +172,8 @@ export const createCalendarInDb = async (calendar: Omit<Calendar, 'id'>) => {
     if (!user) {
       throw new Error('User must be authenticated to create a calendar');
     }
+    
+    console.log('Creating calendar with user ID:', user.id);
     
     // Remove sharedWith from the data sent to Supabase if it exists
     const { sharedWith, ...calendarData } = calendar as any;

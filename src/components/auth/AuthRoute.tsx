@@ -23,5 +23,6 @@ export function AuthRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
-  return <>{children}</>;
+  // If we have children, render them, otherwise render the Outlet
+  return children ? <>{children}</> : <Outlet />;
 }
