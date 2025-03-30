@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Calendar, Event, isValidUUID, convertDbEventToEvent, convertEventToDbEvent } from '@/utils/calendarUtils';
@@ -13,8 +14,6 @@ export const fetchCalendars = async () => {
       return { myCalendars: [], otherCalendars: [] };
     }
 
-    console.log('User authenticated, user ID:', user.id);
-
     // Fetch calendars from database
     const { data: calendarsData, error: calendarsError } = await supabase
       .from('calendars')
@@ -24,8 +23,6 @@ export const fetchCalendars = async () => {
       console.error('Error fetching calendars from DB:', calendarsError);
       throw calendarsError;
     }
-
-    console.log('Raw calendar data from DB:', calendarsData);
 
     // Get current user
     const currentUserId = user?.id;
@@ -182,7 +179,6 @@ export const createCalendarInDb = async (calendar: Omit<Calendar, 'id'>) => {
     }
     
     console.log('Creating calendar with user ID:', user.id);
-    console.log('Calendar data to be created:', calendar);
     
     // Remove sharedWith from the data sent to Supabase if it exists
     const { sharedWith, ...calendarData } = calendar as any;
@@ -204,7 +200,7 @@ export const createCalendarInDb = async (calendar: Omit<Calendar, 'id'>) => {
       throw error;
     }
     
-    console.log('Calendar created in DB, response data:', data);
+    console.log('Calendar created in DB:', data);
     
     // Return new calendar with generated ID and sharedWith array
     return {

@@ -150,7 +150,7 @@ export function FullCalendarView({
   }));
 
   return (
-    <div className="h-full w-full">
+    <div className="h-full w-full rounded-lg overflow-hidden">
       <FullCalendar
         ref={calendarRef}
         plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
