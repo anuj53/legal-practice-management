@@ -20,7 +20,6 @@ export function MainLayout() {
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
       {isMobile ? (
-        // Mobile version with slide-out sidebar
         <>
           <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
             <SheetContent side="left" className="p-0 w-72">
@@ -80,7 +79,6 @@ export function MainLayout() {
           </div>
         </>
       ) : (
-        // Desktop version with collapsible sidebar
         <>
           <div className={`${sidebarCollapsed ? 'w-24' : 'w-72'} transition-all duration-300 ease-in-out relative`}>
             <Sidebar collapsed={sidebarCollapsed} onToggleCollapse={toggleSidebar} />
@@ -121,10 +119,8 @@ export function MainLayout() {
                   </svg>
                 </div>
                 
-                <div className="relative z-10 h-full">
-                  <ScrollArea className="h-full w-full">
-                    <Outlet />
-                  </ScrollArea>
+                <div className="relative z-10 h-full w-full">
+                  <Outlet />
                 </div>
               </div>
             </main>
