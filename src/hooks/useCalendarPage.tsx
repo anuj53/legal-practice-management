@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { CalendarViewType } from '@/types/calendar';
 import { Calendar, Event } from '@/utils/calendarUtils';
-import { useCalendar } from '@/hooks/useCalendar.tsx'; // Explicit import from database-connected hook
+import { useCalendar } from '@/hooks/useCalendar'; // Remove explicit .tsx extension to ensure proper importing
 import { toast } from 'sonner';
 
 export function useCalendarPage() {
