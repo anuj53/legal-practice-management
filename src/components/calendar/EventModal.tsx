@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { format, addDays } from 'date-fns';
 import { X, Users, MapPin, Clock, CalendarClock, Bell, FileText, Briefcase, Scale, Plus, Trash2 } from 'lucide-react';
@@ -318,7 +319,6 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
               </div>
               
               <div className="flex-1 overflow-y-auto p-6">
-                
                 <TabsContent value="general" className="space-y-4 mt-0">
                   <div>
                     <Label htmlFor="title">Title</Label>
@@ -477,9 +477,7 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
                   </div>
                 </TabsContent>
 
-                
                 <TabsContent value="legal" className="space-y-4 mt-0">
-                  
                   <div>
                     <Label htmlFor="caseId">Case ID</Label>
                     <Input
@@ -557,7 +555,6 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
                 </TabsContent>
                 
                 <TabsContent value="recurrence" className="space-y-4 mt-0">
-                  
                   <div className="border p-4 rounded-md">
                     <h3 className="font-medium mb-3">Recurrence Pattern</h3>
                     
@@ -675,7 +672,6 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
                 </TabsContent>
                 
                 <TabsContent value="documents" className="space-y-4 mt-0">
-                  
                   <div>
                     <h3 className="font-medium mb-3">Linked Documents</h3>
                     
