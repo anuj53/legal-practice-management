@@ -38,6 +38,12 @@ export const MonthView: React.FC<MonthViewProps> = ({
     return window.innerWidth > 1024 ? 3 : 2;
   };
   
+  // Format time to 1:00P style
+  const formatShortTime = (date: Date) => {
+    const formattedTime = format(date, 'h:mma');
+    return formattedTime.replace('am', 'A').replace('pm', 'P');
+  };
+  
   const renderEventPill = (event: CalendarEvent) => (
     <div 
       key={event.id}
@@ -50,7 +56,7 @@ export const MonthView: React.FC<MonthViewProps> = ({
         onEventClick(event);
       }}
     >
-      {format(new Date(event.start), 'h:mma')} {event.title}
+      {formatShortTime(new Date(event.start))} {event.title}
     </div>
   );
 

@@ -105,6 +105,12 @@ export const WeekView: React.FC<WeekViewProps> = ({
     dayDate.setHours(0, 0, 0, 0);
     return dayDate.getTime() === today.getTime();
   });
+  
+  // Format time to "1:00P" style
+  const formatShortTime = (date: Date) => {
+    const formattedTime = format(date, 'h:mm a');
+    return formattedTime.replace(' AM', 'A').replace(' PM', 'P');
+  };
 
   return (
     <div className="week-view h-full flex flex-col overflow-hidden">
@@ -198,7 +204,7 @@ export const WeekView: React.FC<WeekViewProps> = ({
                             >
                               <div className="flex items-center justify-between">
                                 <span className="font-medium">
-                                  {format(event.start, 'h:mm')} {event.title}
+                                  {formatShortTime(event.start)} {event.title}
                                 </span>
                                 {event.location && (
                                   <MapPin className="h-3 w-3 ml-1 opacity-80" />
