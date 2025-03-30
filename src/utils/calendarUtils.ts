@@ -1,3 +1,4 @@
+
 import { v4 as uuidv4 } from 'uuid';
 
 export interface Event {
@@ -96,6 +97,13 @@ export const convertDbEventToEvent = (dbEvent: any, eventTypeMap?: Record<string
     }
   }
   
+  // Create the court info object if any of the court fields exist
+  const courtInfo = (dbEvent.court_name || dbEvent.judge_details || dbEvent.docket_number) ? {
+    courtName: dbEvent.court_name || undefined,
+    judgeDetails: dbEvent.judge_details || undefined,
+    docketNumber: dbEvent.docket_number || undefined
+  } : undefined;
+  
   return {
     id: dbEvent.id,
     title: dbEvent.title,
@@ -108,7 +116,11 @@ export const convertDbEventToEvent = (dbEvent: any, eventTypeMap?: Record<string
     description: dbEvent.description || '',
     isAllDay: dbEvent.is_all_day || false,
     isRecurring: dbEvent.is_recurring || false,
-    recurrencePattern: recurrencePattern
+    recurrencePattern: recurrencePattern,
+    caseId: dbEvent.case_id || undefined,
+    clientName: dbEvent.client_name || undefined,
+    assignedLawyer: dbEvent.assigned_lawyer || undefined,
+    courtInfo: courtInfo
   };
 };
 
@@ -122,7 +134,13 @@ export const convertEventToDbEvent = (event: Event) => {
     description: event.description || null,
     calendar_id: event.calendar,
     is_recurring: event.isRecurring || false,
-    recurrence_pattern: event.recurrencePattern ? JSON.stringify(event.recurrencePattern) : null
+    recurrence_pattern: event.recurrencePattern ? JSON.stringify(event.recurrencePattern) : null,
+    case_id: event.caseId || null,
+    client_name: event.clientName || null,
+    assigned_lawyer: event.assignedLawyer || null,
+    court_name: event.courtInfo?.courtName || null,
+    judge_details: event.courtInfo?.judgeDetails || null,
+    docket_number: event.courtInfo?.docketNumber || null
   };
 };
 

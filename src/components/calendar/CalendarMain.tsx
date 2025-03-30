@@ -38,8 +38,16 @@ export function CalendarMain({
 }: CalendarMainProps) {
   const isMobile = useIsMobile();
 
-  // Debug calendars being passed
-  console.log('CalendarMain: myCalendars:', myCalendars.map(cal => ({id: cal.id, name: cal.name, color: cal.color})));
+  // Debug events - Add this to check if events contain the legal details and other fields
+  console.log('CalendarMain: Events with details:', events.map(event => ({
+    id: event.id,
+    title: event.title,
+    attendees: event.attendees?.length || 0,
+    reminder: event.reminder,
+    caseId: event.caseId,
+    clientName: event.clientName,
+    courtInfo: event.courtInfo
+  })));
 
   return (
     <div className="h-full overflow-hidden relative">

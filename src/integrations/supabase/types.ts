@@ -150,14 +150,20 @@ export type Database = {
       }
       events: {
         Row: {
+          assigned_lawyer: string | null
           calendar_id: string
+          case_id: string | null
+          client_name: string | null
+          court_name: string | null
           created_at: string
           created_by: string
           description: string | null
+          docket_number: string | null
           end_time: string
           event_type_id: string | null
           id: string
           is_recurring: boolean | null
+          judge_details: string | null
           location: string | null
           matter_id: string | null
           recurrence_pattern: Json | null
@@ -166,14 +172,20 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          assigned_lawyer?: string | null
           calendar_id: string
+          case_id?: string | null
+          client_name?: string | null
+          court_name?: string | null
           created_at?: string
           created_by: string
           description?: string | null
+          docket_number?: string | null
           end_time: string
           event_type_id?: string | null
           id?: string
           is_recurring?: boolean | null
+          judge_details?: string | null
           location?: string | null
           matter_id?: string | null
           recurrence_pattern?: Json | null
@@ -182,14 +194,20 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          assigned_lawyer?: string | null
           calendar_id?: string
+          case_id?: string | null
+          client_name?: string | null
+          court_name?: string | null
           created_at?: string
           created_by?: string
           description?: string | null
+          docket_number?: string | null
           end_time?: string
           event_type_id?: string | null
           id?: string
           is_recurring?: boolean | null
+          judge_details?: string | null
           location?: string | null
           matter_id?: string | null
           recurrence_pattern?: Json | null

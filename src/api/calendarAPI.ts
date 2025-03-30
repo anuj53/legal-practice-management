@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Calendar, Event, isValidUUID, convertDbEventToEvent, convertEventToDbEvent } from '@/utils/calendarUtils';
@@ -100,7 +101,13 @@ export const fetchEvents = async () => {
         event_type_id,
         calendar_id,
         created_by,
-        recurrence_pattern
+        recurrence_pattern,
+        case_id,
+        client_name,
+        assigned_lawyer,
+        court_name,
+        judge_details,
+        docket_number
       `);
 
     if (eventsError) {
@@ -121,7 +128,61 @@ export const fetchEvents = async () => {
         return acc;
       }, {}) : {};
       
-      const convertedEvents = eventsData.map(dbEvent => convertDbEventToEvent(dbEvent, eventTypeMap));
+      // Fetch calendars for colors
+      const { data: calendarsData } = await supabase
+        .from('calendars')
+        .select('*');
+      
+      const calendars = calendarsData ? calendarsData.map(cal => ({
+        id: cal.id,
+        name: cal.name,
+        color: cal.color,
+        checked: true,
+        is_firm: cal.is_firm || false,
+        is_statute: cal.is_statute || false,
+        is_public: cal.is_public || false,
+        sharedWith: []
+      })) : [];
+      
+      // Convert database events to app events
+      const convertedEvents = await Promise.all(eventsData.map(async (dbEvent) => {
+        // Get attendees for the event
+        const { data: attendeesData } = await supabase
+          .from('event_attendees')
+          .select('name, email')
+          .eq('event_id', dbEvent.id);
+        
+        const attendees = attendeesData ? attendeesData.map(att => att.email || att.name).filter(Boolean) : [];
+        
+        // Get reminders for the event
+        const { data: remindersData } = await supabase
+          .from('event_reminders')
+          .select('reminder_type, reminder_time')
+          .eq('event_id', dbEvent.id)
+          .order('reminder_time', { ascending: true })
+          .limit(1);
+        
+        // Convert reminder to string format used in the UI
+        let reminder = 'none';
+        if (remindersData && remindersData.length > 0) {
+          const reminderTime = remindersData[0].reminder_time;
+          if (reminderTime === 5) reminder = '5min';
+          else if (reminderTime === 15) reminder = '15min';
+          else if (reminderTime === 30) reminder = '30min';
+          else if (reminderTime === 60) reminder = '1hour';
+          else if (reminderTime === 1440) reminder = '1day';
+        }
+        
+        // Convert the base event
+        const event = convertDbEventToEvent(dbEvent, eventTypeMap, calendars);
+        
+        // Add attendees and reminder
+        return {
+          ...event,
+          attendees,
+          reminder
+        };
+      }));
       
       console.log('Converted events:', convertedEvents.length);
       return convertedEvents;
@@ -279,7 +340,13 @@ export const createEventInDb = async (event: Omit<Event, 'id'>) => {
       recurrence_pattern: event.recurrencePattern ? JSON.stringify(event.recurrencePattern) : null,
       event_type_id: eventTypeId,
       calendar_id: event.calendar,
-      created_by: user.id // Set explicitly even though trigger will handle this
+      created_by: user.id, // Set explicitly even though trigger will handle this
+      case_id: event.caseId || null,
+      client_name: event.clientName || null,
+      assigned_lawyer: event.assignedLawyer || null,
+      court_name: event.courtInfo?.courtName || null,
+      judge_details: event.courtInfo?.judgeDetails || null,
+      docket_number: event.courtInfo?.docketNumber || null
     };
     
     console.log('API: Formatted DB event for create:', dbEvent);
@@ -301,8 +368,57 @@ export const createEventInDb = async (event: Omit<Event, 'id'>) => {
       throw new Error('No data returned from event creation');
     }
     
+    // Save attendees if provided
+    if (event.attendees && event.attendees.length > 0) {
+      const attendeesToInsert = event.attendees.map(attendee => {
+        const isEmail = attendee.includes('@');
+        return {
+          event_id: data[0].id,
+          name: isEmail ? null : attendee,
+          email: isEmail ? attendee : null
+        };
+      });
+      
+      const { error: attendeesError } = await supabase
+        .from('event_attendees')
+        .insert(attendeesToInsert);
+      
+      if (attendeesError) {
+        console.error('Error saving event attendees:', attendeesError);
+        // Don't throw here, we want to continue even if attendees fail
+      }
+    }
+    
+    // Save reminder if provided
+    if (event.reminder && event.reminder !== 'none') {
+      let reminderTime = 15; // default
+      
+      if (event.reminder === '5min') reminderTime = 5;
+      else if (event.reminder === '15min') reminderTime = 15;
+      else if (event.reminder === '30min') reminderTime = 30;
+      else if (event.reminder === '1hour') reminderTime = 60;
+      else if (event.reminder === '1day') reminderTime = 1440;
+      
+      const { error: reminderError } = await supabase
+        .from('event_reminders')
+        .insert({
+          event_id: data[0].id,
+          reminder_type: 'email', // default to email for now
+          reminder_time: reminderTime
+        });
+      
+      if (reminderError) {
+        console.error('Error saving event reminder:', reminderError);
+        // Don't throw here, we want to continue even if reminder fails
+      }
+    }
+    
     // Return new event with generated ID
     const newEvent = convertDbEventToEvent(data[0]);
+    
+    // Add the attendees and reminder to returned event
+    newEvent.attendees = event.attendees || [];
+    newEvent.reminder = event.reminder || 'none';
     
     console.log('API: Converted new event:', newEvent);
     return newEvent;
@@ -366,7 +482,13 @@ export const updateEventInDb = async (event: Event) => {
       recurrence_pattern: event.recurrencePattern ? JSON.stringify(event.recurrencePattern) : null,
       event_type_id: eventTypeId,
       calendar_id: event.calendar,
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      case_id: event.caseId || null,
+      client_name: event.clientName || null,
+      assigned_lawyer: event.assignedLawyer || null,
+      court_name: event.courtInfo?.courtName || null,
+      judge_details: event.courtInfo?.judgeDetails || null,
+      docket_number: event.courtInfo?.docketNumber || null
     };
     
     console.log('API: Formatted DB event for update:', dbEvent);
@@ -384,6 +506,65 @@ export const updateEventInDb = async (event: Event) => {
     
     console.log('API: Event update response from DB:', data);
     
+    // Update attendees (remove all existing and add new ones)
+    if (event.attendees) {
+      // Delete existing attendees
+      await supabase
+        .from('event_attendees')
+        .delete()
+        .eq('event_id', event.id);
+      
+      // Add new attendees if any provided
+      if (event.attendees.length > 0) {
+        const attendeesToInsert = event.attendees.map(attendee => {
+          const isEmail = attendee.includes('@');
+          return {
+            event_id: event.id,
+            name: isEmail ? null : attendee,
+            email: isEmail ? attendee : null
+          };
+        });
+        
+        const { error: attendeesError } = await supabase
+          .from('event_attendees')
+          .insert(attendeesToInsert);
+        
+        if (attendeesError) {
+          console.error('Error updating event attendees:', attendeesError);
+          // Don't throw here, we want to continue even if attendees fail
+        }
+      }
+    }
+    
+    // Update reminder (remove existing and add new one if provided)
+    await supabase
+      .from('event_reminders')
+      .delete()
+      .eq('event_id', event.id);
+    
+    if (event.reminder && event.reminder !== 'none') {
+      let reminderTime = 15; // default
+      
+      if (event.reminder === '5min') reminderTime = 5;
+      else if (event.reminder === '15min') reminderTime = 15;
+      else if (event.reminder === '30min') reminderTime = 30;
+      else if (event.reminder === '1hour') reminderTime = 60;
+      else if (event.reminder === '1day') reminderTime = 1440;
+      
+      const { error: reminderError } = await supabase
+        .from('event_reminders')
+        .insert({
+          event_id: event.id,
+          reminder_type: 'email', // default to email for now
+          reminder_time: reminderTime
+        });
+      
+      if (reminderError) {
+        console.error('Error updating event reminder:', reminderError);
+        // Don't throw here, we want to continue even if reminder fails
+      }
+    }
+    
     if (!data || data.length === 0) {
       console.warn('Update succeeded but no data returned from database. Returning original event.');
       return event;
@@ -391,6 +572,10 @@ export const updateEventInDb = async (event: Event) => {
     
     // Return the updated event
     const updatedEvent = convertDbEventToEvent(data[0]);
+    
+    // Add the attendees and reminder to returned event
+    updatedEvent.attendees = event.attendees || [];
+    updatedEvent.reminder = event.reminder || 'none';
     
     return updatedEvent;
   } catch (err) {
@@ -415,6 +600,12 @@ export const deleteEventFromDb = async (id: string) => {
       throw new Error(`Invalid UUID format for event ID: ${id}`);
     }
     
+    // Delete attendees and reminders first (not strictly necessary due to cascade,
+    // but being explicit for clarity)
+    await supabase.from('event_attendees').delete().eq('event_id', id);
+    await supabase.from('event_reminders').delete().eq('event_id', id);
+    
+    // Now delete the event
     const { error } = await supabase
       .from('events')
       .delete()
