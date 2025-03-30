@@ -20,8 +20,25 @@ export function TodaysEventsList({
   myCalendars = [],
   otherCalendars = []
 }: TodaysEventsListProps) {
+  // Debug the input events
+  console.log('TodaysEventsList received events:', events.length, events.map(e => ({
+    id: e.id,
+    title: e.title,
+    start: e.start,
+    isRecurring: e.isRecurring
+  })));
+  
   // Expand recurring events so we can catch instances that occur today
   const expandedEvents = expandRecurringEvents(events);
+  
+  // Debug the expanded events
+  console.log('TodaysEventsList expanded events:', expandedEvents.length, expandedEvents.map(e => ({
+    id: e.id,
+    title: e.title,
+    start: new Date(e.start),
+    isRecurring: e.isRecurring,
+    isOccurrence: e.id.includes('_occurrence_')
+  })));
   
   // Filter for today's events
   const today = new Date();
@@ -31,8 +48,27 @@ export function TodaysEventsList({
   
   const todaysEvents = expandedEvents.filter(event => {
     const eventDate = new Date(event.start);
-    return eventDate >= today && eventDate < tomorrow;
+    const isToday = eventDate >= today && eventDate < tomorrow;
+    
+    if (isToday) {
+      console.log('Found event for today:', {
+        id: event.id, 
+        title: event.title, 
+        start: eventDate,
+        isOccurrence: event.id.includes('_occurrence_'),
+        isRecurring: event.isRecurring
+      });
+    }
+    return isToday;
   });
+  
+  // Debug the filtered events
+  console.log('TodaysEventsList filtered events for today:', todaysEvents.length, todaysEvents.map(e => ({
+    id: e.id,
+    title: e.title,
+    start: new Date(e.start),
+    isRecurring: e.isRecurring
+  })));
   
   // Sort events by start time
   const sortedEvents = [...todaysEvents].sort((a, b) => 
@@ -44,18 +80,15 @@ export function TodaysEventsList({
     // First check in myCalendars
     const myCalendar = myCalendars.find(cal => cal.id === calendarId);
     if (myCalendar) {
-      console.log(`Found color for calendar ${calendarId}: ${myCalendar.color}`);
       return myCalendar.color;
     }
     
     // Then check in otherCalendars
     const otherCalendar = otherCalendars.find(cal => cal.id === calendarId);
     if (otherCalendar) {
-      console.log(`Found color for other calendar ${calendarId}: ${otherCalendar.color}`);
       return otherCalendar.color;
     }
     
-    console.log(`No color found for calendar ID: ${calendarId}`);
     return null;
   };
 

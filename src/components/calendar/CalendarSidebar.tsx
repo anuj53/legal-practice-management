@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Plus, Settings, ListFilter, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -29,17 +28,6 @@ export function CalendarSidebar({
   collapsed = false,
   onToggleCollapse
 }: CalendarSidebarProps) {
-  // Filter for today's events
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  
-  const todaysEvents = events.filter(event => {
-    const eventDate = new Date(event.start);
-    return eventDate >= today && eventDate < tomorrow;
-  });
-
   return (
     <div className={`h-full bg-white/80 backdrop-blur-sm shadow-lg overflow-hidden flex flex-col rounded-xl border border-gray-200 relative ${collapsed ? 'w-16' : 'w-auto'} transition-all duration-300`}>
       {/* Toggle collapse button */}
@@ -60,9 +48,11 @@ export function CalendarSidebar({
       {/* Today's Events List - non-scrollable section */}
       <div className="flex-shrink-0">
         <TodaysEventsList 
-          events={todaysEvents} 
+          events={events} 
           collapsed={collapsed} 
           onEventClick={onEventClick}
+          myCalendars={myCalendars}
+          otherCalendars={otherCalendars}
         />
       </div>
       

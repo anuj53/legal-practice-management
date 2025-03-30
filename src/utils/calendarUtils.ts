@@ -170,6 +170,13 @@ export const expandRecurringEvents = (events: Event[]): Event[] => {
       return;
     }
     
+    console.log('Expanding recurring event:', {
+      id: event.id,
+      title: event.title,
+      start: new Date(event.start),
+      recurrencePattern: event.recurrencePattern
+    });
+    
     const { frequency, interval, occurrences, endDate } = event.recurrencePattern;
     
     // Basic implementation for daily, weekly, and monthly recurrences
@@ -199,6 +206,12 @@ export const expandRecurringEvents = (events: Event[]): Event[] => {
           start: new Date(currentDate),
           end: new Date(currentDate.getTime() + duration)
         };
+        
+        console.log('Generated occurrence:', {
+          id: occurrenceEvent.id,
+          title: occurrenceEvent.title,
+          start: occurrenceEvent.start
+        });
         
         expandedEvents.push(occurrenceEvent);
       }
