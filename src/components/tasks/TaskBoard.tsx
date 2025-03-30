@@ -181,7 +181,7 @@ export function TaskBoard({ tasks: initialTasks }: TaskBoardProps) {
                                 className={`border shadow-sm transition-shadow cursor-grab ${
                                   snapshot.isDragging ? 'shadow-lg' : 'hover:shadow-md'
                                 }`}
-                                onDoubleClick={() => handleEditTask(task)}
+                                onClick={() => handleEditTask(task)}
                               >
                                 <CardHeader className="p-3 pb-0">
                                   <div className="flex justify-between items-start">
@@ -190,12 +190,18 @@ export function TaskBoard({ tasks: initialTasks }: TaskBoardProps) {
                                     </CardTitle>
                                     <DropdownMenu>
                                       <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                        <Button 
+                                          variant="ghost" 
+                                          size="sm" 
+                                          className="h-8 w-8 p-0"
+                                          onClick={(e) => e.stopPropagation()} // Prevent opening edit dialog when clicking dropdown
+                                        >
                                           <MoreHorizontal className="h-4 w-4" />
                                         </Button>
                                       </DropdownMenuTrigger>
                                       <DropdownMenuContent align="end">
-                                        <DropdownMenuItem onClick={() => {
+                                        <DropdownMenuItem onClick={(e) => {
+                                          e.stopPropagation(); // Prevent opening edit dialog
                                           const updatedTask = {...task, status: 'Completed'};
                                           handleSaveTask(updatedTask);
                                           toast({
@@ -206,7 +212,10 @@ export function TaskBoard({ tasks: initialTasks }: TaskBoardProps) {
                                           <Check className="h-4 w-4 mr-2" />
                                           Mark as Complete
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => handleEditTask(task)}>
+                                        <DropdownMenuItem onClick={(e) => {
+                                          e.stopPropagation(); // Prevent opening edit dialog
+                                          handleEditTask(task);
+                                        }}>
                                           <Edit className="h-4 w-4 mr-2" />
                                           Edit Task
                                         </DropdownMenuItem>
