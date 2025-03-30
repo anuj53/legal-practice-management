@@ -104,3 +104,13 @@
 .fc {
   transition: width 0s linear 0.15s;
 }
+
+/* Ensure the calendar container properly adjusts */
+.fc-view-harness {
+  transition: height 0.1s ease;
+}
+
+/* Make sure the calendar wrapper adjusts smoothly */
+.fc .fc-scrollgrid {
+  transition: width 0s ease 0.2s;
+}

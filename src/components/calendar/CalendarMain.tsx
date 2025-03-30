@@ -44,10 +44,22 @@ export function CalendarMain({
   
   // Force calendar to update its layout when sidebar is collapsed/expanded
   useEffect(() => {
+    // Trigger multiple resize events when sidebar changes
+    const triggerResizeEvents = () => {
+      [0, 50, 150, 300, 500].forEach(delay => {
+        setTimeout(() => {
+          window.dispatchEvent(new Event('resize'));
+        }, delay);
+      });
+    };
+    
     if (calendarContainerRef.current) {
       // Force a complete re-render by incrementing the state
       setForceRerender(prev => prev + 1);
       console.log('Calendar force rerender triggered due to sidebar state change', forceRerender + 1);
+      
+      // Additional resize events for more reliability
+      triggerResizeEvents();
     }
   }, [sidebarCollapsed]);
 

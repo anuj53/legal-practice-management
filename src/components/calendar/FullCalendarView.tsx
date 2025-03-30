@@ -37,6 +37,7 @@ export function FullCalendarView({
   const calendarRef = useRef<FullCalendar | null>(null);
   const isMobile = useIsMobile();
   const prevSizeRef = useRef<{ width: number; height: number } | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const getDefaultColor = (type: string): string => {
     switch (type) {
@@ -85,11 +86,8 @@ export function FullCalendarView({
   // This effect handles window resize events
   useEffect(() => {
     const handleResize = () => {
-      if (calendarRef.current) {
-        const container = calendarRef.current.elRef.current?.parentElement;
-        if (!container) return;
-        
-        const { width, height } = container.getBoundingClientRect();
+      if (calendarRef.current && containerRef.current) {
+        const { width, height } = containerRef.current.getBoundingClientRect();
         const prevSize = prevSizeRef.current;
         
         // Only update if dimensions have actually changed
@@ -202,7 +200,7 @@ export function FullCalendarView({
   }));
 
   return (
-    <div className="h-full w-full rounded-lg overflow-hidden">
+    <div className="h-full w-full rounded-lg overflow-hidden" ref={containerRef}>
       <FullCalendar
         ref={calendarRef}
         plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
