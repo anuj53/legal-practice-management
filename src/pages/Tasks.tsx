@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -28,7 +29,7 @@ import { TaskTypeProvider } from '@/contexts/TaskTypeContext';
 export default function Tasks() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('my-tasks');
-  const [viewMode, setViewMode] = useState<'list' | 'board'>('list');
+  const [viewMode, setViewMode] = useState<'list' | 'board'>('board'); // Changed default to 'board' instead of 'list'
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
   const [isTaskTypeOpen, setIsTaskTypeOpen] = useState(false);
   const [isNewTaskListOpen, setIsNewTaskListOpen] = useState(false);
