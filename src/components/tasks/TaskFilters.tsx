@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -54,6 +53,7 @@ export function TaskFilters({ onSearch, onFilterChange, onSort }: TaskFiltersPro
   });
   const [filtersActive, setFiltersActive] = useState(false);
   const [activeFilterCount, setActiveFilterCount] = useState(0);
+  const [showCalendar, setShowCalendar] = useState(false);
   
   const { taskTypes } = useTaskTypes();
   
@@ -113,6 +113,15 @@ export function TaskFilters({ onSearch, onFilterChange, onSort }: TaskFiltersPro
     setFiltersActive(false);
   };
   
+  const toggleCalendar = () => {
+    setShowCalendar(!showCalendar);
+  };
+  
+  const handleDateSelect = (date: Date | undefined) => {
+    handleFilterChange('dueDate', date || null);
+    setShowCalendar(false);
+  };
+  
   return (
     <div className="flex items-center space-x-2">
       <div className="relative w-[180px] md:w-[220px] lg:w-[280px] xl:w-[320px]">
@@ -151,7 +160,13 @@ export function TaskFilters({ onSearch, onFilterChange, onSort }: TaskFiltersPro
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-72 p-4 max-h-[90vh] overflow-y-auto" align="start" side="bottom" sideOffset={5}>
+          <PopoverContent 
+            className="w-72 p-4 max-h-[80vh] overflow-y-auto" 
+            align="start" 
+            side="bottom" 
+            sideOffset={5}
+            avoidCollisions={true}
+          >
             <div className="flex items-center justify-between mb-4">
               <h4 className="font-medium">Filters</h4>
               {filtersActive && (
@@ -250,7 +265,7 @@ export function TaskFilters({ onSearch, onFilterChange, onSort }: TaskFiltersPro
                       <Button 
                         variant="outline" 
                         className="w-full justify-start text-left font-normal"
-                        onClick={() => handleFilterChange('dueDate', null)}
+                        onClick={toggleCalendar}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
                         {filters.dueDate ? format(filters.dueDate, 'PPP') : 'Pick a date'}
@@ -268,12 +283,16 @@ export function TaskFilters({ onSearch, onFilterChange, onSort }: TaskFiltersPro
                     )}
                   </div>
                   
-                  <Calendar
-                    mode="single"
-                    selected={filters.dueDate || undefined}
-                    onSelect={(date) => handleFilterChange('dueDate', date)}
-                    className="rounded-md border mt-2"
-                  />
+                  {showCalendar && (
+                    <div className="mt-2 bg-background rounded-md border p-1">
+                      <Calendar
+                        mode="single"
+                        selected={filters.dueDate || undefined}
+                        onSelect={handleDateSelect}
+                        initialFocus
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -292,7 +311,13 @@ export function TaskFilters({ onSearch, onFilterChange, onSort }: TaskFiltersPro
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-56 p-2" align="end" side="bottom" sideOffset={5}>
+          <PopoverContent 
+            className="w-56 p-2" 
+            align="end" 
+            side="bottom" 
+            sideOffset={5}
+            avoidCollisions={true}
+          >
             <div className="space-y-1">
               <Button 
                 variant={sortConfig.field === 'name' ? "default" : "ghost"} 
