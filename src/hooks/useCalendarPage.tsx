@@ -59,12 +59,15 @@ export function useCalendarPage() {
   const handleCreateEvent = () => {
     console.log("Create event clicked");
     
+    // Use the first available calendar from myCalendars
     const defaultCalendarId = myCalendars.length > 0 ? myCalendars[0].id : '';
     
     if (!defaultCalendarId) {
       toast.error("Cannot create event: No calendars available");
       return;
     }
+    
+    console.log("Using default calendar ID:", defaultCalendarId);
     
     const now = new Date();
     const defaultEvent: Omit<Event, 'id'> = {
@@ -125,6 +128,7 @@ export function useCalendarPage() {
   const handleSaveEvent = async (event: Event) => {
     console.log("handleSaveEvent called with event:", event);
     console.log("Current modal mode:", modalMode);
+    console.log("Event calendar ID:", event.calendar);
     
     if (event.isRecurring && event.recurrencePattern) {
       console.log("Recurrence pattern:", {

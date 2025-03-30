@@ -18,43 +18,43 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from '@/components/ui/separator';
-import { CalendarEvent } from '@/types/calendar';
+import { Event } from '@/utils/calendarUtils';
+import { Calendar } from '@/utils/calendarUtils';
+import { useCalendar } from '@/hooks/useCalendar';
 
 interface EventModalProps {
   isOpen: boolean;
   onClose: () => void;
-  event?: CalendarEvent | null;
+  event?: Event | null;
   mode: 'create' | 'edit' | 'view';
-  onSave: (event: CalendarEvent) => void;
+  onSave: (event: Event) => void;
   onDelete?: (id: string) => void;
 }
 
 export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: EventModalProps) {
-  const defaultEvent: CalendarEvent = {
-    id: Math.random().toString(36).substring(2, 9),
+  const { myCalendars = [], otherCalendars = [] } = useCalendar();
+  
+  const availableCalendars = [...myCalendars, ...otherCalendars];
+  
+  const defaultCalendarId = myCalendars.length > 0 ? myCalendars[0].id : '';
+
+  const defaultEvent: Event = {
+    id: '',
     title: '',
     start: new Date(),
     end: new Date(new Date().getTime() + 30 * 60000), // 30 minutes later
     type: 'client-meeting',
-    calendar: 'personal',
+    calendar: defaultCalendarId,
     description: '',
     location: '',
     attendees: [],
     isRecurring: false,
     reminder: '15min',
     isAllDay: false,
-    caseId: '',
-    clientName: '',
-    assignedLawyer: '',
-    courtInfo: {
-      courtName: '',
-      judgeDetails: '',
-      docketNumber: ''
-    },
     documents: []
   };
   
-  const [formData, setFormData] = useState<CalendarEvent>(event || defaultEvent);
+  const [formData, setFormData] = useState<Event>(event || defaultEvent);
   const [activeTab, setActiveTab] = useState('general');
   const [attendeeInput, setAttendeeInput] = useState('');
   const [documentName, setDocumentName] = useState('');
@@ -78,13 +78,16 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
         console.log("Recurrence pattern:", event.recurrencePattern);
       }
     } else {
-      setFormData(defaultEvent);
+      setFormData({
+        ...defaultEvent,
+        calendar: defaultCalendarId
+      });
       setEditMode(mode !== 'view');
       setRecurrenceOption('none');
     }
     
     setActiveTab('general');
-  }, [event, mode, isOpen]);
+  }, [event, mode, isOpen, defaultCalendarId]);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -245,6 +248,7 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
   };
   
   const handleSave = () => {
+    console.log("Saving event with calendar:", formData.calendar);
     onSave(formData);
     onClose();
   };
@@ -390,11 +394,11 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
                           <SelectValue placeholder="Select calendar" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="personal">Personal</SelectItem>
-                          <SelectItem value="firm">Firm Calendar</SelectItem>
-                          <SelectItem value="statute">Statute of Limitations</SelectItem>
-                          <SelectItem value="team-a">Team A</SelectItem>
-                          <SelectItem value="team-b">Team B</SelectItem>
+                          {availableCalendars.map(calendar => (
+                            <SelectItem key={calendar.id} value={calendar.id}>
+                              {calendar.name}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -776,11 +780,7 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
                     <div>
                       <div className="font-medium">Calendar</div>
                       <div className="text-gray-700">
-                        {formData.calendar === 'personal' ? 'Personal Calendar' : 
-                         formData.calendar === 'firm' ? 'Firm Calendar' : 
-                         formData.calendar === 'statute' ? 'Statute of Limitations' :
-                         formData.calendar === 'team-a' ? 'Team A' :
-                         'Team B'}
+                        {availableCalendars.find(cal => cal.id === formData.calendar)?.name || 'Unknown Calendar'}
                       </div>
                     </div>
                   </div>
