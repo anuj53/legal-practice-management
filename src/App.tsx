@@ -9,6 +9,7 @@ import Calendar from '@/pages/Calendar';
 import Auth from '@/pages/Auth';
 import Tasks from '@/pages/Tasks';
 import { AuthRoute } from './components/auth/AuthRoute';
+import { AuthProvider } from './hooks/useAuth';
 
 function App() {
   // Development bypass option - remove in production
@@ -19,17 +20,19 @@ function App() {
 
   return (
     <ThemeProvider defaultTheme="light" storageKey="yorpro-theme">
-      <Router>
-        <Routes>
-          <Route path="/auth" element={<Auth />} />
-          <Route element={<AuthWrapper><MainLayout /></AuthWrapper>}>
-            <Route path="/" element={<Index />} />
-            <Route path="/calendar" element={<Calendar />} />
-            <Route path="/tasks" element={<Tasks />} />
-            <Route path="*" element={<NotFound />} />
-          </Route>
-        </Routes>
-      </Router>
+      <AuthProvider>
+        <Router>
+          <Routes>
+            <Route path="/auth" element={<Auth />} />
+            <Route element={<AuthWrapper><MainLayout /></AuthWrapper>}>
+              <Route path="/" element={<Index />} />
+              <Route path="/calendar" element={<Calendar />} />
+              <Route path="/tasks" element={<Tasks />} />
+              <Route path="*" element={<NotFound />} />
+            </Route>
+          </Routes>
+        </Router>
+      </AuthProvider>
       <Toaster />
     </ThemeProvider>
   );

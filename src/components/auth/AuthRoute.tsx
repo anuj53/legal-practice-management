@@ -12,12 +12,14 @@ export const AuthRoute = ({ children }: AuthRouteProps) => {
   const location = useLocation();
   const [showTimeout, setShowTimeout] = useState(false);
   const [waitingTooLong, setWaitingTooLong] = useState(false);
+  const [bypassOption, setBypassOption] = useState(false);
 
   useEffect(() => {
     // Clear timeouts when authentication state changes
     if (!loading) {
       setShowTimeout(false);
       setWaitingTooLong(false);
+      setBypassOption(false);
     }
 
     if (!loading && !session) {
@@ -39,10 +41,19 @@ export const AuthRoute = ({ children }: AuthRouteProps) => {
         setWaitingTooLong(true);
       }
     }, 15000); // 15 second timeout for more serious issue
+    
+    // After even longer, offer bypass option for development
+    const bypassTimeoutId = setTimeout(() => {
+      if (loading) {
+        console.log('Auth loading critical timeout reached (30s), showing bypass option');
+        setBypassOption(true);
+      }
+    }, 30000); // 30 second timeout
 
     return () => {
       clearTimeout(timeoutId);
       clearTimeout(longTimeoutId);
+      clearTimeout(bypassTimeoutId);
     };
   }, [session, loading]);
 
@@ -53,11 +64,12 @@ export const AuthRoute = ({ children }: AuthRouteProps) => {
     loading, 
     showTimeout,
     waitingTooLong,
+    bypassOption,
     pathname: location.pathname 
   });
 
-  // If waiting too long, we might be in a deadlock - force option to bypass
-  if (loading && waitingTooLong) {
+  // If bypass option is shown and user wants to continue anyway
+  if (loading && bypassOption) {
     return (
       <div className="flex flex-col items-center justify-center h-screen p-4">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yorpro-600 mb-4"></div>
@@ -77,19 +89,37 @@ export const AuthRoute = ({ children }: AuthRouteProps) => {
     );
   }
 
+  // If waiting too long, we might be in a deadlock - show additional information
+  if (loading && waitingTooLong) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen p-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yorpro-600 mb-4"></div>
+        <p className="text-gray-700 font-medium text-lg mb-2">Authentication is taking longer than expected</p>
+        <p className="text-sm text-gray-600 mb-4 max-w-md text-center">
+          This may indicate an issue with the authentication system or network connectivity.
+        </p>
+        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
+          <a href="/auth" className="text-yorpro-600 hover:underline font-medium px-4 py-2 border border-yorpro-600 rounded-md text-center">
+            Go to login page
+          </a>
+          <button onClick={() => window.location.reload()} className="bg-yorpro-600 text-white px-4 py-2 rounded-md hover:bg-yorpro-700 transition-colors">
+            Refresh page
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // If still loading but timeout reached
   if (loading && showTimeout) {
     return (
       <div className="flex flex-col items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yorpro-600 mb-4"></div>
         <p className="text-gray-700">Still loading authentication...</p>
-        <p className="text-sm text-gray-500 mb-2">This may be due to a session issue.</p>
+        <p className="text-sm text-gray-500 mb-2">This may be due to a network issue.</p>
         <div className="flex space-x-4">
           <a href="/auth" className="text-yorpro-600 hover:underline">
             Go to login page
-          </a>
-          <a href="/?bypass=true" className="text-gray-600 hover:underline">
-            Bypass auth (dev only)
           </a>
         </div>
       </div>

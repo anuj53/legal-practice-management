@@ -1,5 +1,5 @@
 
-import { createContext, useState, useContext, useEffect, useRef } from 'react';
+import { createContext, useState, useContext, useEffect, useRef, useCallback } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -23,89 +23,93 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const isInitialized = useRef(false);
   const isMounted = useRef(true);
+  const authCheckCompleted = useRef(false);
+
+  // Separate function to safely update state only if component is still mounted
+  const safeSetState = useCallback((
+    sessionData: Session | null,
+    userData: User | null,
+    isLoading: boolean
+  ) => {
+    if (!isMounted.current) return;
+
+    setSession(sessionData);
+    setUser(userData);
+    setLoading(isLoading);
+    
+    if (!isLoading && !authCheckCompleted.current) {
+      authCheckCompleted.current = true;
+      console.log('Auth check completed with user:', userData?.email || 'No user');
+    }
+  }, []);
 
   useEffect(() => {
-    console.log('Setting up auth state listener and checking initial session');
+    console.log('Setting up auth provider, initializing auth state');
     
-    // Set isMounted to true when the component mounts
+    // Reset mounted state on mount
     isMounted.current = true;
     
-    // Initial session check - run this first
-    const initializeAuth = async () => {
+    // Function to check the initial session
+    const checkSession = async () => {
       try {
-        if (!isMounted.current) return;
-        
         console.log('Checking initial session...');
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error('Error getting initial session:', error);
-          if (isMounted.current) {
-            setLoading(false);
-          }
+          safeSetState(null, null, false);
           return;
         }
         
-        console.log('Initial session check:', data.session?.user?.email || 'No session');
+        console.log('Initial session check result:', 
+          data.session ? `User: ${data.session.user?.email}` : 'No active session');
         
-        if (isMounted.current) {
-          setSession(data.session);
-          setUser(data.session?.user ?? null);
-          setLoading(false);
-          isInitialized.current = true;
-        }
+        safeSetState(data.session, data.session?.user ?? null, false);
+        isInitialized.current = true;
       } catch (error) {
         console.error('Unexpected error during auth initialization:', error);
-        if (isMounted.current) {
-          setLoading(false);
-        }
+        safeSetState(null, null, false);
       }
     };
 
-    // Start the initialization process
-    initializeAuth();
-    
-    // Set up auth state listener
+    // Set up the auth state change listener before checking session
+    console.log('Setting up auth state change listener');
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
-        console.log('Auth state changed:', event, newSession?.user?.email);
+        console.log('Auth state changed:', event, newSession?.user?.email || 'no user');
         
-        if (!isMounted.current) return;
-        
-        setSession(newSession);
-        setUser(newSession?.user ?? null);
-        
-        // Only update loading state after initialization
-        if (isInitialized.current) {
-          setLoading(false);
-        }
+        // Defer state update to avoid potential deadlocks or race conditions
+        setTimeout(() => {
+          if (!isMounted.current) return;
+          safeSetState(newSession, newSession?.user ?? null, false);
+        }, 0);
       }
     );
 
-    // Cleanup function
+    // Start the session check
+    checkSession();
+
+    // Clean up on unmount
     return () => {
-      console.log('Cleaning up auth listener');
+      console.log('Cleaning up auth provider');
       isMounted.current = false;
-      subscription.unsubscribe();
+      if (subscription) subscription.unsubscribe();
     };
-  }, []);
+  }, [safeSetState]);
 
   const signOut = async () => {
     try {
       setLoading(true);
-      // Call Supabase signOut to clear the session on the server
+      console.log('Signing out...');
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
-      // Manually clear the session and user state
-      setSession(null);
-      setUser(null);
-      console.log('Signed out successfully - state cleared');
+      console.log('Sign out successful, clearing state');
+      safeSetState(null, null, false);
     } catch (error) {
       console.error('Error signing out:', error);
-      throw error; // Re-throw to let caller handle
-    } finally {
       setLoading(false);
+      throw error;
     }
   };
 
@@ -120,7 +124,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     hasUser: !!user, 
     hasSession: !!session, 
     loading, 
-    isInitialized: isInitialized.current 
+    isInitialized: isInitialized.current,
+    authCheckCompleted: authCheckCompleted.current
   });
 
   return (
