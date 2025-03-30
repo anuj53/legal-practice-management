@@ -245,20 +245,6 @@ export function TaskBoard({ tasks: initialTasks, onCloseTask }: TaskBoardProps) 
                                     </div>
                                   </div>
                                 </CardContent>
-                                <CardFooter className="p-1 pt-0 flex justify-end">
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm"
-                                    className="h-6"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleCompleteTask(task.id);
-                                    }}
-                                  >
-                                    <Check className="h-3.5 w-3.5 mr-1 text-green-500" />
-                                    <span className="text-xs">Complete</span>
-                                  </Button>
-                                </CardFooter>
                               </Card>
                             )}
                           </Draggable>
@@ -280,6 +266,7 @@ export function TaskBoard({ tasks: initialTasks, onCloseTask }: TaskBoardProps) 
         onOpenChange={setIsEditDialogOpen}
         task={editingTask}
         onSave={handleSaveTask}
+        onCompleteTask={handleCompleteTask}
       />
     </>
   );

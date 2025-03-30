@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { 
   Dialog, 
@@ -30,12 +31,14 @@ import * as z from 'zod';
 import { toast } from '@/hooks/use-toast';
 import { Task } from './TaskList';
 import { useTaskTypes } from '@/contexts/TaskTypeContext';
+import { Check } from 'lucide-react';
 
 interface EditTaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   task: Task | null;
   onSave: (updatedTask: Task) => void;
+  onCompleteTask?: (taskId: string) => void;
 }
 
 const formSchema = z.object({
@@ -50,7 +53,7 @@ const formSchema = z.object({
   isPrivate: z.boolean().default(false)
 });
 
-export function EditTaskDialog({ open, onOpenChange, task, onSave }: EditTaskDialogProps) {
+export function EditTaskDialog({ open, onOpenChange, task, onSave, onCompleteTask }: EditTaskDialogProps) {
   const { taskTypes } = useTaskTypes();
   const activeTaskTypes = taskTypes.filter(type => type.active);
   
@@ -99,6 +102,13 @@ export function EditTaskDialog({ open, onOpenChange, task, onSave }: EditTaskDia
       title: "Task Updated",
       description: "Task details have been saved successfully.",
     });
+  };
+
+  const handleCompleteTask = () => {
+    if (task && onCompleteTask) {
+      onCompleteTask(task.id);
+      onOpenChange(false);
+    }
   };
 
   return (
@@ -251,7 +261,20 @@ export function EditTaskDialog({ open, onOpenChange, task, onSave }: EditTaskDia
             </div>
 
             <DialogFooter className="pt-4">
-              <Button type="submit">Save Changes</Button>
+              <div className="flex gap-2 w-full justify-between sm:justify-end">
+                {onCompleteTask && (
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="flex items-center" 
+                    onClick={handleCompleteTask}
+                  >
+                    <Check className="mr-2 h-4 w-4 text-green-500" />
+                    Journey complete
+                  </Button>
+                )}
+                <Button type="submit">Save Changes</Button>
+              </div>
             </DialogFooter>
           </form>
         </Form>
