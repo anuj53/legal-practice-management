@@ -52,12 +52,14 @@ export default function Calendar() {
   
   const handleTimeSlotSelect = (start: Date, end: Date) => {
     console.log("Time slot selected:", start, end);
-    const defaultCalendarId = myCalendars.length > 0 ? myCalendars[0].id : '';
-    
-    if (!defaultCalendarId) {
+    // Get the default calendar ID
+    if (!myCalendars || myCalendars.length === 0) {
       toast.error("Cannot create event: No calendars available");
       return;
     }
+    
+    const defaultCalendarId = myCalendars[0].id;
+    console.log("Using default calendar ID for new event:", defaultCalendarId);
     
     const defaultEvent = {
       title: '',

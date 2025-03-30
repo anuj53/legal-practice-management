@@ -82,12 +82,14 @@ export function useCalendarPage() {
   const handleCreateEvent = () => {
     console.log("Create event clicked");
     
-    const defaultCalendarId = myCalendars.length > 0 ? myCalendars[0].id : '';
-    
-    if (!defaultCalendarId) {
+    if (!myCalendars || myCalendars.length === 0) {
       toast.error("Cannot create event: No calendars available");
       return;
     }
+    
+    // Use the first available calendar ID
+    const defaultCalendarId = myCalendars[0].id;
+    console.log("Selected calendar ID for new event:", defaultCalendarId);
     
     const now = new Date();
     const defaultEvent: Omit<Event, 'id'> = {

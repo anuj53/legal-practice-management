@@ -19,6 +19,7 @@ import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from '@/components/ui/separator';
 import { CalendarEvent } from '@/types/calendar';
+import { useCalendar } from '@/hooks/useCalendar';
 
 interface EventModalProps {
   isOpen: boolean;
@@ -30,13 +31,25 @@ interface EventModalProps {
 }
 
 export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: EventModalProps) {
+  // Get calendars from the useCalendar hook
+  const { myCalendars } = useCalendar();
+  
+  // Create defaultEvent with a valid calendar ID from myCalendars
+  const getDefaultCalendarId = () => {
+    if (!myCalendars || myCalendars.length === 0) {
+      console.error('No calendars available for event creation');
+      return '';
+    }
+    return myCalendars[0].id;
+  };
+  
   const defaultEvent: CalendarEvent = {
     id: Math.random().toString(36).substring(2, 9),
     title: '',
     start: new Date(),
     end: new Date(new Date().getTime() + 30 * 60000), // 30 minutes later
     type: 'client-meeting',
-    calendar: 'personal',
+    calendar: getDefaultCalendarId(),
     description: '',
     location: '',
     attendees: [],
@@ -78,13 +91,18 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
         console.log("Recurrence pattern:", event.recurrencePattern);
       }
     } else {
-      setFormData(defaultEvent);
+      // Make sure we're using a valid calendar ID from myCalendars
+      const updatedDefaultEvent = {
+        ...defaultEvent,
+        calendar: getDefaultCalendarId()
+      };
+      setFormData(updatedDefaultEvent);
       setEditMode(mode !== 'view');
       setRecurrenceOption('none');
     }
     
     setActiveTab('general');
-  }, [event, mode, isOpen]);
+  }, [event, mode, isOpen, myCalendars]);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -245,6 +263,8 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
   };
   
   const handleSave = () => {
+    // Print calendar ID being saved for debugging
+    console.log("Saving event with calendar ID:", formData.calendar);
     onSave(formData);
     onClose();
   };
@@ -257,6 +277,13 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
   };
   
   const isViewOnly = !editMode;
+  
+  // Helper function to get calendar name from ID
+  const getCalendarNameById = (id: string) => {
+    if (!myCalendars) return 'Unknown Calendar';
+    const calendar = myCalendars.find(cal => cal.id === id);
+    return calendar ? calendar.name : 'Unknown Calendar';
+  };
   
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -390,11 +417,11 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
                           <SelectValue placeholder="Select calendar" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="personal">Personal</SelectItem>
-                          <SelectItem value="firm">Firm Calendar</SelectItem>
-                          <SelectItem value="statute">Statute of Limitations</SelectItem>
-                          <SelectItem value="team-a">Team A</SelectItem>
-                          <SelectItem value="team-b">Team B</SelectItem>
+                          {myCalendars.map((calendar) => (
+                            <SelectItem key={calendar.id} value={calendar.id}>
+                              {calendar.name}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -776,11 +803,7 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
                     <div>
                       <div className="font-medium">Calendar</div>
                       <div className="text-gray-700">
-                        {formData.calendar === 'personal' ? 'Personal Calendar' : 
-                         formData.calendar === 'firm' ? 'Firm Calendar' : 
-                         formData.calendar === 'statute' ? 'Statute of Limitations' :
-                         formData.calendar === 'team-a' ? 'Team A' :
-                         'Team B'}
+                        {getCalendarNameById(formData.calendar)}
                       </div>
                     </div>
                   </div>
@@ -881,75 +904,3 @@ export function EventModal({ isOpen, onClose, event, mode, onSave, onDelete }: E
                   {formData.courtInfo && (formData.courtInfo.courtName || formData.courtInfo.judgeDetails || formData.courtInfo.docketNumber) && (
                     <div className="border-t border-gray-200 pt-4">
                       <h3 className="font-medium mb-3">Court Information</h3>
-                      
-                      <div className="space-y-2">
-                        {formData.courtInfo.courtName && (
-                          <div>
-                            <span className="font-medium">Court:</span> {formData.courtInfo.courtName}
-                          </div>
-                        )}
-                        
-                        {formData.courtInfo.judgeDetails && (
-                          <div>
-                            <span className="font-medium">Judge:</span> {formData.courtInfo.judgeDetails}
-                          </div>
-                        )}
-                        
-                        {formData.courtInfo.docketNumber && (
-                          <div>
-                            <span className="font-medium">Docket:</span> {formData.courtInfo.docketNumber}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {formData.documents && formData.documents.length > 0 && (
-                    <div className="border-t border-gray-200 pt-4">
-                      <h3 className="font-medium mb-3">Linked Documents</h3>
-                      
-                      <div className="space-y-2">
-                        {formData.documents.map(doc => (
-                          <div key={doc.id} className="flex items-center justify-between p-3 border rounded-md">
-                            <div className="flex items-center gap-2">
-                              <FileText className="h-4 w-4 text-blue-500" />
-                              <span>{doc.name}</span>
-                            </div>
-                            <a 
-                              href={doc.url} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="text-blue-500 hover:text-blue-700 text-sm"
-                            >
-                              View
-                            </a>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-              
-              <DialogFooter className="bg-gray-50 p-4 mt-auto">
-                <div className="flex w-full justify-between">
-                  <Button variant="destructive" onClick={handleDelete}>
-                    Delete
-                  </Button>
-                  <div className="space-x-2">
-                    <Button variant="outline" onClick={onClose}>
-                      Close
-                    </Button>
-                    <Button onClick={handleSwitchToEdit}>
-                      Edit
-                    </Button>
-                  </div>
-                </div>
-              </DialogFooter>
-            </>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
