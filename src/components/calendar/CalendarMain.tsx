@@ -52,8 +52,10 @@ export function CalendarMain({
               <CalendarSidebar 
                 myCalendars={myCalendars} 
                 otherCalendars={otherCalendars}
+                events={events}
                 onCalendarToggle={onCalendarToggle}
                 onEditCalendar={onEditCalendar}
+                onEventClick={onEventClick}
               />
             </div>
           </SheetContent>
