@@ -10,13 +10,13 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-gradient-to-r from-legal-600 to-legal-500 hover:from-legal-700 hover:to-legal-600 text-white shadow-sm",
+        default: "bg-gradient-to-r from-yorpro-600 to-yorpro-500 hover:from-yorpro-700 hover:to-yorpro-600 text-white shadow-sm",
         destructive: "bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white shadow-sm",
         outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
         secondary: "bg-gradient-to-r from-gray-200 to-gray-100 hover:from-gray-300 hover:to-gray-200 text-gray-800 shadow-sm",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        gradient: "bg-gradient-to-r from-legal-600 via-legal-500 to-legal-400 hover:from-legal-700 hover:via-legal-600 hover:to-legal-500 text-white shadow-md transition-all duration-300 hover:shadow-lg",
+        gradient: "bg-gradient-to-r from-yorpro-600 via-yorpro-500 to-yorpro-400 hover:from-yorpro-700 hover:via-yorpro-600 hover:to-yorpro-500 text-white shadow-md transition-all duration-300 hover:shadow-lg",
         "gradient-purple": "bg-gradient-to-r from-purple-600 via-purple-500 to-purple-400 hover:from-purple-700 hover:via-purple-600 hover:to-purple-500 text-white shadow-md transition-all duration-300 hover:shadow-lg",
         "gradient-teal": "bg-gradient-to-r from-teal-600 via-teal-500 to-teal-400 hover:from-teal-700 hover:via-teal-600 hover:to-teal-500 text-white shadow-md transition-all duration-300 hover:shadow-lg",
         "glass": "bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 transition-all duration-300",
