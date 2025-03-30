@@ -138,6 +138,12 @@ export default function Calendar() {
   
   const toggleSidebar = () => {
     setSidebarCollapsed(prevState => !prevState);
+    
+    // Add a small delay before triggering a resize event
+    // This ensures components have time to update before recalculating dimensions
+    setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+    }, 50);
   };
   
   if (!session) {
@@ -179,7 +185,7 @@ export default function Calendar() {
       <div className="flex flex-1 overflow-hidden px-2 sm:px-4 pb-2 sm:pb-4 h-[calc(100vh-6rem)]">
         <div 
           className="flex-1 overflow-hidden relative bg-white rounded-lg shadow-md border border-gray-100"
-          key={`calendar-main-${sidebarCollapsed}`} // Force re-render when sidebar collapses/expands
+          key={`calendar-main-${sidebarCollapsed}`} // Keep this to force re-render when sidebar collapses/expands
         >
           <CalendarMain
             view={currentView}

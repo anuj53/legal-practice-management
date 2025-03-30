@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { FullCalendarView } from '@/components/calendar/FullCalendarView';
 import { CalendarViewType } from '@/types/calendar';
 import { Event } from '@/utils/calendarUtils';
@@ -21,7 +21,7 @@ interface CalendarMainProps {
   otherCalendars?: any[];
   onCalendarToggle?: (id: string, category: 'my' | 'other') => void;
   onEditCalendar?: (calendar: any) => void;
-  sidebarCollapsed?: boolean; // Add this prop to trigger re-rendering
+  sidebarCollapsed?: boolean;
 }
 
 export function CalendarMain({ 
@@ -36,12 +36,21 @@ export function CalendarMain({
   otherCalendars = [],
   onCalendarToggle,
   onEditCalendar,
-  sidebarCollapsed // Use this prop in component to trigger re-rendering
+  sidebarCollapsed
 }: CalendarMainProps) {
   const isMobile = useIsMobile();
+  const calendarContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Force calendar to update its layout when sidebar is collapsed/expanded
+  useEffect(() => {
+    if (calendarContainerRef.current) {
+      // Trigger a resize event to make FullCalendar recalculate dimensions
+      window.dispatchEvent(new Event('resize'));
+    }
+  }, [sidebarCollapsed]);
 
   return (
-    <div className="h-full overflow-hidden relative">
+    <div className="h-full overflow-hidden relative" ref={calendarContainerRef}>
       {isMobile && (
         <Sheet>
           <SheetTrigger asChild>
@@ -72,7 +81,7 @@ export function CalendarMain({
         onDateClick={null}
         onCreateEvent={onCreateEvent}
         showFullDay={showFullDay}
-        key={`calendar-view-${sidebarCollapsed ? 'collapsed' : 'expanded'}`} // Force re-render on sidebar state change
+        key={`calendar-view-${sidebarCollapsed ? 'collapsed' : 'expanded'}`} // Keep this to force re-render
         onDateSelect={(start, end) => {
           if (!onCreateEvent) {
             onDayClick(start);
