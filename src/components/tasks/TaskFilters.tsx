@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -96,12 +95,12 @@ export function TaskFilters({ onSearch, onFilterChange, onSort }: TaskFiltersPro
   
   // Handle sort changes
   const handleSortChange = (field: keyof Task) => {
-    const direction = 
+    const direction: 'asc' | 'desc' = 
       sortConfig.field === field && sortConfig.direction === 'asc' 
         ? 'desc' 
         : 'asc';
         
-    const newSortConfig = { field, direction };
+    const newSortConfig: SortConfig = { field, direction };
     setSortConfig(newSortConfig);
     onSort(newSortConfig);
   };
