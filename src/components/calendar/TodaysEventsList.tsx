@@ -26,19 +26,22 @@ export function TodaysEventsList({
   );
 
   // Function to get calendar color based on calendar ID
-  const getCalendarColor = (calendarId: string): string => {
+  const getCalendarColor = (calendarId: string): string | null => {
     // First check in myCalendars
     const myCalendar = myCalendars.find(cal => cal.id === calendarId);
     if (myCalendar) {
+      console.log(`Found color for calendar ${calendarId}: ${myCalendar.color}`);
       return myCalendar.color;
     }
     
     // Then check in otherCalendars
     const otherCalendar = otherCalendars.find(cal => cal.id === calendarId);
     if (otherCalendar) {
+      console.log(`Found color for other calendar ${calendarId}: ${otherCalendar.color}`);
       return otherCalendar.color;
     }
     
+    console.log(`No color found for calendar ID: ${calendarId}`);
     return null;
   };
 
@@ -69,7 +72,9 @@ export function TodaysEventsList({
             {sortedEvents.map((event) => {
               // Get calendar color for custom styling
               const calendarColor = event.calendar ? getCalendarColor(event.calendar) : null;
-              const customStyle = calendarColor ? {
+              const hasCalendarColor = calendarColor !== null;
+              
+              const customStyle = hasCalendarColor ? {
                 backgroundColor: calendarColor,
                 color: 'white',
                 borderLeft: `3px solid ${calendarColor}`
@@ -79,7 +84,7 @@ export function TodaysEventsList({
                 <div 
                   key={event.id} 
                   className="p-2 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors border border-gray-200/50 shadow-sm"
-                  style={calendarColor ? customStyle : { backgroundColor: 'rgb(249 250 251)' }} // default bg-gray-50
+                  style={hasCalendarColor ? customStyle : { backgroundColor: 'rgb(249 250 251)' }} // default bg-gray-50
                   onClick={() => onEventClick && onEventClick(event)}
                 >
                   <div className="text-sm font-medium line-clamp-1">{event.title}</div>

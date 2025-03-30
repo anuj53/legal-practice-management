@@ -1,4 +1,3 @@
-
 import { v4 as uuidv4 } from 'uuid';
 
 export interface Event {
@@ -61,7 +60,7 @@ export const isValidUUID = (str: string): boolean => {
 };
 
 // Convert database event to app event
-export const convertDbEventToEvent = (dbEvent: any, eventTypeMap?: Record<string, any>): Event => {
+export const convertDbEventToEvent = (dbEvent: any, eventTypeMap?: Record<string, any>, calendars?: Calendar[]): Event => {
   // Parse recurrence pattern if exists
   let recurrencePattern = undefined;
   if (dbEvent.recurrence_pattern) {
@@ -86,6 +85,15 @@ export const convertDbEventToEvent = (dbEvent: any, eventTypeMap?: Record<string
   if (dbEvent.event_type_id && eventTypeMap && eventTypeMap[dbEvent.event_type_id]) {
     eventType = eventTypeMap[dbEvent.event_type_id].name;
     eventColor = eventTypeMap[dbEvent.event_type_id].color || eventColor;
+  }
+  
+  // Try to get calendar color if calendars are provided
+  if (calendars && dbEvent.calendar_id) {
+    const calendar = calendars.find(cal => cal.id === dbEvent.calendar_id);
+    if (calendar) {
+      eventColor = calendar.color;
+      console.log(`Using calendar color for event ${dbEvent.title}: ${eventColor} from calendar ${calendar.name}`);
+    }
   }
   
   return {

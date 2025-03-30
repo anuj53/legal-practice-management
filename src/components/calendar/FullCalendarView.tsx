@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -40,16 +41,19 @@ export function FullCalendarView({
   const isMobile = useIsMobile();
 
   const getCalendarColor = (calendarId: string): string => {
+    // First check in myCalendars
     const myCalendar = myCalendars.find(cal => cal.id === calendarId);
     if (myCalendar) {
       return myCalendar.color;
     }
     
+    // Then check in otherCalendars
     const otherCalendar = otherCalendars.find(cal => cal.id === calendarId);
     if (otherCalendar) {
       return otherCalendar.color;
     }
     
+    // Fallback to default color
     return '#6B7280';
   };
 
@@ -142,15 +146,13 @@ export function FullCalendarView({
 
   const expandedEvents = expandRecurringEvents(events);
   
-  events.filter(e => e.isRecurring).forEach(e => {
-    console.log('Recurring event:', e.title, 
-      'pattern:', e.recurrencePattern?.frequency, 
-      'interval:', e.recurrencePattern?.interval, 
-      'occurrences:', e.recurrencePattern?.occurrences);
-  });
+  console.log('Calendar colors available:', myCalendars.map(cal => ({id: cal.id, color: cal.color})));
+  console.log('Events to display:', events.map(e => ({id: e.id, title: e.title, calendarId: e.calendar})));
   
   const calendarEvents = expandedEvents.map(event => {
+    // Get calendar color directly from the calendar collection
     const calendarColor = event.calendar ? getCalendarColor(event.calendar) : getDefaultColor(event.type);
+    console.log(`Event: ${event.title}, Calendar ID: ${event.calendar}, Color: ${calendarColor}`);
     
     return {
       id: event.id,

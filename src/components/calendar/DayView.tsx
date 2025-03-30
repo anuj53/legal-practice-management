@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { format } from 'date-fns';
 import { CalendarEvent } from '@/types/calendar';
@@ -65,19 +66,23 @@ export const DayView: React.FC<DayViewProps> = ({
   };
 
   const getCalendarColor = (calendarId: string): string => {
+    // First check in myCalendars
     const myCalendar = myCalendars.find(cal => cal.id === calendarId);
     if (myCalendar) {
       return myCalendar.color;
     }
     
+    // Then check in otherCalendars
     const otherCalendar = otherCalendars.find(cal => cal.id === calendarId);
     if (otherCalendar) {
       return otherCalendar.color;
     }
     
+    // Fallback to default color
     return '#6B7280';
   };
 
+  // Fallback event type colors (used only if calendar color isn't available)
   const eventTypeColors = {
     'event': 'bg-orange-500 text-white',
     'client': 'bg-green-500 text-white',
@@ -134,7 +139,9 @@ export const DayView: React.FC<DayViewProps> = ({
                 >
                   {hourEvents.map((event) => {
                     const calendarColor = event.calendar ? getCalendarColor(event.calendar) : '';
-                    const customStyle = calendarColor ? {
+                    const hasCalendarColor = calendarColor && calendarColor !== '#6B7280';
+                    
+                    const customStyle = hasCalendarColor ? {
                       backgroundColor: calendarColor,
                       color: 'white',
                       borderLeft: `4px solid ${calendarColor}`
@@ -145,9 +152,9 @@ export const DayView: React.FC<DayViewProps> = ({
                         key={event.id}
                         className={cn(
                           "p-2 rounded-md my-1 cursor-pointer shadow-sm hover:shadow-md transition-shadow",
-                          !calendarColor && (eventTypeColors[event.type] || "bg-gray-500 text-white")
+                          !hasCalendarColor && (eventTypeColors[event.type] || "bg-gray-500 text-white")
                         )}
-                        style={calendarColor ? customStyle : {}}
+                        style={hasCalendarColor ? customStyle : {}}
                         onClick={(e) => {
                           e.stopPropagation();
                           onEventClick(event);

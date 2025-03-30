@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import { format, addDays, startOfWeek, isToday } from 'date-fns';
 import { CalendarEvent } from '@/types/calendar';
@@ -69,19 +70,23 @@ export const WeekView: React.FC<WeekViewProps> = ({
   };
 
   const getCalendarColor = (calendarId: string): string => {
+    // First check in myCalendars
     const myCalendar = myCalendars.find(cal => cal.id === calendarId);
     if (myCalendar) {
       return myCalendar.color;
     }
     
+    // Then check in otherCalendars
     const otherCalendar = otherCalendars.find(cal => cal.id === calendarId);
     if (otherCalendar) {
       return otherCalendar.color;
     }
     
+    // Fallback to default color
     return null;
   };
 
+  // Fallback event type colors (used only if calendar color isn't available)
   const eventColors = {
     'event': 'bg-orange-500 text-white',
     'client': 'bg-green-500 text-white',
@@ -167,20 +172,25 @@ export const WeekView: React.FC<WeekViewProps> = ({
                         }}
                       >
                         {dayEvents.map((event) => {
+                          // Get calendar color for custom styling
                           const calendarColor = event.calendar ? getCalendarColor(event.calendar) : null;
-                          const customStyle = calendarColor ? {
+                          const hasCalendarColor = calendarColor !== null;
+                          
+                          const customStyle = hasCalendarColor ? {
                             background: calendarColor,
                             color: 'white'
                           } : {};
+                          
+                          console.log(`Week view event: ${event.title}, calendarId: ${event.calendar}, color: ${calendarColor}`);
                           
                           return (
                             <div
                               key={event.id}
                               className={cn(
                                 "p-1 rounded text-xs cursor-pointer truncate shadow-sm hover:shadow-md transition-shadow",
-                                !calendarColor && (eventColors[event.type] || "bg-gray-500 text-white")
+                                !hasCalendarColor && (eventColors[event.type] || "bg-gray-500 text-white")
                               )}
-                              style={calendarColor ? customStyle : {}}
+                              style={hasCalendarColor ? customStyle : {}}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 onEventClick(event);

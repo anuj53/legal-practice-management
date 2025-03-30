@@ -26,12 +26,23 @@ export function useCalendarPage() {
     deleteCalendar
   } = useCalendar();
   
-  console.log('useCalendarPage: myCalendars received from useCalendar hook:', myCalendars);
+  console.log('useCalendarPage: myCalendars received from useCalendar hook:', 
+    myCalendars.map(cal => ({id: cal.id, name: cal.name, color: cal.color, checked: cal.checked}))
+  );
   
   const filteredEvents = events.filter(event => {
     const calendar = [...(myCalendars || []), ...(otherCalendars || [])].find(cal => cal.id === event.calendar);
     return calendar && calendar.checked;
   });
+  
+  useEffect(() => {
+    console.log('Filtered events:', filteredEvents.map(e => ({
+      id: e.id,
+      title: e.title,
+      calendarId: e.calendar,
+      calendar: [...(myCalendars || []), ...(otherCalendars || [])].find(cal => cal.id === e.calendar)
+    })));
+  }, [filteredEvents, myCalendars, otherCalendars]);
   
   const handleCalendarToggle = (id: string, category: 'my' | 'other') => {
     const calendarList = category === 'my' ? myCalendars : otherCalendars;
