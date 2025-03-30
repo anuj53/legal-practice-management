@@ -20,10 +20,21 @@ const defaultTaskTypes: TaskType[] = [
   { id: '5', name: 'Invoicing', active: true },
 ];
 
+const STORAGE_KEY = 'yorpro_task_types';
+
 const TaskTypeContext = createContext<TaskTypeContextType | undefined>(undefined);
 
 export function TaskTypeProvider({ children }: { children: React.ReactNode }) {
-  const [taskTypes, setTaskTypes] = useState<TaskType[]>(defaultTaskTypes);
+  const [taskTypes, setTaskTypes] = useState<TaskType[]>(() => {
+    // Try to load from localStorage first
+    const savedTypes = localStorage.getItem(STORAGE_KEY);
+    return savedTypes ? JSON.parse(savedTypes) : defaultTaskTypes;
+  });
+
+  // Persist task types to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(taskTypes));
+  }, [taskTypes]);
 
   return (
     <TaskTypeContext.Provider value={{ taskTypes, setTaskTypes }}>

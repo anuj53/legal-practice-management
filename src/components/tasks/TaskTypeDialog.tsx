@@ -7,11 +7,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  Switch,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Edit, Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,7 +47,7 @@ export function TaskTypeDialog({ open, onOpenChange }: TaskTypeDialogProps) {
         active: true 
       };
       
-      setTaskTypes([...taskTypes, newType]);
+      setTaskTypes(prevTypes => [...prevTypes, newType]);
       setNewTaskType('');
       setShowAddForm(false);
       
@@ -60,8 +60,8 @@ export function TaskTypeDialog({ open, onOpenChange }: TaskTypeDialogProps) {
 
   const handleUpdateType = () => {
     if (editingType && editingType.name.trim()) {
-      setTaskTypes(
-        taskTypes.map(type => 
+      setTaskTypes(prevTypes =>
+        prevTypes.map(type => 
           type.id === editingType.id 
             ? { ...type, name: editingType.name } 
             : type
@@ -77,8 +77,8 @@ export function TaskTypeDialog({ open, onOpenChange }: TaskTypeDialogProps) {
   };
 
   const handleToggleActive = (id: string, active: boolean) => {
-    setTaskTypes(
-      taskTypes.map(type => 
+    setTaskTypes(prevTypes =>
+      prevTypes.map(type => 
         type.id === id ? { ...type, active } : type
       )
     );
@@ -93,7 +93,7 @@ export function TaskTypeDialog({ open, onOpenChange }: TaskTypeDialogProps) {
   const handleDeleteType = (id: string) => {
     const typeToDelete = taskTypes.find(type => type.id === id);
     if (typeToDelete) {
-      setTaskTypes(taskTypes.filter(type => type.id !== id));
+      setTaskTypes(prevTypes => prevTypes.filter(type => type.id !== id));
       setDeleteConfirm(null);
       
       toast({

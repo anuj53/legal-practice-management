@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -34,6 +34,11 @@ export function TaskBoard({ tasks: initialTasks }: TaskBoardProps) {
   // Get task types from context
   const { taskTypes } = useTaskTypes();
   
+  // Update tasks when initialTasks changes
+  useEffect(() => {
+    setTasks(initialTasks);
+  }, [initialTasks]);
+  
   // Filter active task types only
   const activeTaskTypes = taskTypes
     .filter(type => type.active)
@@ -41,12 +46,21 @@ export function TaskBoard({ tasks: initialTasks }: TaskBoardProps) {
 
   // Group tasks by task type
   const tasksByType = tasks.reduce((acc: Record<string, Task[]>, task) => {
+    // If the task's type isn't in our active types, we still want to show it
+    // This avoids losing tasks when their type is disabled
     if (!acc[task.taskType]) {
       acc[task.taskType] = [];
     }
     acc[task.taskType].push(task);
     return acc;
   }, {});
+
+  // Make sure we have an empty array for each active task type, even if no tasks
+  activeTaskTypes.forEach(type => {
+    if (!tasksByType[type]) {
+      tasksByType[type] = [];
+    }
+  });
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -111,7 +125,7 @@ export function TaskBoard({ tasks: initialTasks }: TaskBoardProps) {
   };
 
   const getTaskTypeColor = (taskType: string) => {
-    const colors = {
+    const colors: Record<string, string> = {
       'Onboarding': 'bg-purple-500',
       'Documentation': 'bg-blue-500',
       'Follow Up': 'bg-indigo-500',
@@ -119,8 +133,11 @@ export function TaskBoard({ tasks: initialTasks }: TaskBoardProps) {
       'Invoicing': 'bg-amber-500',
     };
     
-    return (colors as Record<string, string>)[taskType] || 'bg-gray-500';
+    return colors[taskType] || 'bg-gray-500';
   };
+
+  console.log('Active task types:', activeTaskTypes);
+  console.log('Task types from context:', taskTypes);
 
   return (
     <>
