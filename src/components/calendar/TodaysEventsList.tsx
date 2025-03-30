@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon, Clock, MapPin } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Event } from '@/utils/calendarUtils';
+import type { Event } from '@/utils/calendarUtils';
 
 interface TodaysEventsListProps {
   events: Event[];
