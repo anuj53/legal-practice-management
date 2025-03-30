@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { CalendarHeader } from '@/components/calendar/CalendarHeader';
 import { CalendarSidebar } from '@/components/calendar/CalendarSidebar';
@@ -47,19 +46,16 @@ export default function Calendar() {
     handleCreateCalendar,
     handleUpdateCalendar,
     handleDeleteCalendar,
-    refreshCalendarData
   } = useCalendarPage();
   
   const handleTimeSlotSelect = (start: Date, end: Date) => {
     console.log("Time slot selected:", start, end);
-    // Get the default calendar ID
-    if (!myCalendars || myCalendars.length === 0) {
+    const defaultCalendarId = myCalendars.length > 0 ? myCalendars[0].id : '';
+    
+    if (!defaultCalendarId) {
       toast.error("Cannot create event: No calendars available");
       return;
     }
-    
-    const defaultCalendarId = myCalendars[0].id;
-    console.log("Using default calendar ID for new event:", defaultCalendarId);
     
     const defaultEvent = {
       title: '',
@@ -85,10 +81,6 @@ export default function Calendar() {
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
         (event, newSession) => {
           setSession(newSession);
-          if (event === 'SIGNED_IN') {
-            // After signing in, refresh calendar data
-            refreshCalendarData();
-          }
         }
       );
       
@@ -97,13 +89,6 @@ export default function Calendar() {
     
     checkAuth();
   }, []);
-  
-  // Add a refresh when the component mounts
-  useEffect(() => {
-    if (session) {
-      refreshCalendarData();
-    }
-  }, [session]);
   
   const createCalendarWrapper = () => {
     setCalendarDialogMode('create');
@@ -165,10 +150,10 @@ export default function Calendar() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="p-8 rounded-lg bg-white shadow-lg border border-gray-100">
+        <div className="p-8 rounded-lg bg-white shadow-lg border border-yorpro-100">
           <div className="flex flex-col items-center">
-            <div className="w-12 h-12 rounded-full border-4 border-t-blue-600 border-blue-100 animate-spin mb-4"></div>
-            <p className="text-gray-700 font-medium">Loading calendar data...</p>
+            <div className="w-12 h-12 rounded-full border-4 border-t-yorpro-600 border-yorpro-100 animate-spin mb-4"></div>
+            <p className="text-yorpro-700 font-medium">Loading calendar data...</p>
           </div>
         </div>
       </div>

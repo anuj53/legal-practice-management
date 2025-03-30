@@ -133,11 +133,11 @@ const Index = () => {
   return (
     <div className="container py-8 mx-auto">
       <div className="mb-8 px-4 md:px-0">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome to Legal Practice Management</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome to YorPro</h1>
         <p className="text-gray-600 text-lg">
           Legal management system for efficient case handling and client management
         </p>
-        <div className="h-1 w-24 bg-gradient-to-r from-lpm-500 to-lpm-700 rounded-full mt-3"></div>
+        <div className="h-1 w-24 bg-gradient-to-r from-yorpro-500 to-yorpro-700 rounded-full mt-3"></div>
       </div>
 
       {/* Stats Section */}
@@ -187,7 +187,7 @@ const Index = () => {
             icon={Calendar}
             title="Calendar"
             description="Manage appointments, court dates, and deadlines"
-            color="bg-gradient-to-r from-lpm-600 to-lpm-700"
+            color="bg-gradient-to-r from-yorpro-600 to-yorpro-700"
             linkTo="/calendar"
             glassEffect={true}
           />
@@ -214,7 +214,7 @@ const Index = () => {
         <Card className="lg:col-span-2 hover:shadow-md transition-shadow border border-gray-200 rounded-xl">
           <CardHeader className="border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
             <CardTitle className="flex items-center text-lg">
-              <BarChart className="h-5 w-5 mr-2 text-lpm-600" />
+              <BarChart className="h-5 w-5 mr-2 text-yorpro-600" />
               Recent Activities
             </CardTitle>
             <CardDescription>Your latest case activities and updates</CardDescription>

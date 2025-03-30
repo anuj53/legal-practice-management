@@ -1,4 +1,3 @@
-
 import { addHours, addDays, subDays, startOfDay, addMonths, addWeeks, addYears } from 'date-fns';
 import { CalendarShare } from '@/types/calendar';
 
@@ -53,84 +52,52 @@ export interface Event {
 }
 
 // Helper function to validate UUID format
-export function isValidUUID(uuid: string): boolean {
-  if (!uuid) return false;
+export const isValidUUID = (id: string): boolean => {
+  if (!id || typeof id !== 'string') {
+    console.log(`UUID validation failed: ${id} is not a valid string`);
+    return false;
+  }
+  
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  return uuidRegex.test(uuid);
-}
+  const isValid = uuidRegex.test(id);
+  console.log(`UUID validation for "${id}": ${isValid}`);
+  return isValid;
+};
 
 // Converter functions for database interactions
-export const convertEventToDbEvent = (event: Event) => {
+export const convertEventToDbEvent = (event: Omit<Event, 'id'> | Event) => {
   return {
-    id: event.id,
     title: event.title,
     description: event.description || null,
     start_time: event.start.toISOString(),
     end_time: event.end.toISOString(),
     location: event.location || null,
     is_recurring: event.isRecurring || false,
-    recurrence_pattern: event.recurrencePattern ? JSON.stringify(event.recurrencePattern) : null,
     calendar_id: event.calendar,
-    // Other properties will be handled by the API
+    recurrence_pattern: event.recurrencePattern ? JSON.stringify(event.recurrencePattern) : null,
+    // ID is included only if present
+    ...(('id' in event) ? { id: event.id } : {})
   };
 };
 
-export const convertDbEventToEvent = (dbEvent: any, eventTypeMap: any = {}): Event => {
-  console.log('Converting DB event to Event:', dbEvent);
+export const convertDbEventToEvent = (dbEvent: any, eventTypeMap: Record<string, any> = {}): Event => {
+  // Get event type information
+  const eventTypeInfo = dbEvent.event_type_id ? eventTypeMap[dbEvent.event_type_id] : null;
   
-  // Handle possible missing data
-  if (!dbEvent) {
-    console.error('Empty DB event object provided to converter');
-    throw new Error('Cannot convert null or undefined DB event');
-  }
-  
-  if (!dbEvent.start_time || !dbEvent.end_time) {
-    console.error('DB event missing required time fields:', dbEvent);
-  }
-  
-  // Get event type info
-  let eventType: 'client-meeting' | 'internal-meeting' | 'court' | 'deadline' | 'personal' = 'client-meeting';
-  let eventColor = null;
-  
-  if (dbEvent.event_type_id && eventTypeMap && eventTypeMap[dbEvent.event_type_id]) {
-    const typeName = eventTypeMap[dbEvent.event_type_id].name;
-    // Ensure the type is one of the allowed types
-    if (typeName === 'client-meeting' || 
-        typeName === 'internal-meeting' || 
-        typeName === 'court' || 
-        typeName === 'deadline' || 
-        typeName === 'personal') {
-      eventType = typeName;
-    }
-    eventColor = eventTypeMap[dbEvent.event_type_id].color;
-  }
-  
-  // Parse recurrence pattern
-  let recurrencePattern = null;
-  if (dbEvent.is_recurring && dbEvent.recurrence_pattern) {
-    try {
-      recurrencePattern = typeof dbEvent.recurrence_pattern === 'string' 
-        ? JSON.parse(dbEvent.recurrence_pattern) 
-        : dbEvent.recurrence_pattern;
-    } catch (e) {
-      console.error('Error parsing recurrence pattern:', e);
-    }
-  }
-  
-  // Create event object
   return {
     id: dbEvent.id,
     title: dbEvent.title,
     description: dbEvent.description || '',
     start: new Date(dbEvent.start_time),
     end: new Date(dbEvent.end_time),
-    location: dbEvent.location || '',
-    isAllDay: false, // Determine if it's an all-day event based on time range
-    isRecurring: dbEvent.is_recurring || false,
-    type: eventType,
-    color: eventColor,
+    type: eventTypeInfo ? eventTypeInfo.name : 'client-meeting',
+    color: eventTypeInfo ? eventTypeInfo.color : null,
     calendar: dbEvent.calendar_id,
-    recurrencePattern: recurrencePattern
+    location: dbEvent.location || '',
+    isRecurring: dbEvent.is_recurring || false,
+    createdBy: dbEvent.created_by,
+    isAllDay: false,
+    recurrencePattern: dbEvent.recurrence_pattern ? JSON.parse(dbEvent.recurrence_pattern) : undefined
   };
 };
 

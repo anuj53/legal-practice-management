@@ -30,7 +30,7 @@ export function Header({ children }: HeaderProps) {
             <Input
               type="text"
               placeholder={isMobile ? "Search" : "Search Here"}
-              className="w-full bg-gray-50 border-gray-100 rounded-lg pl-8 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-lpm-500 focus:border-transparent transition-all duration-200"
+              className="w-full bg-gray-50 border-gray-100 rounded-lg pl-8 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yorpro-500 focus:border-transparent transition-all duration-200"
             />
           </div>
         </div>
@@ -61,7 +61,7 @@ export function Header({ children }: HeaderProps) {
 
         {!isMobile && (
           <div className="hidden sm:flex items-center px-3 py-1.5 bg-gray-50 rounded-lg border border-gray-100 shadow-sm">
-            <Clock className="h-5 w-5 mr-2 text-lpm-600" />
+            <Clock className="h-5 w-5 mr-2 text-yorpro-600" />
             <span className="font-medium text-gray-700">00:00:00</span>
           </div>
         )}

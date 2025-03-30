@@ -11,7 +11,6 @@ export function useCalendarPage() {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('view');
-  const [localDataUpdated, setLocalDataUpdated] = useState(0);
 
   const {
     myCalendars = [],
@@ -23,30 +22,8 @@ export function useCalendarPage() {
     deleteEvent,
     createCalendar,
     updateCalendar,
-    deleteCalendar,
+    deleteCalendar
   } = useCalendar();
-  
-  // Add a refresh function that can be called when needed
-  const refreshCalendarData = () => {
-    console.log('Manually refreshing calendar data');
-    setLocalDataUpdated(prev => prev + 1);
-  };
-  
-  // Ensure we refresh events data after calendar events:
-  // 1. On mount
-  // 2. When current date changes significantly (month/year)
-  useEffect(() => {
-    refreshCalendarData();
-  }, []);
-  
-  // Use local state to trigger refreshes
-  useEffect(() => {
-    if (localDataUpdated > 0) {
-      console.log('Local data updated, refreshing from useCalendar');
-      // This effect will simply cause the component to re-render
-      // which will pull fresh data from useCalendar
-    }
-  }, [localDataUpdated]);
   
   const filteredEvents = events.filter(event => {
     const calendar = [...(myCalendars || []), ...(otherCalendars || [])].find(cal => cal.id === event.calendar);
@@ -82,14 +59,12 @@ export function useCalendarPage() {
   const handleCreateEvent = () => {
     console.log("Create event clicked");
     
-    if (!myCalendars || myCalendars.length === 0) {
+    const defaultCalendarId = myCalendars.length > 0 ? myCalendars[0].id : '';
+    
+    if (!defaultCalendarId) {
       toast.error("Cannot create event: No calendars available");
       return;
     }
-    
-    // Use the first available calendar ID
-    const defaultCalendarId = myCalendars[0].id;
-    console.log("Selected calendar ID for new event:", defaultCalendarId);
     
     const now = new Date();
     const defaultEvent: Omit<Event, 'id'> = {
@@ -182,9 +157,6 @@ export function useCalendarPage() {
         
         toast.success('Event created successfully!');
         console.log("New event created:", newEvent);
-        
-        // Refresh the data after creating the event
-        refreshCalendarData();
       } 
       else {
         console.log("Updating existing event with ID:", event.id);
@@ -211,9 +183,6 @@ export function useCalendarPage() {
         const updatedEvent = await updateEvent(eventToUpdate);
         toast.success('Event updated successfully!');
         console.log("Event updated:", updatedEvent);
-        
-        // Refresh the data after updating the event
-        refreshCalendarData();
       }
       
       setModalOpen(false);
@@ -230,9 +199,6 @@ export function useCalendarPage() {
       await deleteEvent(id);
       toast.success('Event deleted successfully!');
       setModalOpen(false);
-      
-      // Refresh the data after deleting the event
-      refreshCalendarData();
     } catch (error) {
       console.error('Error deleting event:', error);
       toast.error(`Failed to delete event: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -263,6 +229,5 @@ export function useCalendarPage() {
     handleCreateCalendar,
     handleUpdateCalendar,
     handleDeleteCalendar,
-    refreshCalendarData
   };
 }

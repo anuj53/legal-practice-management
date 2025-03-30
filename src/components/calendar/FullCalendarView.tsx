@@ -36,8 +36,6 @@ export function FullCalendarView({
   const calendarRef = useRef<FullCalendar | null>(null);
   const isMobile = useIsMobile();
 
-  console.log('FullCalendarView: Received events:', events);
-
   const getDefaultColor = (type: string): string => {
     switch (type) {
       case 'client-meeting':
@@ -125,12 +123,8 @@ export function FullCalendarView({
     }
   };
 
-  // Expand events to handle recurring events
   const expandedEvents = expandRecurringEvents(events);
   
-  console.log('FullCalendarView: Expanded events:', expandedEvents.length);
-  
-  // Debug recurring events
   events.filter(e => e.isRecurring).forEach(e => {
     console.log('Recurring event:', e.title, 
       'pattern:', e.recurrencePattern?.frequency, 
@@ -138,7 +132,6 @@ export function FullCalendarView({
       'occurrences:', e.recurrencePattern?.occurrences);
   });
   
-  // Format for FullCalendar
   const calendarEvents = expandedEvents.map(event => ({
     id: event.id,
     title: event.title,
@@ -155,8 +148,6 @@ export function FullCalendarView({
       calendar: event.calendar
     }
   }));
-
-  console.log('FullCalendarView: Rendering calendar events:', calendarEvents.length);
 
   return (
     <div className="h-full w-full rounded-lg overflow-hidden">

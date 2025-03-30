@@ -67,13 +67,11 @@ export function CalendarMain({
         date={date}
         events={events}
         onEventClick={onEventClick}
-        onDateClick={onDayClick}
+        onDateClick={null}
         onCreateEvent={onCreateEvent}
         showFullDay={showFullDay}
         onDateSelect={(start, end) => {
-          if (onCreateEvent) {
-            onCreateEvent(start, end);
-          } else {
+          if (!onCreateEvent) {
             onDayClick(start);
           }
         }}

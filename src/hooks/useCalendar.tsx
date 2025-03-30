@@ -58,7 +58,6 @@ export const useCalendar = () => {
   const loadCalendarData = async () => {
     try {
       setLoading(true);
-      console.log('Loading calendar data from database...');
       
       // First check if we have a user session
       const { data: { session } } = await supabase.auth.getSession();
@@ -71,24 +70,16 @@ export const useCalendar = () => {
       // Fetch calendars
       const calendarsResult = await fetchCalendars();
       if (calendarsResult) {
-        console.log('Calendars fetched:', calendarsResult);
         setMyCalendars(calendarsResult.myCalendars);
         setOtherCalendars(calendarsResult.otherCalendars);
-        
-        // Fetch events after calendars are loaded
-        const eventsData = await fetchEvents();
-        console.log('Events fetched:', eventsData);
-        setEvents(eventsData || []);
       } else {
-        console.log('No calendars returned, creating defaults');
         // If no calendars returned, create default calendars
         await createDefaultCalendars();
-        
-        // After creating defaults, try fetching events again
-        const eventsData = await fetchEvents();
-        console.log('Events fetched after creating default calendars:', eventsData);
-        setEvents(eventsData || []);
       }
+      
+      // Fetch events
+      const eventsData = await fetchEvents();
+      setEvents(eventsData);
       
       setError(null);
     } catch (err) {
@@ -258,7 +249,7 @@ export const useCalendar = () => {
       // Update local state
       setEvents(prev => [...prev, newEvent]);
       
-      // Trigger a data refresh to ensure we get fresh data from DB
+      // Trigger a data refresh
       setDataUpdated(prev => prev + 1);
       
       toast.success('Event created successfully!');

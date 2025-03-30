@@ -112,7 +112,7 @@
   
   /* Trendy gradient utilities */
   .bg-gradient-blue {
-    @apply bg-gradient-to-r from-lpm-600 via-lpm-500 to-lpm-400;
+    @apply bg-gradient-to-r from-yorpro-600 via-yorpro-500 to-yorpro-400;
   }
   
   .bg-gradient-purple {
@@ -208,7 +208,7 @@
 }
 
 .today .day-number {
-  @apply bg-gradient-to-r from-lpm-600 to-lpm-500 text-white;
+  @apply bg-gradient-to-r from-yorpro-600 to-yorpro-500 text-white;
 }
 
 .different-month .day-number {
