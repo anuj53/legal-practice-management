@@ -14,6 +14,12 @@ export const AuthRoute = ({ children }: AuthRouteProps) => {
   const [waitingTooLong, setWaitingTooLong] = useState(false);
 
   useEffect(() => {
+    // Clear timeouts when authentication state changes
+    if (!loading) {
+      setShowTimeout(false);
+      setWaitingTooLong(false);
+    }
+
     if (!loading && !session) {
       console.log('User not authenticated, redirecting to /auth');
     }

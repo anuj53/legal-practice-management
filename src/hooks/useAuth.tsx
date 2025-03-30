@@ -1,5 +1,5 @@
 
-import { createContext, useState, useContext, useEffect } from 'react';
+import { createContext, useState, useContext, useEffect, useRef } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -21,39 +21,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [initialized, setInitialized] = useState(false);
+  const isInitialized = useRef(false);
+  const isMounted = useRef(true);
 
   useEffect(() => {
-    console.log('Setting up auth state listener');
+    console.log('Setting up auth state listener and checking initial session');
     
-    let isMounted = true;
+    // Set isMounted to true when the component mounts
+    isMounted.current = true;
     
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, newSession) => {
-        console.log('Auth state changed:', event, newSession?.user?.email);
-        
-        if (isMounted) {
-          setSession(newSession);
-          setUser(newSession?.user ?? null);
-          
-          // Only set loading to false after the initial auth state is processed
-          if (initialized) {
-            setLoading(false);
-          }
-        }
-      }
-    );
-
-    // Initial session check
+    // Initial session check - run this first
     const initializeAuth = async () => {
       try {
+        if (!isMounted.current) return;
+        
         console.log('Checking initial session...');
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error('Error getting initial session:', error);
-          if (isMounted) {
+          if (isMounted.current) {
             setLoading(false);
           }
           return;
@@ -61,25 +48,44 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         console.log('Initial session check:', data.session?.user?.email || 'No session');
         
-        if (isMounted) {
+        if (isMounted.current) {
           setSession(data.session);
           setUser(data.session?.user ?? null);
-          setInitialized(true);
           setLoading(false);
+          isInitialized.current = true;
         }
       } catch (error) {
         console.error('Unexpected error during auth initialization:', error);
-        if (isMounted) {
+        if (isMounted.current) {
           setLoading(false);
         }
       }
     };
 
+    // Start the initialization process
     initializeAuth();
+    
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, newSession) => {
+        console.log('Auth state changed:', event, newSession?.user?.email);
+        
+        if (!isMounted.current) return;
+        
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
+        
+        // Only update loading state after initialization
+        if (isInitialized.current) {
+          setLoading(false);
+        }
+      }
+    );
 
+    // Cleanup function
     return () => {
       console.log('Cleaning up auth listener');
-      isMounted = false;
+      isMounted.current = false;
       subscription.unsubscribe();
     };
   }, []);
@@ -114,7 +120,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     hasUser: !!user, 
     hasSession: !!session, 
     loading, 
-    initialized 
+    isInitialized: isInitialized.current 
   });
 
   return (
