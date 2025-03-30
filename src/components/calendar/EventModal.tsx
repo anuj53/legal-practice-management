@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { format, addDays } from 'date-fns';
 import { X, Users, MapPin, Clock, CalendarClock, Bell, FileText, Briefcase, Scale, Plus, Trash2 } from 'lucide-react';
@@ -20,7 +21,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from '@/components/ui/separator';
 import { Event } from '@/utils/calendarUtils';
 import { RecurrencePattern } from '@/types/calendar';
-import { useCalendar } from '@/hooks/useCalendar.tsx';
+import { useCalendar } from '@/hooks/useCalendar.tsx'; // Explicitly using the database-connected hook
 import { RecurrenceDialog } from './RecurrenceDialog';
 
 interface EventModalProps {
