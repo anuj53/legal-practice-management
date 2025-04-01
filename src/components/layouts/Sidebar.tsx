@@ -25,7 +25,6 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { UserProfile } from './UserProfile';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
 const SidebarItem = ({ 
@@ -62,17 +61,11 @@ const SidebarItem = ({
   </NavLink>
 );
 
-const LPMLogo = ({ collapsed, organizationName = "Legal Practice Management" }: { collapsed?: boolean, organizationName?: string }) => (
-  <div className={cn("flex items-center gap-3 px-4 py-6", collapsed && "justify-center")}>
+const LPMLogo = ({ collapsed }: { collapsed?: boolean }) => (
+  <div className={cn("flex items-center justify-center px-4 py-6", collapsed && "justify-center")}>
     <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-white/30 to-white/5 backdrop-blur-md shadow-lg border border-white/20 hover:scale-105 transition-all duration-300">
       <span className="text-white font-bold text-2xl">L</span>
     </div>
-    {!collapsed && (
-      <div className="flex flex-col">
-        <span className="font-bold text-white text-xl tracking-tight truncate max-w-[170px]">{organizationName}</span>
-        <span className="text-xs text-white/70 tracking-wide uppercase">Legal Practice Management</span>
-      </div>
-    )}
   </div>
 );
 
@@ -82,46 +75,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ collapsed = false, onToggleCollapse }: SidebarProps) {
-  const [organizationName, setOrganizationName] = useState<string>("Legal Practice Management");
   const { user } = useAuth();
-  
-  useEffect(() => {
-    const fetchOrganizationName = async () => {
-      if (!user) return;
-      
-      try {
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('organization_id')
-          .eq('id', user.id)
-          .maybeSingle();
-          
-        if (profileError || !profileData?.organization_id) {
-          console.error('Error fetching profile:', profileError);
-          return;
-        }
-        
-        const { data: orgData, error: orgError } = await supabase
-          .from('organizations')
-          .select('name')
-          .eq('id', profileData.organization_id)
-          .maybeSingle();
-          
-        if (orgError) {
-          console.error('Error fetching organization:', orgError);
-          return;
-        }
-        
-        if (orgData && orgData.name) {
-          setOrganizationName(orgData.name);
-        }
-      } catch (error) {
-        console.error('Error fetching organization details:', error);
-      }
-    };
-    
-    fetchOrganizationName();
-  }, [user]);
   
   return (
     <div className={cn(
@@ -152,7 +106,7 @@ export function Sidebar({ collapsed = false, onToggleCollapse }: SidebarProps) {
       
       <div className="relative z-10 flex flex-1 flex-col h-full overflow-hidden">
         <div className="flex-shrink-0">
-          <LPMLogo collapsed={collapsed} organizationName={organizationName} />
+          <LPMLogo collapsed={collapsed} />
           <Separator className="bg-white/10 mx-4 my-2" />
         </div>
         
