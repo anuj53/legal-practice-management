@@ -109,16 +109,26 @@ export default function ContactDetail() {
 
         // If it's a company, fetch its employees
         if (processedContact.contact_type_id === contactTypes.find(t => t.name === 'Company')?.id) {
+          // Fixed query - specify the relationship explicitly
           const { data: employeeData, error: employeeError } = await supabase
             .from('company_employees')
             .select(`
               *,
-              person:person_id(*)
+              person:person_id(
+                id,
+                first_name,
+                last_name,
+                email,
+                phone
+              )
             `)
             .eq('company_id', id);
           
           if (employeeError) throw employeeError;
-          setEmployees(employeeData);
+          
+          // Type assertion to ensure the employee data matches our expected type
+          const typedEmployees = employeeData as unknown as CompanyEmployee[];
+          setEmployees(typedEmployees);
         }
 
         // Fetch matters related to this contact (placeholder for now)

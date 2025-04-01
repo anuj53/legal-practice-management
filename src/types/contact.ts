@@ -43,7 +43,15 @@ export interface CompanyEmployee {
   company_id: string;
   person_id: string;
   job_title: string | null;
-  person?: Contact;
+  created_at?: string;
+  updated_at?: string;
+  person?: {
+    id: string;
+    first_name: string | null;
+    last_name: string | null;
+    email: string | null;
+    phone: string | null;
+  };
 }
 
 export interface ContactFormValues {
