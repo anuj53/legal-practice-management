@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Table, 
   TableHeader, 
@@ -35,6 +36,8 @@ interface ContactListProps {
 }
 
 export function ContactList({ contacts, contactTypes }: ContactListProps) {
+  const navigate = useNavigate();
+  
   if (contacts.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-64 border border-dashed rounded-lg bg-gray-50">
@@ -89,6 +92,10 @@ export function ContactList({ contacts, contactTypes }: ContactListProps) {
     );
   };
 
+  const handleRowClick = (contact: Contact) => {
+    navigate(`/contacts/${contact.id}`);
+  };
+
   return (
     <div className="rounded-md border overflow-hidden">
       <Table>
@@ -104,7 +111,11 @@ export function ContactList({ contacts, contactTypes }: ContactListProps) {
         </TableHeader>
         <TableBody>
           {contacts.map((contact) => (
-            <TableRow key={contact.id}>
+            <TableRow 
+              key={contact.id} 
+              className="cursor-pointer hover:bg-muted/50"
+              onClick={() => handleRowClick(contact)}
+            >
               <TableCell>
                 <div className="flex items-center gap-3">
                   {getContactAvatar(contact)}
@@ -120,9 +131,15 @@ export function ContactList({ contacts, contactTypes }: ContactListProps) {
               </TableCell>
               <TableCell>
                 {contact.email ? (
-                  <div className="flex items-center gap-2">
+                  <div 
+                    className="flex items-center gap-2"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <Mail className="h-4 w-4 text-gray-400" />
-                    <a href={`mailto:${contact.email}`} className="text-yorpro-600 hover:underline">
+                    <a 
+                      href={`mailto:${contact.email}`} 
+                      className="text-yorpro-600 hover:underline"
+                    >
                       {contact.email}
                     </a>
                   </div>
@@ -132,9 +149,15 @@ export function ContactList({ contacts, contactTypes }: ContactListProps) {
               </TableCell>
               <TableCell className="hidden md:table-cell">
                 {contact.phone ? (
-                  <div className="flex items-center gap-2">
+                  <div 
+                    className="flex items-center gap-2"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <Phone className="h-4 w-4 text-gray-400" />
-                    <a href={`tel:${contact.phone}`} className="text-yorpro-600 hover:underline">
+                    <a 
+                      href={`tel:${contact.phone}`} 
+                      className="text-yorpro-600 hover:underline"
+                    >
                       {contact.phone}
                     </a>
                   </div>
@@ -159,7 +182,7 @@ export function ContactList({ contacts, contactTypes }: ContactListProps) {
               </TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
+                  <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                     <Button variant="ghost" size="sm">
                       <MoreHorizontal className="h-4 w-4" />
                       <span className="sr-only">Open menu</span>

@@ -31,6 +31,11 @@ export interface Contact {
   organization_id: string | null;
   tags?: ContactTag[];
   employees?: Contact[];
+  
+  // Billing information fields (could be expanded in the future)
+  client_id?: string | null;
+  payment_terms?: string | null;
+  billing_rate?: number | null;
 }
 
 export interface CompanyEmployee {
@@ -56,4 +61,14 @@ export interface ContactFormValues {
   notes?: string;
   is_client?: boolean;
   tags?: string[];
+}
+
+// New interface for matter/case related to a contact
+export interface Matter {
+  id: string;
+  title: string;
+  status: string;
+  client_id: string;
+  created_at: string;
+  practice_area?: string;
 }
