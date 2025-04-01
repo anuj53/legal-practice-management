@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,16 +9,10 @@ import { PageHeader } from '@/components/ui/page-header';
 import { ContactList } from '@/components/contacts/ContactList';
 import { ContactDialog } from '@/components/contacts/ContactDialog';
 import { ContactsFilters } from '@/components/contacts/ContactsFilters';
+import { ExportDialog } from '@/components/contacts/ExportDialog';
 import { Loader2, Users, Building2, Plus, Download } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { processContactFromDatabase } from '@/utils/contactUtils';
-import { exportContactsToCSV, exportContactsToPDF } from '@/utils/exportUtils';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 
 export default function Contacts() {
   const { user } = useAuth();
@@ -27,6 +22,7 @@ export default function Contacts() {
   const [activeTab, setActiveTab] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false); 
   const [isClientOnly, setIsClientOnly] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -133,7 +129,7 @@ export default function Contacts() {
     setRefreshKey(prev => prev + 1);
   };
 
-  const handleExportContacts = (format: 'csv' | 'pdf') => {
+  const handleExportClick = () => {
     if (filteredContacts.length === 0) {
       toast({
         title: "No contacts to export",
@@ -143,28 +139,7 @@ export default function Contacts() {
       return;
     }
     
-    try {
-      if (format === 'csv') {
-        exportContactsToCSV(filteredContacts);
-        toast({
-          title: "Export Successful",
-          description: "Contacts have been exported to CSV format."
-        });
-      } else {
-        exportContactsToPDF(filteredContacts);
-        toast({
-          title: "Export Initiated",
-          description: "A print dialog will open to save contacts as PDF."
-        });
-      }
-    } catch (error) {
-      console.error('Error exporting contacts:', error);
-      toast({
-        title: "Export Failed",
-        description: "An error occurred while exporting contacts.",
-        variant: "destructive"
-      });
-    }
+    setIsExportDialogOpen(true);
   };
 
   return (
@@ -174,26 +149,15 @@ export default function Contacts() {
         description="Manage your clients, companies, and other contacts."
         actions={
           <div className="flex gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="secondary" 
-                  size="sm"
-                  className="hidden md:flex"
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  Export
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => handleExportContacts('csv')}>
-                  Export as CSV
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExportContacts('pdf')}>
-                  Export as PDF
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button 
+              variant="secondary" 
+              size="sm"
+              onClick={handleExportClick}
+              className="hidden md:flex"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Export
+            </Button>
             <Button 
               variant="gradient" 
               size="sm"
@@ -282,6 +246,12 @@ export default function Contacts() {
           onSuccess={handleCreateContact}
         />
       )}
+      
+      <ExportDialog
+        open={isExportDialogOpen}
+        onOpenChange={setIsExportDialogOpen}
+        contacts={filteredContacts}
+      />
     </div>
   );
 }

@@ -1,10 +1,18 @@
 
 import { Contact } from '@/types/contact';
+import { jsPDF } from 'jspdf';
+import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
+
+export type ExportColumnOption = 'all' | 'visible';
 
 /**
  * Formats contact data for export
  */
-export function formatContactsForExport(contacts: Contact[]): Record<string, string>[] {
+export function formatContactsForExport(
+  contacts: Contact[], 
+  columnOption: ExportColumnOption = 'all'
+): Record<string, string>[] {
   return contacts.map(contact => {
     // Get primary email and phone if available
     const primaryEmail = contact.emails?.find(e => e.is_primary)?.email || contact.email || '';
@@ -23,7 +31,7 @@ export function formatContactsForExport(contacts: Contact[]): Record<string, str
     const contactName = contact.company_name || 
       `${contact.prefix || ''} ${contact.first_name || ''} ${contact.middle_name || ''} ${contact.last_name || ''}`.trim();
     
-    return {
+    const basicContactFields = {
       'Name': contactName,
       'Type': contactType,
       'Email': primaryEmail,
@@ -32,14 +40,37 @@ export function formatContactsForExport(contacts: Contact[]): Record<string, str
       'Notes': contact.notes || '',
       'Client': contact.is_client ? 'Yes' : 'No'
     };
+    
+    // For 'all' columns, add additional fields
+    if (columnOption === 'all') {
+      return {
+        ...basicContactFields,
+        'Job Title': contact.job_title || '',
+        'Date of Birth': contact.date_of_birth || '',
+        'Additional Emails': contact.emails?.filter(e => !e.is_primary).map(e => e.email).join(', ') || '',
+        'Additional Phones': contact.phones?.filter(p => !p.is_primary).map(p => p.phone).join(', ') || '',
+        'Websites': contact.websites?.map(w => w.url).join(', ') || '',
+        'Additional Addresses': contact.addresses?.filter(a => !a.is_primary).length 
+          ? contact.addresses.filter(a => !a.is_primary).map(a => 
+              `${a.street}, ${a.city}, ${a.state} ${a.zip}, ${a.country} (${a.type})`
+            ).join('; ')
+          : '',
+        'Tags': contact.tags?.map(tag => tag.name).join(', ') || '',
+        'Billing Rate': contact.billing_rate ? `$${contact.billing_rate}` : '',
+        'Payment Profile': contact.payment_profile || '',
+        'Created At': new Date(contact.created_at).toLocaleDateString(),
+      };
+    }
+    
+    return basicContactFields;
   });
 }
 
 /**
  * Exports contacts to CSV format
  */
-export function exportContactsToCSV(contacts: Contact[]): void {
-  const formattedData = formatContactsForExport(contacts);
+export function exportContactsToCSV(contacts: Contact[], columnOption: ExportColumnOption = 'all'): void {
+  const formattedData = formatContactsForExport(contacts, columnOption);
   if (formattedData.length === 0) return;
   
   const headers = Object.keys(formattedData[0]);
@@ -70,69 +101,70 @@ export function exportContactsToCSV(contacts: Contact[]): void {
 }
 
 /**
- * Exports contacts to PDF format using browser print capabilities
+ * Exports contacts to PDF format with direct download
  */
 export function exportContactsToPDF(contacts: Contact[]): void {
-  const formattedData = formatContactsForExport(contacts);
+  const formattedData = formatContactsForExport(contacts, 'visible');
   if (formattedData.length === 0) return;
   
-  // Create a printable HTML document
-  const headers = Object.keys(formattedData[0]);
-  
-  const printWindow = window.open('', '_blank');
-  if (!printWindow) {
-    alert('Please allow pop-ups to export as PDF');
-    return;
+  try {
+    // Create new PDF document
+    const doc = new jsPDF();
+    
+    // Add title
+    doc.setFontSize(18);
+    doc.text('Contacts Export', 14, 22);
+    
+    // Add timestamp
+    doc.setFontSize(10);
+    doc.text(`Generated on ${new Date().toLocaleString()}`, 14, 30);
+    
+    // Extract headers and data for the table
+    const headers = Object.keys(formattedData[0]);
+    const data = formattedData.map(row => headers.map(header => row[header] || ''));
+    
+    // Create table
+    autoTable(doc, {
+      head: [headers],
+      body: data,
+      startY: 35,
+      styles: {
+        fontSize: 9,
+        cellPadding: 3,
+      },
+      headStyles: {
+        fillColor: [51, 65, 85],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+      },
+      alternateRowStyles: {
+        fillColor: [248, 250, 252],
+      },
+    });
+    
+    // Footer
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.text(
+        'YorPro Legal Case Management System',
+        doc.internal.pageSize.getWidth() / 2,
+        doc.internal.pageSize.getHeight() - 10,
+        { align: 'center' }
+      );
+      doc.text(
+        `Page ${i} of ${pageCount}`,
+        doc.internal.pageSize.getWidth() - 20,
+        doc.internal.pageSize.getHeight() - 10
+      );
+    }
+    
+    // Save and download the PDF
+    doc.save(`contacts_export_${new Date().toISOString().slice(0,10)}.pdf`);
+    
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    throw error;
   }
-  
-  // Write the HTML content
-  printWindow.document.write(`
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>Contacts Export - ${new Date().toLocaleDateString()}</title>
-      <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        h1 { color: #334155; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { background-color: #f1f5f9; text-align: left; padding: 10px; }
-        td { padding: 8px 10px; border-bottom: 1px solid #e2e8f0; }
-        tr:nth-child(even) { background-color: #f8fafc; }
-        .footer { margin-top: 20px; font-size: 12px; color: #64748b; text-align: center; }
-        @media print {
-          body { margin: 0.5cm; }
-          h1 { font-size: 14pt; }
-          table, th, td { font-size: 9pt; }
-          .footer { font-size: 8pt; }
-          button { display: none; }
-        }
-      </style>
-    </head>
-    <body>
-      <h1>Contacts Export</h1>
-      <table>
-        <thead>
-          <tr>
-            ${headers.map(header => `<th>${header}</th>`).join('')}
-          </tr>
-        </thead>
-        <tbody>
-          ${formattedData.map(row => `
-            <tr>
-              ${headers.map(header => `<td>${row[header] || ''}</td>`).join('')}
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-      <div class="footer">
-        Generated on ${new Date().toLocaleString()} - YorPro Legal Case Management System
-      </div>
-      <button onclick="window.print(); window.close();" style="margin-top: 20px; padding: 10px; background: #0f766e; color: white; border: none; border-radius: 4px; cursor: pointer;">
-        Print / Save as PDF
-      </button>
-    </body>
-    </html>
-  `);
-  
-  printWindow.document.close();
 }
