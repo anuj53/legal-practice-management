@@ -78,7 +78,7 @@ export function AssignWorkflowDialog({
       assigneeId: '',
       assignAllToOne: false,
       notifyAssignees: false,
-      matterId: '',
+      matterId: undefined, // Changed from empty string to undefined
       triggerDate: new Date(),
     },
   });
@@ -90,7 +90,7 @@ export function AssignWorkflowDialog({
         assigneeId: '',
         assignAllToOne: false,
         notifyAssignees: false,
-        matterId: '',
+        matterId: undefined, // Changed from empty string to undefined
         triggerDate: new Date(),
       });
     }
@@ -248,7 +248,7 @@ export function AssignWorkflowDialog({
                   <FormLabel className="text-base font-medium">Matter</FormLabel>
                   <Select 
                     onValueChange={field.onChange} 
-                    defaultValue={field.value}
+                    value={field.value}
                   >
                     <FormControl>
                       <SelectTrigger className="h-12">
@@ -256,7 +256,8 @@ export function AssignWorkflowDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">No matter</SelectItem>
+                      {/* Replaced empty string with a value "none" */}
+                      <SelectItem value="none">No matter</SelectItem>
                       {matters.map(matter => (
                         <SelectItem key={matter.id} value={matter.id}>
                           {matter.name}
