@@ -100,17 +100,24 @@ export function AssignWorkflowDialog({
   useEffect(() => {
     const fetchUsers = async () => {
       try {
+        console.log('Fetching users from profiles table');
         const { data, error } = await supabase
           .from('profiles')
           .select('id, first_name, last_name')
           .order('first_name', { ascending: true });
         
-        if (error) throw error;
+        if (error) {
+          console.error('Error fetching users:', error);
+          throw error;
+        }
         
+        console.log('Fetched users:', data);
         // Cast the data to match the Profile interface
         setUsers((data || []) as Profile[]);
       } catch (error) {
-        console.error('Error fetching users:', error);
+        console.error('Error in fetchUsers:', error);
+        // Show an empty list with current user as fallback
+        setUsers([]);
       }
     };
     
@@ -188,11 +195,15 @@ export function AssignWorkflowDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {users.map(user => (
-                        <SelectItem key={user.id} value={user.id}>
-                          {user.first_name} {user.last_name}
-                        </SelectItem>
-                      ))}
+                      {users.length > 0 ? (
+                        users.map(user => (
+                          <SelectItem key={user.id} value={user.id}>
+                            {user.first_name} {user.last_name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="current-user">Current User</SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                   <FormMessage />
