@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -25,6 +24,7 @@ import { TaskFilters, TaskFilters as TaskFiltersType, SortConfig } from '@/compo
 import { fetchTasks } from '@/components/tasks/TaskService';
 import { Task } from '@/types/task';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Tasks() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -46,6 +46,19 @@ export default function Tasks() {
   
   const [tasks, setTasks] = useState<UITask[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        console.log('Current user ID:', session.user.id);
+        setCurrentUserId(session.user.id);
+      }
+    };
+    
+    getCurrentUser();
+  }, []);
 
   const loadTasks = async () => {
     setIsLoading(true);
@@ -164,7 +177,8 @@ export default function Tasks() {
         true;
       
       const matchesTab = 
-        (activeTab === 'my-tasks' && task.status !== 'Completed') ||
+        (activeTab === 'my-tasks' && task.status !== 'Completed' && 
+          (currentUserId ? task.assignee === currentUserId : true)) ||
         (activeTab === 'all-tasks' && task.status !== 'Completed');
       
       const matchesPriority = filters.priority.length === 0 || 
@@ -195,7 +209,7 @@ export default function Tasks() {
       
       return (a[field]?.toString() || '').localeCompare(b[field]?.toString() || '') * direction;
     });
-  }, [tasks, searchQuery, activeTab, filters, sortConfig]);
+  }, [tasks, searchQuery, activeTab, filters, sortConfig, currentUserId]);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -284,6 +298,10 @@ export default function Tasks() {
                 <div className="flex justify-center py-10">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
                 </div>
+              ) : filteredTasks.length === 0 ? (
+                <div className="bg-white border rounded-lg p-8 shadow-sm text-center">
+                  <p className="text-gray-600">No tasks assigned to you yet.</p>
+                </div>
               ) : viewMode === 'list' ? (
                 <TaskList tasks={filteredTasks} onCloseTask={handleCloseTask} />
               ) : (
@@ -295,6 +313,10 @@ export default function Tasks() {
               {isLoading ? (
                 <div className="flex justify-center py-10">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                </div>
+              ) : filteredTasks.length === 0 ? (
+                <div className="bg-white border rounded-lg p-8 shadow-sm text-center">
+                  <p className="text-gray-600">No tasks available.</p>
                 </div>
               ) : viewMode === 'list' ? (
                 <TaskList tasks={filteredTasks} onCloseTask={handleCloseTask} />
