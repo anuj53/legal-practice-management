@@ -37,6 +37,7 @@ import { useTaskTypes } from '@/contexts/TaskTypeContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { createTask } from './TaskService';
+import { useAuth } from '@/hooks/useAuth';
 
 interface NewTaskDialogProps {
   open: boolean;
@@ -47,6 +48,7 @@ interface NewTaskDialogProps {
 export function NewTaskDialog({ open, onOpenChange, onTaskCreated }: NewTaskDialogProps) {
   const { taskTypes } = useTaskTypes();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [users, setUsers] = useState<{ id: string; first_name: string; last_name: string }[]>([]);
   const [matters, setMatters] = useState<{ id: string; name: string }[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -57,20 +59,43 @@ export function NewTaskDialog({ open, onOpenChange, onTaskCreated }: NewTaskDial
   useEffect(() => {
     const fetchUsers = async () => {
       try {
+        console.log('Fetching users from profiles table, current user:', user?.email);
+        
+        // First, add current user as a fallback if available
+        if (user?.id) {
+          const currentUserProfile = {
+            id: user.id,
+            first_name: user.email?.split('@')[0] || 'Current',
+            last_name: 'User'
+          };
+          setUsers([currentUserProfile]);
+        }
+        
         const { data, error } = await supabase
           .from('profiles')
           .select('id, first_name, last_name')
           .order('first_name', { ascending: true });
         
         if (error) throw error;
-        setUsers(data || []);
+        
+        console.log('Fetched profiles:', data);
+        
+        if (data && data.length > 0) {
+          setUsers(data);
+        } else {
+          console.log('No profiles found in the database');
+          // We already set current user as fallback above
+        }
       } catch (error) {
         console.error('Error fetching users:', error);
       }
     };
     
-    fetchUsers();
-  }, []);
+    // Only fetch users when dialog opens
+    if (open) {
+      fetchUsers();
+    }
+  }, [open, user]);
   
   // For demonstration, we'll use mock matters data
   useEffect(() => {
@@ -97,6 +122,24 @@ export function NewTaskDialog({ open, onOpenChange, onTaskCreated }: NewTaskDial
       dueDate: undefined as Date | undefined,
     },
   });
+
+  // Reset form when dialog opens or closes
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        name: '',
+        description: '',
+        priority: 'Normal',
+        status: 'Pending',
+        assignee: user?.id || '',
+        isPrivate: false,
+        taskType: '',
+        timeEstimate: '',
+        matter: '',
+        dueDate: undefined,
+      });
+    }
+  }, [open, form, user]);
 
   async function onSubmit(data: any) {
     console.log('Form submitted:', data);
@@ -206,11 +249,15 @@ export function NewTaskDialog({ open, onOpenChange, onTaskCreated }: NewTaskDial
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {users.map(user => (
-                          <SelectItem key={user.id} value={user.id}>
-                            {user.first_name} {user.last_name}
-                          </SelectItem>
-                        ))}
+                        {users.length > 0 ? (
+                          users.map(user => (
+                            <SelectItem key={user.id} value={user.id}>
+                              {user.first_name || 'User'} {user.last_name || ''}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="current-user">Current User</SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                   </FormItem>

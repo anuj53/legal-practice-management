@@ -89,14 +89,14 @@ export function AssignWorkflowDialog({
   useEffect(() => {
     if (open) {
       form.reset({
-        assigneeId: '',
+        assigneeId: user?.id || '',
         assignAllToOne: false,
         notifyAssignees: false,
         matterId: null,
         triggerDate: new Date(),
       });
     }
-  }, [open, form]);
+  }, [open, form, user]);
   
   // Fetch users
   useEffect(() => {
@@ -105,13 +105,14 @@ export function AssignWorkflowDialog({
         console.log('Fetching users from profiles table, current user:', user?.email);
         
         // First, add current user as a fallback if available
+        const currentUsers: Profile[] = [];
         if (user?.id) {
           const currentUserProfile: Profile = {
             id: user.id,
             first_name: user.email?.split('@')[0] || 'Current',
             last_name: 'User'
           };
-          setUsers([currentUserProfile]);
+          currentUsers.push(currentUserProfile);
         }
         
         const { data, error } = await supabase
@@ -128,10 +129,11 @@ export function AssignWorkflowDialog({
         
         if (data && data.length > 0) {
           // Cast the data to match the Profile interface
-          setUsers(data as Profile[]);
+          setUsers([...currentUsers, ...data]);
         } else {
           console.log('No profiles found in the database');
           // We already set current user as fallback above
+          setUsers(currentUsers);
         }
       } catch (error) {
         console.error('Error in fetchUsers:', error);
