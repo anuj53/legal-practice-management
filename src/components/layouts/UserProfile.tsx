@@ -7,7 +7,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
-import { LogOut } from 'lucide-react';
 
 interface UserProfileProps {
   collapsed?: boolean;
@@ -24,7 +23,7 @@ interface ProfileData {
 }
 
 export function UserProfile({ collapsed = false }: UserProfileProps) {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -140,24 +139,6 @@ export function UserProfile({ collapsed = false }: UserProfileProps) {
   const handleManageAccount = () => {
     navigate('/account-settings');
   };
-  
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      toast({
-        title: "Signed out",
-        description: "You have been signed out successfully",
-      });
-      navigate('/auth');
-    } catch (error) {
-      console.error('Error signing out:', error);
-      toast({
-        title: "Error",
-        description: "Failed to sign out",
-        variant: "destructive",
-      });
-    }
-  };
 
   return (
     <div className={cn("flex-shrink-0 p-4 relative z-10", collapsed && "p-2")}>
@@ -182,36 +163,14 @@ export function UserProfile({ collapsed = false }: UserProfileProps) {
           )}
         </div>
         {!collapsed && (
-          <div className="mt-3 pt-3 border-t border-white/10 flex gap-2">
+          <div className="mt-3 pt-3 border-t border-white/10">
             <Button 
               variant="glass" 
               size="sm" 
-              className="flex-1 justify-center text-xs font-medium hover:bg-white/20"
+              className="w-full justify-center text-xs font-medium hover:bg-white/20"
               onClick={handleManageAccount}
             >
               Manage Account
-            </Button>
-            <Button
-              variant="glass" 
-              size="sm"
-              className="hover:bg-red-500/20 hover:text-white"
-              onClick={handleSignOut}
-              title="Sign out"
-            >
-              <LogOut className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
-        {collapsed && (
-          <div className="mt-3 pt-3 border-t border-white/10 flex justify-center">
-            <Button
-              variant="glass" 
-              size="sm"
-              className="hover:bg-red-500/20 hover:text-white"
-              onClick={handleSignOut}
-              title="Sign out"
-            >
-              <LogOut className="h-4 w-4" />
             </Button>
           </div>
         )}
