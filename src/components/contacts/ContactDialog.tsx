@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,6 +21,8 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { format } from 'date-fns';
 import { prepareContactForDatabase, processContactFromDatabase } from '@/utils/contactUtils';
+import { CustomFieldsManager } from './CustomFieldsManager';
+import { CustomFieldFormValue } from '@/types/customField';
 
 interface ContactDialogProps {
   open: boolean;
@@ -42,6 +43,7 @@ export function ContactDialog({
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('contact-info');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [customFieldValues, setCustomFieldValues] = useState<CustomFieldFormValue[]>([]);
   
   const [formValues, setFormValues] = useState<ContactFormValues>(
     contact ? {
@@ -75,7 +77,6 @@ export function ContactDialog({
         type: 'Work',
         is_primary: true
       }],
-      // These fields are now stored in the database
       payment_profile: contact.payment_profile || 'Default',
       billing_rate: contact.billing_rate || undefined,
       ledes_client_id: contact.ledes_client_id || '',
@@ -94,7 +95,6 @@ export function ContactDialog({
         type: 'Work', 
         is_primary: true 
       }],
-      // These fields are now stored in the database
       payment_profile: 'Default',
     }
   );
@@ -320,7 +320,6 @@ export function ContactDialog({
         phones: formValues.phones,
         websites: formValues.websites,
         addresses: formValues.addresses,
-        // Now include these fields in the data sent to the database
         payment_profile: formValues.payment_profile || 'Default',
         billing_rate: formValues.billing_rate,
         ledes_client_id: formValues.ledes_client_id || null,
@@ -329,6 +328,7 @@ export function ContactDialog({
       const databaseContactData = prepareContactForDatabase(contactData);
       
       let result;
+      let contactId;
       
       if (contact) {
         const { data, error } = await supabase
@@ -344,6 +344,7 @@ export function ContactDialog({
           
         if (error) throw error;
         result = data;
+        contactId = contact.id;
       } else {
         const { data, error } = await supabase
           .from('contacts')
@@ -357,6 +358,54 @@ export function ContactDialog({
           
         if (error) throw error;
         result = data;
+        contactId = result.id;
+      }
+      
+      if (customFieldValues.length > 0 && contactId) {
+        const { data: existingFields } = await supabase
+          .from('custom_field_values')
+          .select('id, definition_id')
+          .eq('entity_id', contactId);
+        
+        const existingFieldMap = new Map();
+        if (existingFields) {
+          existingFields.forEach(field => {
+            existingFieldMap.set(field.definition_id, field.id);
+          });
+        }
+        
+        const updates = [];
+        const inserts = [];
+        
+        for (const fieldValue of customFieldValues) {
+          if (existingFieldMap.has(fieldValue.definition_id)) {
+            updates.push({
+              id: existingFieldMap.get(fieldValue.definition_id),
+              value: fieldValue.value
+            });
+          } else {
+            inserts.push({
+              definition_id: fieldValue.definition_id,
+              entity_id: contactId,
+              value: fieldValue.value
+            });
+          }
+        }
+        
+        if (updates.length > 0) {
+          for (const update of updates) {
+            await supabase
+              .from('custom_field_values')
+              .update({ value: update.value })
+              .eq('id', update.id);
+          }
+        }
+        
+        if (inserts.length > 0) {
+          await supabase
+            .from('custom_field_values')
+            .insert(inserts);
+        }
       }
       
       const processedContact = processContactFromDatabase(result);
@@ -860,19 +909,13 @@ export function ContactDialog({
               </div>
             </TabsContent>
             
-            <TabsContent value="custom-fields" className="mt-4 space-y-4">
-              <div className="p-4 border border-gray-100 rounded-md">
-                <div className="flex items-start">
-                  <FileText className="h-8 w-8 text-yorpro-600 mr-3" />
-                  <div>
-                    <h3 className="text-base font-medium mb-1">Custom Fields</h3>
-                    <p className="text-sm text-gray-600 mb-4">
-                      Speed up your workflow by creating Custom Field sets for often-used Custom Fields.
-                    </p>
-                    <Button variant="outline">Add custom field</Button>
-                  </div>
-                </div>
-              </div>
+            <TabsContent value="custom-fields" className="mt-4 space-y-6">
+              <CustomFieldsManager 
+                entityType="contact"
+                entityId={contact?.id}
+                values={customFieldValues}
+                onChange={setCustomFieldValues}
+              />
             </TabsContent>
             
             <TabsContent value="billing-prefs" className="mt-4 space-y-4">

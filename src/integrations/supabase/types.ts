@@ -296,6 +296,80 @@ export type Database = {
           },
         ]
       }
+      custom_field_definitions: {
+        Row: {
+          created_at: string | null
+          default_value: string | null
+          entity_type: string
+          field_type: string
+          id: string
+          is_required: boolean | null
+          name: string
+          options: Json | null
+          organization_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          default_value?: string | null
+          entity_type: string
+          field_type: string
+          id?: string
+          is_required?: boolean | null
+          name: string
+          options?: Json | null
+          organization_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          default_value?: string | null
+          entity_type?: string
+          field_type?: string
+          id?: string
+          is_required?: boolean | null
+          name?: string
+          options?: Json | null
+          organization_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      custom_field_values: {
+        Row: {
+          created_at: string | null
+          definition_id: string
+          entity_id: string
+          id: string
+          updated_at: string | null
+          value: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          definition_id: string
+          entity_id: string
+          id?: string
+          updated_at?: string | null
+          value?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          definition_id?: string
+          entity_id?: string
+          id?: string
+          updated_at?: string | null
+          value?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_field_values_definition_id_fkey"
+            columns: ["definition_id"]
+            isOneToOne: false
+            referencedRelation: "custom_field_definitions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_attendees: {
         Row: {
           created_at: string

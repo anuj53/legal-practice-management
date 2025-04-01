@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Contact, ContactType, Matter, CompanyEmployee } from '@/types/contact';
+import { CustomFieldValue } from '@/types/customField';
 import { 
   Tabs, 
   TabsContent, 
@@ -31,7 +32,8 @@ import {
   UserPlus,
   Users,
   Trash2,
-  Calendar
+  Calendar,
+  PencilIcon
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { PageHeader } from '@/components/ui/page-header';
@@ -60,6 +62,7 @@ export default function ContactDetail() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [customFields, setCustomFields] = useState<CustomFieldValue[]>([]);
 
   useEffect(() => {
     const fetchContactTypes = async () => {
@@ -131,7 +134,6 @@ export default function ContactDetail() {
           setEmployees(typedEmployees);
         }
 
-        // Fetch matters - placeholder for future implementation
         setMatters([]);
         
       } catch (error) {
@@ -150,6 +152,35 @@ export default function ContactDetail() {
       fetchContact();
     }
   }, [id, user, contactTypes]); // Only run when id, user, or contactTypes change
+
+  useEffect(() => {
+    const fetchCustomFields = async () => {
+      if (!id || !user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('custom_field_values')
+          .select(`
+            id,
+            definition_id,
+            entity_id,
+            value,
+            definition:custom_field_definitions(*)
+          `)
+          .eq('entity_id', id);
+          
+        if (error) throw error;
+        
+        setCustomFields(data || []);
+      } catch (error) {
+        console.error('Error fetching custom fields:', error);
+      }
+    };
+    
+    if (contact) {
+      fetchCustomFields();
+    }
+  }, [id, user, contact]);
 
   const getContactTypeName = (typeId: string | undefined) => {
     if (!typeId) return 'Unknown';
@@ -257,6 +288,40 @@ export default function ContactDetail() {
     } finally {
       setIsDeleting(false);
     }
+  };
+
+  const renderCustomFields = () => {
+    if (customFields.length === 0) {
+      return (
+        <div className="text-center py-8">
+          <p className="text-gray-600 mb-4">
+            Custom Fields let you configure the system to meet your firm's unique needs. Create Custom Fields to store useful details and quickly find information when you need it.
+          </p>
+          <Button variant="outline" onClick={() => navigate(`/contacts/${id}/edit`)}>
+            Add Custom Field
+          </Button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {customFields.map((field) => (
+          <div key={field.id} className="p-2 border-b">
+            <div className="text-sm font-medium text-gray-500">
+              {field.definition?.name}
+            </div>
+            <div className="mt-1">
+              {field.field_type === 'checkbox' ? (
+                field.value === 'true' ? 'Yes' : 'No'
+              ) : (
+                field.value || <span className="text-gray-400">Not specified</span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
   };
 
   if (loading) {
@@ -557,13 +622,8 @@ export default function ContactDetail() {
                     </div>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="pt-2 text-center">
-                  <p className="text-gray-600 mb-4">
-                    Custom Fields let you configure the system to meet your firm's unique needs. Create Custom Fields to store useful details and quickly find information when you need it.
-                  </p>
-                  <Button variant="outline" className="mt-2">
-                    Learn more about Custom Fields
-                  </Button>
+                <CardContent>
+                  {renderCustomFields()}
                 </CardContent>
               </Card>
 
