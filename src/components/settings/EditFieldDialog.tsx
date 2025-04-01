@@ -12,21 +12,19 @@ import { toast } from '@/hooks/use-toast';
 import { Loader2, Plus, X } from 'lucide-react';
 import { CustomFieldDefinition } from '@/types/customField';
 
-interface CustomFieldDialogProps {
+interface EditFieldDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  entityType: 'contact' | 'matter' | 'task';
-  fieldSetId?: string;
+  field: CustomFieldDefinition;
   onSuccess?: () => void;
 }
 
-export function CustomFieldDialog({
+export function EditFieldDialog({
   open,
   onOpenChange,
-  entityType,
-  fieldSetId,
+  field,
   onSuccess
-}: CustomFieldDialogProps) {
+}: EditFieldDialogProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState('');
@@ -35,7 +33,17 @@ export function CustomFieldDialog({
   const [defaultValue, setDefaultValue] = useState('');
   const [options, setOptions] = useState<string[]>([]);
   const [optionInput, setOptionInput] = useState('');
-
+  
+  useEffect(() => {
+    if (field) {
+      setName(field.name || '');
+      setFieldType(field.field_type);
+      setIsRequired(field.is_required || false);
+      setDefaultValue(field.default_value || '');
+      setOptions(field.options || []);
+    }
+  }, [field]);
+  
   const handleAddOption = () => {
     if (optionInput.trim() && !options.includes(optionInput.trim())) {
       setOptions([...options, optionInput.trim()]);
@@ -48,23 +56,14 @@ export function CustomFieldDialog({
     newOptions.splice(index, 1);
     setOptions(newOptions);
   };
-
-  const resetForm = () => {
-    setName('');
-    setFieldType('text');
-    setIsRequired(false);
-    setDefaultValue('');
-    setOptions([]);
-    setOptionInput('');
-  };
-
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!user) {
       toast({
         title: "Error",
-        description: "You must be logged in to create custom fields.",
+        description: "You must be logged in to edit custom fields.",
         variant: "destructive"
       });
       return;
@@ -78,80 +77,40 @@ export function CustomFieldDialog({
       });
       return;
     }
-
+    
     try {
       setLoading(true);
       
-      // Get user's organization ID
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('organization_id')
-        .eq('id', user.id)
-        .single();
-      
-      if (!profileData?.organization_id) {
-        throw new Error("Organization not found");
-      }
-
-      // Get the next position for the field
-      const positionQuery = supabase
-        .from('custom_field_definitions')
-        .select('position')
-        .eq('organization_id', profileData.organization_id)
-        .eq('entity_type', entityType);
-        
-      if (fieldSetId) {
-        positionQuery.eq('field_set', fieldSetId);
-      } else {
-        positionQuery.is('field_set', null);
-      }
-      
-      const { data: positionData } = await positionQuery
-        .order('position', { ascending: false })
-        .limit(1);
-        
-      const nextPosition = positionData && positionData.length > 0
-        ? (positionData[0].position || 0) + 1
-        : 0;
-      
       const fieldData = {
-        organization_id: profileData.organization_id,
         name: name.trim(),
-        field_type: fieldType,
-        entity_type: entityType,
-        field_set: fieldSetId || null,
-        default_value: defaultValue || null,
         is_required: isRequired,
+        default_value: defaultValue || null,
         options: fieldType === 'select' ? options : null,
-        position: nextPosition
+        updated_at: new Date().toISOString()
       };
 
       const { error } = await supabase
         .from('custom_field_definitions')
-        .insert(fieldData);
+        .update(fieldData)
+        .eq('id', field.id);
         
       if (error) {
-        if (error.code === '23505') {
-          // Unique constraint violation
-          throw new Error("A field with this name already exists");
-        }
         throw error;
       }
 
       toast({
         title: "Success",
-        description: "Custom field created successfully."
+        description: "Custom field updated successfully."
       });
       
       if (onSuccess) onSuccess();
-      resetForm();
       onOpenChange(false);
       
     } catch (error: any) {
-      console.error('Error creating custom field:', error);
+      console.error('Error updating custom field:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to create custom field.",
+        description: error.message || "Failed to update custom field.",
         variant: "destructive"
       });
     } finally {
@@ -163,10 +122,9 @@ export function CustomFieldDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Create Custom Field</DialogTitle>
+          <DialogTitle>Edit Custom Field</DialogTitle>
           <DialogDescription>
-            Add a new custom field for {entityType === 'contact' ? 'contacts' : entityType === 'matter' ? 'matters' : 'tasks'}.
-            {fieldSetId ? " This field will be added to the selected field set." : " This field will be available for all items of this type."}
+            Update the details of this custom field.
           </DialogDescription>
         </DialogHeader>
         
@@ -183,24 +141,14 @@ export function CustomFieldDialog({
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="fieldType">Field Type <span className="text-red-500">*</span></Label>
-            <Select 
-              value={fieldType} 
-              onValueChange={(value) => setFieldType(value as CustomFieldDefinition['field_type'])}>
-              <SelectTrigger id="fieldType">
-                <SelectValue placeholder="Select field type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="text">Text</SelectItem>
-                <SelectItem value="number">Number</SelectItem>
-                <SelectItem value="date">Date</SelectItem>
-                <SelectItem value="select">Dropdown</SelectItem>
-                <SelectItem value="checkbox">Checkbox</SelectItem>
-                <SelectItem value="email">Email</SelectItem>
-                <SelectItem value="phone">Phone</SelectItem>
-                <SelectItem value="url">URL</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label htmlFor="fieldType">Field Type</Label>
+            <Input
+              id="fieldType"
+              value={getFieldTypeLabel(fieldType)}
+              disabled
+              className="bg-muted"
+            />
+            <p className="text-xs text-muted-foreground">Field type cannot be changed after creation.</p>
           </div>
           
           <div className="flex items-center space-x-2">
@@ -269,11 +217,34 @@ export function CustomFieldDialog({
             </Button>
             <Button type="submit" disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create Field
+              Save Changes
             </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
   );
+}
+
+function getFieldTypeLabel(fieldType: string) {
+  switch (fieldType) {
+    case 'text':
+      return 'Text';
+    case 'number':
+      return 'Number';
+    case 'date':
+      return 'Date';
+    case 'select':
+      return 'Dropdown';
+    case 'checkbox':
+      return 'Checkbox';
+    case 'email':
+      return 'Email';
+    case 'phone':
+      return 'Phone';
+    case 'url':
+      return 'URL';
+    default:
+      return fieldType;
+  }
 }

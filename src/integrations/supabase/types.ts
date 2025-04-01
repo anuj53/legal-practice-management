@@ -301,36 +301,80 @@ export type Database = {
           created_at: string | null
           default_value: string | null
           entity_type: string
+          field_set: string | null
           field_type: string
           id: string
           is_required: boolean | null
           name: string
           options: Json | null
           organization_id: string
+          position: number | null
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
           default_value?: string | null
           entity_type: string
+          field_set?: string | null
           field_type: string
           id?: string
           is_required?: boolean | null
           name: string
           options?: Json | null
           organization_id: string
+          position?: number | null
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
           default_value?: string | null
           entity_type?: string
+          field_set?: string | null
           field_type?: string
           id?: string
           is_required?: boolean | null
           name?: string
           options?: Json | null
           organization_id?: string
+          position?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_field_definitions_field_set_fkey"
+            columns: ["field_set"]
+            isOneToOne: false
+            referencedRelation: "custom_field_sets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      custom_field_sets: {
+        Row: {
+          created_at: string | null
+          entity_type: string
+          id: string
+          name: string
+          organization_id: string
+          position: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          entity_type: string
+          id?: string
+          name: string
+          organization_id: string
+          position?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          entity_type?: string
+          id?: string
+          name?: string
+          organization_id?: string
+          position?: number | null
           updated_at?: string | null
         }
         Relationships: []

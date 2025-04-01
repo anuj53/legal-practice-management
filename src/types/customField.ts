@@ -10,6 +10,19 @@ export interface CustomFieldDefinition {
   options: string[] | null;
   created_at: string;
   updated_at: string;
+  field_set: string | null;
+  position: number;
+}
+
+export interface CustomFieldSet {
+  id: string;
+  organization_id: string;
+  name: string;
+  entity_type: 'contact' | 'matter' | 'task';
+  position: number;
+  created_at: string;
+  updated_at: string;
+  fields?: CustomFieldDefinition[];
 }
 
 export interface CustomFieldValue {

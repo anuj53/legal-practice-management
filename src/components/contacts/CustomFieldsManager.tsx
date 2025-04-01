@@ -12,6 +12,8 @@ import { toast } from '@/hooks/use-toast';
 import { Plus, Settings, Loader2 } from 'lucide-react';
 import { CustomFieldDialog } from './CustomFieldDialog';
 import { CustomFieldDefinition, CustomFieldFormValue } from '@/types/customField';
+import { Separator } from '@/components/ui/separator';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 interface CustomFieldsManagerProps {
   entityType: 'contact' | 'matter' | 'task';
@@ -29,9 +31,10 @@ export function CustomFieldsManager({
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [fields, setFields] = useState<CustomFieldDefinition[]>([]);
+  const [fieldSets, setFieldSets] = useState<any[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   
-  // Fetch available custom fields
+  // Fetch available custom fields and field sets
   useEffect(() => {
     const fetchCustomFields = async () => {
       if (!user) return;
@@ -39,15 +42,61 @@ export function CustomFieldsManager({
       try {
         setLoading(true);
         
-        const { data, error } = await supabase
+        // Get user's organization ID
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('organization_id')
+          .eq('id', user.id)
+          .maybeSingle();
+          
+        if (!profileData?.organization_id) {
+          setLoading(false);
+          return;
+        }
+        
+        const organizationId = profileData.organization_id;
+        
+        // Fetch field sets first
+        const { data: setsData, error: setsError } = await supabase
+          .from('custom_field_sets')
+          .select('*')
+          .eq('organization_id', organizationId)
+          .eq('entity_type', entityType)
+          .order('position');
+        
+        if (setsError) throw setsError;
+        
+        const sets = setsData || [];
+        setFieldSets(sets);
+        
+        // Fetch fields for each set
+        const updatedSets = [...sets];
+        
+        for (const [index, set] of updatedSets.entries()) {
+          const { data: fieldsInSetData, error: fieldsInSetError } = await supabase
+            .from('custom_field_definitions')
+            .select('*')
+            .eq('organization_id', organizationId)
+            .eq('field_set', set.id)
+            .order('position');
+          
+          if (fieldsInSetError) throw fieldsInSetError;
+          updatedSets[index].fields = fieldsInSetData || [];
+        }
+        
+        setFieldSets(updatedSets);
+        
+        // Fetch standalone fields (fields with no set)
+        const { data: standaloneFieldsData, error: standaloneFieldsError } = await supabase
           .from('custom_field_definitions')
           .select('*')
+          .eq('organization_id', organizationId)
           .eq('entity_type', entityType)
-          .order('name');
-          
-        if (error) throw error;
+          .is('field_set', null)
+          .order('position');
         
-        setFields(data || []);
+        if (standaloneFieldsError) throw standaloneFieldsError;
+        setFields(standaloneFieldsData || []);
       } catch (error) {
         console.error('Error fetching custom fields:', error);
         toast({
@@ -231,20 +280,53 @@ export function CustomFieldsManager({
     );
   }
 
+  // Check if there are any fields or field sets
+  const hasContent = fields.length > 0 || fieldSets.length > 0;
+
   return (
-    <div className="space-y-4">
-      {fields.length > 0 ? (
-        <div className="space-y-4">
-          {fields.map((field) => (
-            <div key={field.id} className="space-y-1">
-              <Label>
-                {field.name}
-                {field.is_required && <span className="text-red-500 ml-1">*</span>}
-              </Label>
-              {renderFieldInput(field)}
+    <div className="space-y-6">
+      {hasContent ? (
+        <>
+          {/* Render field sets */}
+          {fieldSets.length > 0 && (
+            <div className="space-y-4">
+              {fieldSets.map((fieldSet) => (
+                <div key={fieldSet.id} className="border rounded-lg p-4">
+                  <h3 className="font-medium text-lg mb-4">{fieldSet.name}</h3>
+                  <div className="space-y-4">
+                    {fieldSet.fields && fieldSet.fields.map((field: CustomFieldDefinition) => (
+                      <div key={field.id} className="space-y-1">
+                        <Label>
+                          {field.name}
+                          {field.is_required && <span className="text-red-500 ml-1">*</span>}
+                        </Label>
+                        {renderFieldInput(field)}
+                      </div>
+                    ))}
+                    {(!fieldSet.fields || fieldSet.fields.length === 0) && (
+                      <p className="text-muted-foreground text-sm">No fields in this set</p>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          )}
+
+          {/* Render standalone fields */}
+          {fields.length > 0 && (
+            <div className="space-y-4">
+              {fields.map((field) => (
+                <div key={field.id} className="space-y-1">
+                  <Label>
+                    {field.name}
+                    {field.is_required && <span className="text-red-500 ml-1">*</span>}
+                  </Label>
+                  {renderFieldInput(field)}
+                </div>
+              ))}
+            </div>
+          )}
+        </>
       ) : (
         <div className="text-center p-4 border border-dashed border-gray-200 rounded-md">
           <p className="text-gray-500 mb-2">No custom fields defined yet</p>
@@ -270,18 +352,76 @@ export function CustomFieldsManager({
         entityType={entityType}
         onSuccess={() => {
           // Refresh the fields list
-          setFields([]);
           setLoading(true);
+          setFields([]);
+          setFieldSets([]);
+          
+          // Get user's organization ID
           supabase
-            .from('custom_field_definitions')
-            .select('*')
-            .eq('entity_type', entityType)
-            .order('name')
-            .then(({ data, error }) => {
-              setLoading(false);
-              if (!error && data) {
-                setFields(data);
+            .from('profiles')
+            .select('organization_id')
+            .eq('id', user?.id)
+            .maybeSingle()
+            .then(({ data: profileData }) => {
+              if (!profileData?.organization_id) {
+                setLoading(false);
+                return;
               }
+              
+              const organizationId = profileData.organization_id;
+              
+              // Fetch field sets
+              supabase
+                .from('custom_field_sets')
+                .select('*')
+                .eq('organization_id', organizationId)
+                .eq('entity_type', entityType)
+                .order('position')
+                .then(({ data: setsData, error: setsError }) => {
+                  if (setsError) {
+                    console.error('Error fetching field sets:', setsError);
+                    setLoading(false);
+                    return;
+                  }
+                  
+                  const sets = setsData || [];
+                  setFieldSets(sets);
+                  
+                  // Fetch fields for each set
+                  const fetchFieldsForSets = async () => {
+                    const updatedSets = [...sets];
+                    
+                    for (const [index, set] of updatedSets.entries()) {
+                      const { data: fieldsInSetData } = await supabase
+                        .from('custom_field_definitions')
+                        .select('*')
+                        .eq('organization_id', organizationId)
+                        .eq('field_set', set.id)
+                        .order('position');
+                      
+                      updatedSets[index].fields = fieldsInSetData || [];
+                    }
+                    
+                    setFieldSets(updatedSets);
+                  };
+                  
+                  fetchFieldsForSets();
+                  
+                  // Fetch standalone fields
+                  supabase
+                    .from('custom_field_definitions')
+                    .select('*')
+                    .eq('organization_id', organizationId)
+                    .eq('entity_type', entityType)
+                    .is('field_set', null)
+                    .order('position')
+                    .then(({ data: fieldsData, error: fieldsError }) => {
+                      setLoading(false);
+                      if (!fieldsError && fieldsData) {
+                        setFields(fieldsData);
+                      }
+                    });
+                });
             });
         }}
       />

@@ -13,6 +13,7 @@ import ContactDetail from '@/pages/ContactDetail';
 import ContactEdit from '@/pages/ContactEdit';
 import WorkflowTemplates from '@/pages/WorkflowTemplates';
 import AccountSettings from '@/pages/AccountSettings';
+import Settings from '@/pages/Settings';
 import { AuthRoute } from './components/auth/AuthRoute';
 import { AuthProvider } from './hooks/useAuth';
 
@@ -32,6 +33,7 @@ function App() {
               <Route path="/contacts/:id/edit" element={<ContactEdit />} />
               <Route path="/workflow-templates" element={<WorkflowTemplates />} />
               <Route path="/account-settings" element={<AccountSettings />} />
+              <Route path="/settings" element={<Settings />} />
               <Route path="/matter" element={<NotFound />} />
               <Route path="*" element={<NotFound />} />
             </Route>
