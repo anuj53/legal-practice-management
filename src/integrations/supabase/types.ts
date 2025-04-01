@@ -934,11 +934,85 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      delete_contact_field_assignments: {
+        Args: {
+          contact_id_param: string
+        }
+        Returns: undefined
+      }
       delete_recurrence_rule: {
         Args: {
           rule_id: string
         }
         Returns: boolean
+      }
+      get_contact_field_assignments: {
+        Args: {
+          contact_id_param: string
+        }
+        Returns: {
+          id: string
+          contact_id: string
+          field_id: string
+          created_at: string
+        }[]
+      }
+      get_contact_field_set_assignments: {
+        Args: {
+          contact_id_param: string
+        }
+        Returns: {
+          id: string
+          contact_id: string
+          field_set_id: string
+          created_at: string
+        }[]
+      }
+      get_contact_field_sets_with_details: {
+        Args: {
+          contact_id_param: string
+        }
+        Returns: {
+          id: string
+          name: string
+          organization_id: string
+          entity_type: string
+          pos_order: number
+          created_at: string
+          updated_at: string
+          fields: Json
+        }[]
+      }
+      get_contact_individual_fields: {
+        Args: {
+          contact_id_param: string
+        }
+        Returns: {
+          id: string
+          organization_id: string
+          name: string
+          field_type: string
+          entity_type: string
+          default_value: string
+          is_required: boolean
+          options: Json
+          created_at: string
+          updated_at: string
+          field_set: string
+          pos_order: number
+        }[]
+      }
+      insert_contact_field_assignments: {
+        Args: {
+          assignments: Json
+        }
+        Returns: undefined
+      }
+      insert_contact_field_set_assignments: {
+        Args: {
+          assignments: Json
+        }
+        Returns: undefined
       }
       is_organization_admin: {
         Args: {

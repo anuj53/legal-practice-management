@@ -12,6 +12,7 @@ export interface CustomFieldDefinition {
   updated_at: string;
   field_set: string | null;
   position: number;
+  pos_order?: number; // Added for compatibility with RPC function returns
 }
 
 export interface CustomFieldSet {
@@ -20,6 +21,7 @@ export interface CustomFieldSet {
   name: string;
   entity_type: 'contact' | 'matter' | 'task';
   position: number;
+  pos_order?: number; // Added for compatibility with RPC function returns
   created_at: string;
   updated_at: string;
   fields?: CustomFieldDefinition[];
@@ -73,7 +75,7 @@ export function mapToCustomFieldDefinition(data: any): CustomFieldDefinition {
     created_at: data.created_at,
     updated_at: data.updated_at,
     field_set: data.field_set,
-    position: data.position || 0
+    position: data.position || data.pos_order || 0 // Support both field names
   };
 }
 
@@ -96,10 +98,12 @@ export function mapToCustomFieldSet(data: any): CustomFieldSet {
     organization_id: data.organization_id,
     name: data.name,
     entity_type: data.entity_type,
-    position: data.position || 0,
+    position: data.position || data.pos_order || 0, // Support both field names
     created_at: data.created_at,
     updated_at: data.updated_at,
-    fields: data.fields ? data.fields.map(mapToCustomFieldDefinition) : []
+    fields: data.fields ? 
+      (Array.isArray(data.fields) ? data.fields.map(mapToCustomFieldDefinition) : []) 
+      : []
   };
 }
 

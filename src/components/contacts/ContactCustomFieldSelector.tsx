@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -79,36 +80,24 @@ export function ContactCustomFieldSelector({
         const mappedFields = (fieldsData || []).map(mapToCustomFieldDefinition);
         setIndividualFields(mappedFields);
         
-        // Fetch currently selected field sets for this contact using custom rpc
+        // Fetch currently selected field sets for this contact using RPC
         const { data: setAssignmentsData, error: setAssignmentsError } = await supabase
           .rpc('get_contact_field_set_assignments', { contact_id_param: contactId });
           
         if (setAssignmentsError) {
           console.error('Error fetching field set assignments:', setAssignmentsError);
-          // Fallback to raw query if RPC doesn't exist yet
-          const { data: rawSetAssignments } = await supabase
-            .from('contact_field_set_assignments')
-            .select('field_set_id')
-            .eq('contact_id', contactId);
-            
-          setSelectedFieldSets((rawSetAssignments || []).map(item => item.field_set_id));
+          setSelectedFieldSets([]);
         } else {
           setSelectedFieldSets((setAssignmentsData || []).map(item => item.field_set_id));
         }
         
-        // Fetch currently selected individual fields for this contact using custom rpc
+        // Fetch currently selected individual fields for this contact using RPC
         const { data: fieldAssignmentsData, error: fieldAssignmentsError } = await supabase
           .rpc('get_contact_field_assignments', { contact_id_param: contactId });
           
         if (fieldAssignmentsError) {
           console.error('Error fetching field assignments:', fieldAssignmentsError);
-          // Fallback to raw query if RPC doesn't exist yet
-          const { data: rawFieldAssignments } = await supabase
-            .from('contact_field_assignments')
-            .select('field_id')
-            .eq('contact_id', contactId);
-            
-          setSelectedIndividualFields((rawFieldAssignments || []).map(item => item.field_id));
+          setSelectedIndividualFields([]);
         } else {
           setSelectedIndividualFields((fieldAssignmentsData || []).map(item => item.field_id));
         }
@@ -154,21 +143,12 @@ export function ContactCustomFieldSelector({
         .rpc('delete_contact_field_assignments', { contact_id_param: contactId });
         
       if (deleteError) {
-        console.error('Error deleting existing assignments:', deleteError);
-        // Fallback if RPC doesn't exist yet
-        await supabase
-          .from('contact_field_set_assignments')
-          .delete()
-          .eq('contact_id', contactId);
-          
-        await supabase
-          .from('contact_field_assignments')
-          .delete()
-          .eq('contact_id', contactId);
+        throw deleteError;
       }
         
       // Add new field set assignments
       if (selectedFieldSets.length > 0) {
+        // Prepare data for bulk insert via RPC
         const fieldSetAssignments = selectedFieldSets.map(fieldSetId => ({
           contact_id: contactId,
           field_set_id: fieldSetId
@@ -180,18 +160,13 @@ export function ContactCustomFieldSelector({
         );
         
         if (insertSetsError) {
-          console.error('Error inserting field set assignments:', insertSetsError);
-          // Fallback if RPC doesn't exist
-          for (const assignment of fieldSetAssignments) {
-            await supabase
-              .from('contact_field_set_assignments')
-              .insert(assignment);
-          }
+          throw insertSetsError;
         }
       }
       
       // Add new individual field assignments
       if (selectedIndividualFields.length > 0) {
+        // Prepare data for bulk insert via RPC
         const fieldAssignments = selectedIndividualFields.map(fieldId => ({
           contact_id: contactId,
           field_id: fieldId
@@ -203,13 +178,7 @@ export function ContactCustomFieldSelector({
         );
         
         if (insertFieldsError) {
-          console.error('Error inserting field assignments:', insertFieldsError);
-          // Fallback if RPC doesn't exist
-          for (const assignment of fieldAssignments) {
-            await supabase
-              .from('contact_field_assignments')
-              .insert(assignment);
-          }
+          throw insertFieldsError;
         }
       }
       
