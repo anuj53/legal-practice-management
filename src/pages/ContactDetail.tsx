@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -560,7 +559,7 @@ export default function ContactDetail() {
                 </CardHeader>
                 <CardContent className="pt-2 text-center">
                   <p className="text-gray-600 mb-4">
-                    Custom Fields let you configure YorPro to meet your firm's unique needs. Create Custom Fields to store useful details and quickly find information when you need it.
+                    Custom Fields let you configure the system to meet your firm's unique needs. Create Custom Fields to store useful details and quickly find information when you need it.
                   </p>
                   <Button variant="outline" className="mt-2">
                     Learn more about Custom Fields
