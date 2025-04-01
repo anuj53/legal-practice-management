@@ -12,7 +12,11 @@ import {
   CustomFieldSet, 
   CustomFieldDefinition,
   mapToCustomFieldSet,
-  mapToCustomFieldDefinition
+  mapToCustomFieldDefinition,
+  ContactFieldSetAssignment,
+  ContactFieldAssignment,
+  mapToContactFieldSetAssignment,
+  mapToContactFieldAssignment
 } from '@/types/customField';
 
 interface ContactCustomFieldSelectorProps {
@@ -80,26 +84,30 @@ export function ContactCustomFieldSelector({
         const mappedFields = (fieldsData || []).map(mapToCustomFieldDefinition);
         setIndividualFields(mappedFields);
         
-        // Fetch currently selected field sets for this contact using RPC
+        // Fetch currently selected field sets for this contact
         const { data: setAssignmentsData, error: setAssignmentsError } = await supabase
           .rpc('get_contact_field_set_assignments', { contact_id_param: contactId });
           
         if (setAssignmentsError) {
           console.error('Error fetching field set assignments:', setAssignmentsError);
           setSelectedFieldSets([]);
+        } else if (Array.isArray(setAssignmentsData)) {
+          setSelectedFieldSets(setAssignmentsData.map(item => item.field_set_id));
         } else {
-          setSelectedFieldSets((setAssignmentsData || []).map(item => item.field_set_id));
+          setSelectedFieldSets([]);
         }
         
-        // Fetch currently selected individual fields for this contact using RPC
+        // Fetch currently selected individual fields for this contact
         const { data: fieldAssignmentsData, error: fieldAssignmentsError } = await supabase
           .rpc('get_contact_field_assignments', { contact_id_param: contactId });
           
         if (fieldAssignmentsError) {
           console.error('Error fetching field assignments:', fieldAssignmentsError);
           setSelectedIndividualFields([]);
+        } else if (Array.isArray(fieldAssignmentsData)) {
+          setSelectedIndividualFields(fieldAssignmentsData.map(item => item.field_id));
         } else {
-          setSelectedIndividualFields((fieldAssignmentsData || []).map(item => item.field_id));
+          setSelectedIndividualFields([]);
         }
       } catch (error) {
         console.error('Error fetching custom fields:', error);

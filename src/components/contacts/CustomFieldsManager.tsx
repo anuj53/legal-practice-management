@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -68,8 +69,8 @@ export function CustomFieldsManager({
           if (fieldSetsError) {
             console.error('Error fetching field sets with details:', fieldSetsError);
             setFieldSets([]);
-          } else {
-            const processedSets = (fieldSetsWithDetails || []).map(set => {
+          } else if (Array.isArray(fieldSetsWithDetails)) {
+            const processedSets = fieldSetsWithDetails.map(set => {
               const fieldSet = mapToCustomFieldSet({
                 id: set.id,
                 name: set.name,
@@ -97,6 +98,8 @@ export function CustomFieldsManager({
             });
             
             setFieldSets(processedSets);
+          } else {
+            setFieldSets([]);
           }
           
           const { data: individualFieldsData, error: individualFieldsError } = await supabase
@@ -105,14 +108,16 @@ export function CustomFieldsManager({
           if (individualFieldsError) {
             console.error('Error fetching individual fields:', individualFieldsError);
             setFields([]);
-          } else {
-            const mappedFields = (individualFieldsData || []).map(field => 
+          } else if (Array.isArray(individualFieldsData)) {
+            const mappedFields = individualFieldsData.map(field => 
               mapToCustomFieldDefinition({
                 ...field,
                 position: field.pos_order
               })
             );
             setFields(mappedFields);
+          } else {
+            setFields([]);
           }
         } else {
           const { data: setsData, error: setsError } = await supabase
@@ -358,8 +363,8 @@ export function CustomFieldsManager({
         if (fieldSetsError) {
           console.error('Error fetching field sets with details:', fieldSetsError);
           setFieldSets([]);
-        } else {
-          const processedSets = (fieldSetsWithDetails || []).map(set => {
+        } else if (Array.isArray(fieldSetsWithDetails)) {
+          const processedSets = fieldSetsWithDetails.map(set => {
             const fieldSet = mapToCustomFieldSet({
               id: set.id,
               name: set.name,
@@ -387,6 +392,8 @@ export function CustomFieldsManager({
           });
           
           setFieldSets(processedSets);
+        } else {
+          setFieldSets([]);
         }
         
         const { data: individualFieldsData, error: individualFieldsError } = await supabase
@@ -395,14 +402,16 @@ export function CustomFieldsManager({
         if (individualFieldsError) {
           console.error('Error fetching individual fields:', individualFieldsError);
           setFields([]);
-        } else {
-          const mappedFields = (individualFieldsData || []).map(field => 
+        } else if (Array.isArray(individualFieldsData)) {
+          const mappedFields = individualFieldsData.map(field => 
             mapToCustomFieldDefinition({
               ...field,
               position: field.pos_order
             })
           );
           setFields(mappedFields);
+        } else {
+          setFields([]);
         }
       } else {
         const { data: setsData } = await supabase
