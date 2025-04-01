@@ -55,7 +55,6 @@ export default function ContactDetail() {
   const [matters, setMatters] = useState<Matter[]>([]);
   const [activeTab, setActiveTab] = useState('dashboard');
 
-  // Fetch contact types once on component mount
   useEffect(() => {
     const fetchContactTypes = async () => {
       try {
@@ -79,7 +78,6 @@ export default function ContactDetail() {
     fetchContactTypes();
   }, []); // Only run once on mount
 
-  // Separate effect for fetching contact and related data
   useEffect(() => {
     const fetchContact = async () => {
       if (!id || !user) return;
@@ -87,7 +85,6 @@ export default function ContactDetail() {
       try {
         setLoading(true);
         
-        // Fetch the contact with tags
         const { data: contactData, error: contactError } = await supabase
           .from('contacts')
           .select(`
@@ -101,14 +98,11 @@ export default function ContactDetail() {
           
         if (contactError) throw contactError;
 
-        // Process contact data for type safety
         const processedContact = processContactFromDatabase(contactData);
         
         setContact(processedContact);
 
-        // Check if we have contact types and it's a company before fetching employees
         if (contactTypes.length > 0 && processedContact.contact_type_id === contactTypes.find(t => t.name === 'Company')?.id) {
-          // Fixed query - specify the relationship explicitly
           const { data: employeeData, error: employeeError } = await supabase
             .from('company_employees')
             .select(`
@@ -125,13 +119,10 @@ export default function ContactDetail() {
           
           if (employeeError) throw employeeError;
           
-          // Type assertion to ensure the employee data matches our expected type
           const typedEmployees = employeeData as unknown as CompanyEmployee[];
           setEmployees(typedEmployees);
         }
 
-        // Fetch matters related to this contact (placeholder for now)
-        // TODO: Replace with actual matter data when available
         setMatters([]);
         
       } catch (error) {
@@ -228,7 +219,6 @@ export default function ContactDetail() {
 
   return (
     <div className="space-y-6">
-      {/* Header with back button and contact info */}
       <div className="flex items-center gap-2 mb-6">
         <Button variant="ghost" size="sm" onClick={() => navigate('/contacts')}>
           <ChevronLeft className="h-4 w-4 mr-1" />
@@ -274,7 +264,6 @@ export default function ContactDetail() {
         </div>
       </div>
 
-      {/* Action buttons */}
       <div className="flex gap-2 justify-end">
         <Button variant="outline">
           Quick bill
@@ -282,13 +271,12 @@ export default function ContactDetail() {
         <Button variant="outline">
           New trust request
         </Button>
-        <Button>
+        <Button onClick={() => navigate(`/contacts/${id}/edit`)}>
           <Edit className="mr-2 h-4 w-4" />
           Edit contact
         </Button>
       </div>
 
-      {/* Tabs for different sections */}
       <Tabs defaultValue="dashboard" value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
@@ -301,7 +289,6 @@ export default function ContactDetail() {
         
         <TabsContent value="dashboard" className="mt-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left column */}
             <div className="space-y-6 col-span-1">
               <Card>
                 <CardHeader className="pb-3">
@@ -390,7 +377,6 @@ export default function ContactDetail() {
               </Card>
             </div>
 
-            {/* Right column (spans 2 columns on large screens) */}
             <div className="space-y-6 col-span-1 lg:col-span-2">
               <Card>
                 <CardHeader className="pb-3">
