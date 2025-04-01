@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -109,18 +108,15 @@ export function ContactDialog({
     setFormValues(prev => ({ ...prev, [name]: checked }));
   };
 
-  // Updated function to properly handle contact type changes
   const handleContactTypeChange = (value: string) => {
-    const contactTypeName = contactTypes.find(t => t.id === value)?.name || '';
+    console.log('Contact type changed to:', value);
     
-    // Make sure UI updates when switching back to Person
     setFormValues(prev => ({ 
       ...prev,
       contact_type_id: value
     }));
   };
-  
-  
+
   const handleEmailChange = (index: number, field: keyof EmailAddress, value: string | boolean) => {
     setFormValues(prev => {
       const newEmails = [...(prev.emails || [])];
@@ -221,7 +217,6 @@ export function ContactDialog({
     });
   };
 
-  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -331,6 +326,7 @@ export function ContactDialog({
   };
 
   const isPersonType = getContactTypeName(formValues.contact_type_id) === 'Person';
+  console.log('Current contact type:', isPersonType ? 'Person' : 'Company');
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -356,7 +352,6 @@ export function ContactDialog({
             </TabsList>
             
             <TabsContent value="contact-info" className="mt-4 space-y-6">
-              {/* Person/Company selector */}
               <div className="space-y-2">
                 <Label>Is this contact a person or a company?</Label>
                 <RadioGroup 
@@ -368,10 +363,9 @@ export function ContactDialog({
                     <div 
                       key={type.id} 
                       className={`
-                        flex items-center space-x-2 border rounded-lg p-4 cursor-pointer
+                        flex items-center space-x-2 border rounded-lg p-4
                         ${formValues.contact_type_id === type.id ? 'border-yorpro-600 bg-yorpro-50' : 'border-gray-200'}
                       `}
-                      onClick={() => handleContactTypeChange(type.id)}
                     >
                       <RadioGroupItem value={type.id} id={type.id} />
                       <Label htmlFor={type.id} className="cursor-pointer flex items-center gap-2">
@@ -387,7 +381,6 @@ export function ContactDialog({
                 </RadioGroup>
               </div>
               
-              {/* Profile photo section */}
               <div className="space-y-2">
                 <Label>Profile photo</Label>
                 <div className="flex items-center gap-2">
@@ -397,7 +390,6 @@ export function ContactDialog({
                 </div>
               </div>
               
-              {/* Person/Company specific fields */}
               {isPersonType ? (
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
@@ -497,7 +489,6 @@ export function ContactDialog({
                 </div>
               )}
               
-              {/* Email section */}
               <div className="space-y-4">
                 <Label>Email</Label>
                 {formValues.emails?.map((email, index) => (
@@ -559,7 +550,6 @@ export function ContactDialog({
                 </Button>
               </div>
               
-              {/* Phone section */}
               <div className="space-y-4">
                 <Label>Phone</Label>
                 {formValues.phones?.map((phone, index) => (
@@ -623,7 +613,6 @@ export function ContactDialog({
                 </Button>
               </div>
               
-              {/* Website section */}
               <div className="space-y-4">
                 <Label>Website</Label>
                 {formValues.websites?.map((website, index) => (
@@ -685,7 +674,6 @@ export function ContactDialog({
                 </Button>
               </div>
               
-              {/* Address section */}
               <div className="space-y-4">
                 <Label>Address</Label>
                 {formValues.addresses?.map((address, index) => (
@@ -771,7 +759,6 @@ export function ContactDialog({
                 </Button>
               </div>
               
-              {/* Tags section */}
               <div className="space-y-2">
                 <Label>Tags</Label>
                 <div className="p-4 border border-gray-100 rounded-md">
@@ -791,7 +778,6 @@ export function ContactDialog({
                 </div>
               </div>
               
-              {/* Notes section */}
               <div className="space-y-2">
                 <Label htmlFor="notes">Notes</Label>
                 <Textarea
@@ -805,7 +791,6 @@ export function ContactDialog({
               </div>
             </TabsContent>
             
-            {/* Custom Fields tab */}
             <TabsContent value="custom-fields" className="mt-4 space-y-4">
               <div className="p-4 border border-gray-100 rounded-md">
                 <div className="flex items-start">
@@ -821,7 +806,6 @@ export function ContactDialog({
               </div>
             </TabsContent>
             
-            {/* Billing preferences tab */}
             <TabsContent value="billing-prefs" className="mt-4 space-y-4">
               {!isPersonType && (
                 <div className="space-y-4 mb-6">
