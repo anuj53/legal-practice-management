@@ -43,6 +43,7 @@ export function ContactList({ contacts, contactTypes, onContactDeleted }: Contac
   const navigate = useNavigate();
   const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
   const [contactToDelete, setContactToDelete] = React.useState<Contact | null>(null);
+  const [isDeleting, setIsDeleting] = React.useState(false);
   
   if (contacts.length === 0) {
     return (
@@ -109,9 +110,61 @@ export function ContactList({ contacts, contactTypes, onContactDeleted }: Contac
   };
 
   const handleDeleteConfirm = async () => {
-    if (!contactToDelete) return;
+    if (!contactToDelete || isDeleting) return;
     
     try {
+      setIsDeleting(true);
+      
+      // First, check if the contact is a person that might be an employee of a company
+      const { error: checkError, count } = await supabase
+        .from('company_employees')
+        .select('id', { count: 'exact', head: true })
+        .eq('person_id', contactToDelete.id);
+      
+      if (checkError) throw checkError;
+      
+      // If the contact is linked as an employee, show error
+      if (count && count > 0) {
+        toast({
+          title: "Cannot delete contact",
+          description: "This contact is linked as an employee to one or more companies. Remove these links first.",
+          variant: "destructive"
+        });
+        setDeleteConfirmOpen(false);
+        setContactToDelete(null);
+        setIsDeleting(false);
+        return;
+      }
+      
+      // If the contact is a company, check for employees
+      if (contactTypes.find(t => t.name === 'Company')?.id === contactToDelete.contact_type_id) {
+        const { error: companyCheckError, count: employeeCount } = await supabase
+          .from('company_employees')
+          .select('id', { count: 'exact', head: true })
+          .eq('company_id', contactToDelete.id);
+        
+        if (companyCheckError) throw companyCheckError;
+        
+        if (employeeCount && employeeCount > 0) {
+          toast({
+            title: "Cannot delete company",
+            description: "This company has employees linked to it. Remove these links first.",
+            variant: "destructive"
+          });
+          setDeleteConfirmOpen(false);
+          setContactToDelete(null);
+          setIsDeleting(false);
+          return;
+        }
+      }
+      
+      // Delete any tag assignments for this contact
+      await supabase
+        .from('contact_tag_assignments')
+        .delete()
+        .eq('contact_id', contactToDelete.id);
+      
+      // Now delete the contact
       const { error } = await supabase
         .from('contacts')
         .delete()
@@ -132,12 +185,13 @@ export function ContactList({ contacts, contactTypes, onContactDeleted }: Contac
       console.error('Error deleting contact:', error);
       toast({
         title: "Error",
-        description: "Failed to delete contact.",
+        description: "Failed to delete contact. Please try again.",
         variant: "destructive"
       });
     } finally {
       setDeleteConfirmOpen(false);
       setContactToDelete(null);
+      setIsDeleting(false);
     }
   };
 
@@ -274,9 +328,13 @@ export function ContactList({ contacts, contactTypes, onContactDeleted }: Contac
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-600 hover:bg-red-700">
-              Delete
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteConfirm} 
+              className="bg-red-600 hover:bg-red-700"
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

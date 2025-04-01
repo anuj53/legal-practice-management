@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,6 +22,7 @@ export default function Contacts() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isClientOnly, setIsClientOnly] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     const fetchContactTypes = async () => {
@@ -46,7 +48,7 @@ export default function Contacts() {
 
   useEffect(() => {
     fetchContacts();
-  }, [user, isClientOnly]);
+  }, [user, isClientOnly, refreshKey]);
 
   const fetchContacts = async () => {
     if (!user) return;
@@ -121,6 +123,11 @@ export default function Contacts() {
     });
   };
 
+  const handleContactDeleted = () => {
+    // Trigger a refresh of the contacts list
+    setRefreshKey(prev => prev + 1);
+  };
+
   const handleExportContacts = () => {
     toast({
       title: "Export Initiated",
@@ -190,7 +197,7 @@ export default function Contacts() {
             <ContactList 
               contacts={filteredContacts} 
               contactTypes={contactTypes}
-              onContactDeleted={fetchContacts}
+              onContactDeleted={handleContactDeleted}
             />
           )}
         </TabsContent>
@@ -204,7 +211,7 @@ export default function Contacts() {
             <ContactList 
               contacts={filteredContacts} 
               contactTypes={contactTypes}
-              onContactDeleted={fetchContacts}
+              onContactDeleted={handleContactDeleted}
             />
           )}
         </TabsContent>
@@ -218,7 +225,7 @@ export default function Contacts() {
             <ContactList 
               contacts={filteredContacts} 
               contactTypes={contactTypes}
-              onContactDeleted={fetchContacts}
+              onContactDeleted={handleContactDeleted}
             />
           )}
         </TabsContent>
