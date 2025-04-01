@@ -142,8 +142,9 @@ export function exportContactsToPDF(contacts: Contact[]): void {
       },
     });
     
-    // Footer
-    const pageCount = doc.internal.getNumberOfPages();
+    // Footer with page numbers - Fix for the TypeScript error
+    // Use doc.getNumberOfPages() instead of doc.internal.getNumberOfPages()
+    const pageCount = doc.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
       doc.setFontSize(8);
