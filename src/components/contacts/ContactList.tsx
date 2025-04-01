@@ -29,14 +29,20 @@ import {
 } from 'lucide-react';
 import { Contact, ContactType } from '@/types/contact';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 interface ContactListProps {
   contacts: Contact[];
   contactTypes: ContactType[];
+  onContactDeleted?: () => void;
 }
 
-export function ContactList({ contacts, contactTypes }: ContactListProps) {
+export function ContactList({ contacts, contactTypes, onContactDeleted }: ContactListProps) {
   const navigate = useNavigate();
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
+  const [contactToDelete, setContactToDelete] = React.useState<Contact | null>(null);
   
   if (contacts.length === 0) {
     return (
@@ -96,120 +102,185 @@ export function ContactList({ contacts, contactTypes }: ContactListProps) {
     navigate(`/contacts/${contact.id}`);
   };
 
+  const handleDeleteClick = (e: React.MouseEvent, contact: Contact) => {
+    e.stopPropagation(); // Prevent row click event
+    setContactToDelete(contact);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!contactToDelete) return;
+    
+    try {
+      const { error } = await supabase
+        .from('contacts')
+        .delete()
+        .eq('id', contactToDelete.id);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Contact deleted",
+        description: "The contact has been removed successfully."
+      });
+      
+      // Refresh contact list
+      if (onContactDeleted) {
+        onContactDeleted();
+      }
+    } catch (error) {
+      console.error('Error deleting contact:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete contact.",
+        variant: "destructive"
+      });
+    } finally {
+      setDeleteConfirmOpen(false);
+      setContactToDelete(null);
+    }
+  };
+
   return (
-    <div className="rounded-md border overflow-hidden">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead className="hidden md:table-cell">Phone</TableHead>
-            <TableHead className="hidden lg:table-cell">Location</TableHead>
-            <TableHead className="hidden md:table-cell">Type</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {contacts.map((contact) => (
-            <TableRow 
-              key={contact.id} 
-              className="cursor-pointer hover:bg-muted/50"
-              onClick={() => handleRowClick(contact)}
-            >
-              <TableCell>
-                <div className="flex items-center gap-3">
-                  {getContactAvatar(contact)}
-                  <div>
-                    <div className="font-medium">{getContactName(contact)}</div>
-                    {contact.is_client && (
-                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 mt-1">
-                        Client
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              </TableCell>
-              <TableCell>
-                {contact.email ? (
-                  <div 
-                    className="flex items-center gap-2"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Mail className="h-4 w-4 text-gray-400" />
-                    <a 
-                      href={`mailto:${contact.email}`} 
-                      className="text-yorpro-600 hover:underline"
-                    >
-                      {contact.email}
-                    </a>
-                  </div>
-                ) : (
-                  <span className="text-gray-400">Not provided</span>
-                )}
-              </TableCell>
-              <TableCell className="hidden md:table-cell">
-                {contact.phone ? (
-                  <div 
-                    className="flex items-center gap-2"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Phone className="h-4 w-4 text-gray-400" />
-                    <a 
-                      href={`tel:${contact.phone}`} 
-                      className="text-yorpro-600 hover:underline"
-                    >
-                      {contact.phone}
-                    </a>
-                  </div>
-                ) : (
-                  <span className="text-gray-400">Not provided</span>
-                )}
-              </TableCell>
-              <TableCell className="hidden lg:table-cell">
-                {contact.city ? (
-                  <span>
-                    {contact.city}{contact.state ? `, ${contact.state}` : ''}
-                  </span>
-                ) : (
-                  <span className="text-gray-400">Not provided</span>
-                )}
-              </TableCell>
-              <TableCell className="hidden md:table-cell">
-                <Badge variant="outline" className={`flex items-center gap-1 ${getContactTypeColor(contact.contact_type_id)}`}>
-                  {getContactTypeIcon(contact.contact_type_id)}
-                  <span>{getContactTypeName(contact.contact_type_id)}</span>
-                </Badge>
-              </TableCell>
-              <TableCell className="text-right">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                    <Button variant="ghost" size="sm">
-                      <MoreHorizontal className="h-4 w-4" />
-                      <span className="sr-only">Open menu</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem className="flex items-center">
-                      <FileEdit className="mr-2 h-4 w-4" />
-                      <span>Edit</span>
-                    </DropdownMenuItem>
-                    {contact.contact_type_id === contactTypes.find(t => t.name === 'Company')?.id && (
-                      <DropdownMenuItem className="flex items-center">
-                        <UserPlus className="mr-2 h-4 w-4" />
-                        <span>Add Employee</span>
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuItem className="flex items-center text-red-600">
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      <span>Delete</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TableCell>
+    <>
+      <div className="rounded-md border overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead className="hidden md:table-cell">Phone</TableHead>
+              <TableHead className="hidden lg:table-cell">Location</TableHead>
+              <TableHead className="hidden md:table-cell">Type</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+          </TableHeader>
+          <TableBody>
+            {contacts.map((contact) => (
+              <TableRow 
+                key={contact.id} 
+                className="cursor-pointer hover:bg-muted/50"
+                onClick={() => handleRowClick(contact)}
+              >
+                <TableCell>
+                  <div className="flex items-center gap-3">
+                    {getContactAvatar(contact)}
+                    <div>
+                      <div className="font-medium">{getContactName(contact)}</div>
+                      {contact.is_client && (
+                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 mt-1">
+                          Client
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  {contact.email ? (
+                    <div 
+                      className="flex items-center gap-2"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Mail className="h-4 w-4 text-gray-400" />
+                      <a 
+                        href={`mailto:${contact.email}`} 
+                        className="text-yorpro-600 hover:underline"
+                      >
+                        {contact.email}
+                      </a>
+                    </div>
+                  ) : (
+                    <span className="text-gray-400">Not provided</span>
+                  )}
+                </TableCell>
+                <TableCell className="hidden md:table-cell">
+                  {contact.phone ? (
+                    <div 
+                      className="flex items-center gap-2"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Phone className="h-4 w-4 text-gray-400" />
+                      <a 
+                        href={`tel:${contact.phone}`} 
+                        className="text-yorpro-600 hover:underline"
+                      >
+                        {contact.phone}
+                      </a>
+                    </div>
+                  ) : (
+                    <span className="text-gray-400">Not provided</span>
+                  )}
+                </TableCell>
+                <TableCell className="hidden lg:table-cell">
+                  {contact.city ? (
+                    <span>
+                      {contact.city}{contact.state ? `, ${contact.state}` : ''}
+                    </span>
+                  ) : (
+                    <span className="text-gray-400">Not provided</span>
+                  )}
+                </TableCell>
+                <TableCell className="hidden md:table-cell">
+                  <Badge variant="outline" className={`flex items-center gap-1 ${getContactTypeColor(contact.contact_type_id)}`}>
+                    {getContactTypeIcon(contact.contact_type_id)}
+                    <span>{getContactTypeName(contact.contact_type_id)}</span>
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-right">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                      <Button variant="ghost" size="sm">
+                        <MoreHorizontal className="h-4 w-4" />
+                        <span className="sr-only">Open menu</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem className="flex items-center" onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/contacts/${contact.id}/edit`);
+                      }}>
+                        <FileEdit className="mr-2 h-4 w-4" />
+                        <span>Edit</span>
+                      </DropdownMenuItem>
+                      {contact.contact_type_id === contactTypes.find(t => t.name === 'Company')?.id && (
+                        <DropdownMenuItem className="flex items-center" onClick={(e) => e.stopPropagation()}>
+                          <UserPlus className="mr-2 h-4 w-4" />
+                          <span>Add Employee</span>
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuItem 
+                        className="flex items-center text-red-600" 
+                        onClick={(e) => handleDeleteClick(e, contact)}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        <span>Delete</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the contact 
+              {contactToDelete ? ` "${getContactName(contactToDelete)}"` : ''} and all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-600 hover:bg-red-700">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

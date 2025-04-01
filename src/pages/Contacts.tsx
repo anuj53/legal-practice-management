@@ -22,7 +22,6 @@ export default function Contacts() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isClientOnly, setIsClientOnly] = useState(false);
 
-  // Fetch contact types on mount
   useEffect(() => {
     const fetchContactTypes = async () => {
       try {
@@ -45,62 +44,60 @@ export default function Contacts() {
     fetchContactTypes();
   }, []);
 
-  // Fetch contacts when user changes
   useEffect(() => {
-    const fetchContacts = async () => {
-      if (!user) return;
-      
-      try {
-        setLoading(true);
-        
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('organization_id')
-          .eq('id', user.id)
-          .maybeSingle();
-        
-        if (!profileData?.organization_id) {
-          setLoading(false);
-          return;
-        }
-        
-        let query = supabase
-          .from('contacts')
-          .select(`
-            *,
-            contact_tag_assignments(
-              contact_tags(*)
-            )
-          `)
-          .eq('organization_id', profileData.organization_id);
-          
-        if (isClientOnly) {
-          query = query.eq('is_client', true);
-        }
-        
-        const { data, error } = await query;
-        
-        if (error) throw error;
-        
-        const processedContacts: Contact[] = data.map(contact => processContactFromDatabase(contact));
-        
-        setContacts(processedContacts);
-      } catch (error) {
-        console.error('Error fetching contacts:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load contacts.",
-          variant: "destructive"
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-    
     fetchContacts();
   }, [user, isClientOnly]);
 
-  // Filter contacts based on active tab and search term
+  const fetchContacts = async () => {
+    if (!user) return;
+    
+    try {
+      setLoading(true);
+      
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user.id)
+        .maybeSingle();
+      
+      if (!profileData?.organization_id) {
+        setLoading(false);
+        return;
+      }
+      
+      let query = supabase
+        .from('contacts')
+        .select(`
+          *,
+          contact_tag_assignments(
+            contact_tags(*)
+          )
+        `)
+        .eq('organization_id', profileData.organization_id);
+        
+      if (isClientOnly) {
+        query = query.eq('is_client', true);
+      }
+      
+      const { data, error } = await query;
+      
+      if (error) throw error;
+      
+      const processedContacts: Contact[] = data.map(contact => processContactFromDatabase(contact));
+      
+      setContacts(processedContacts);
+    } catch (error) {
+      console.error('Error fetching contacts:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load contacts.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const filteredContacts = contacts.filter(contact => {
     const matchesType = activeTab === 'all' || 
       (activeTab === 'people' && contact.contact_type_id === contactTypes.find(t => t.name === 'Person')?.id) ||
@@ -125,7 +122,6 @@ export default function Contacts() {
   };
 
   const handleExportContacts = () => {
-    // Export functionality will be implemented here
     toast({
       title: "Export Initiated",
       description: "Contact export feature will be implemented soon."
@@ -194,6 +190,7 @@ export default function Contacts() {
             <ContactList 
               contacts={filteredContacts} 
               contactTypes={contactTypes}
+              onContactDeleted={fetchContacts}
             />
           )}
         </TabsContent>
@@ -207,6 +204,7 @@ export default function Contacts() {
             <ContactList 
               contacts={filteredContacts} 
               contactTypes={contactTypes}
+              onContactDeleted={fetchContacts}
             />
           )}
         </TabsContent>
@@ -220,6 +218,7 @@ export default function Contacts() {
             <ContactList 
               contacts={filteredContacts} 
               contactTypes={contactTypes}
+              onContactDeleted={fetchContacts}
             />
           )}
         </TabsContent>
