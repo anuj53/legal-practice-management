@@ -9,6 +9,7 @@ import Calendar from '@/pages/Calendar';
 import Auth from '@/pages/Auth';
 import Tasks from '@/pages/Tasks';
 import WorkflowTemplates from '@/pages/WorkflowTemplates';
+import AccountSettings from '@/pages/AccountSettings';
 import { AuthRoute } from './components/auth/AuthRoute';
 import { AuthProvider } from './hooks/useAuth';
 
@@ -24,6 +25,7 @@ function App() {
               <Route path="/calendar" element={<Calendar />} />
               <Route path="/tasks" element={<Tasks />} />
               <Route path="/workflow-templates" element={<WorkflowTemplates />} />
+              <Route path="/account-settings" element={<AccountSettings />} />
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>

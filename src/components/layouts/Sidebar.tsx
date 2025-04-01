@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { UserProfile } from './UserProfile';
 
 const SidebarItem = ({ 
   icon: Icon, 
@@ -165,31 +166,8 @@ export function Sidebar({ collapsed = false, onToggleCollapse }: SidebarProps) {
         </div>
         
         {/* User profile section - fixed at bottom */}
-        <div className="flex-shrink-0 p-4 relative z-10">
-          <div className="rounded-xl bg-gradient-to-r from-yorpro-700/30 to-yorpro-800/30 backdrop-blur-md p-4 border border-white/10 shadow-lg hover:shadow-xl transition-all duration-300 group">
-            <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-yorpro-400/80 to-yorpro-500/80 flex items-center justify-center shadow-lg border border-white/20 group-hover:scale-105 transition-all duration-300">
-                <span className="font-semibold text-white">JD</span>
-              </div>
-              {!collapsed && (
-                <div>
-                  <p className="text-sm font-medium text-white">John Doe</p>
-                  <p className="text-xs text-white/70">Senior Attorney</p>
-                </div>
-              )}
-            </div>
-            {!collapsed && (
-              <div className="mt-3 pt-3 border-t border-white/10">
-                <Button 
-                  variant="glass" 
-                  size="sm" 
-                  className="w-full justify-center text-xs font-medium hover:bg-white/20"
-                >
-                  Manage Account
-                </Button>
-              </div>
-            )}
-          </div>
+        <div className="flex-shrink-0">
+          <UserProfile collapsed={collapsed} />
         </div>
       </div>
     </div>
