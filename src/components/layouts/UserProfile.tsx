@@ -164,15 +164,19 @@ export function UserProfile({ collapsed = false }: UserProfileProps) {
       <div className="rounded-xl bg-gradient-to-r from-yorpro-700/30 to-yorpro-800/30 backdrop-blur-md p-4 border border-white/10 shadow-lg hover:shadow-xl transition-all duration-300 group">
         <div className="flex items-center gap-3">
           <div className="h-12 w-12 overflow-hidden rounded-xl bg-gradient-to-br from-yorpro-400/80 to-yorpro-500/80 flex items-center justify-center shadow-lg border border-white/20 group-hover:scale-105 transition-all duration-300">
-            {profileData?.avatar_url ? (
-              <AvatarImage 
-                src={profileData.avatar_url} 
-                alt={getDisplayName()} 
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <span className="font-semibold text-white">{getInitials()}</span>
-            )}
+            <Avatar className="h-full w-full">
+              {profileData?.avatar_url ? (
+                <AvatarImage 
+                  src={profileData.avatar_url} 
+                  alt={getDisplayName()} 
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <AvatarFallback className="font-semibold text-white">
+                  {getInitials()}
+                </AvatarFallback>
+              )}
+            </Avatar>
           </div>
           {!collapsed && (
             <div>
