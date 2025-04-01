@@ -40,6 +40,7 @@ export function ContactDialog({
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('contact-info');
+  const [errors, setErrors] = useState<Record<string, string>>({});
   
   const [formValues, setFormValues] = useState<ContactFormValues>(
     contact ? {
@@ -102,6 +103,14 @@ export function ContactDialog({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormValues(prev => ({ ...prev, [name]: value }));
+    
+    if (errors[name]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
   };
 
   const handleSwitchChange = (checked: boolean, name: string) => {
@@ -115,6 +124,12 @@ export function ContactDialog({
       ...prev,
       contact_type_id: value
     }));
+    
+    const newErrors = { ...errors };
+    delete newErrors.first_name;
+    delete newErrors.last_name;
+    delete newErrors.company_name;
+    setErrors(newErrors);
   };
 
   const handleEmailChange = (index: number, field: keyof EmailAddress, value: string | boolean) => {
@@ -217,8 +232,39 @@ export function ContactDialog({
     });
   };
 
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+    const isPersonType = getContactTypeName(formValues.contact_type_id) === 'Person';
+    
+    if (isPersonType) {
+      if (!formValues.first_name?.trim()) {
+        newErrors.first_name = 'First name is required';
+      }
+      
+      if (!formValues.last_name?.trim()) {
+        newErrors.last_name = 'Last name is required';
+      }
+    } else {
+      if (!formValues.company_name?.trim()) {
+        newErrors.company_name = 'Company name is required';
+      }
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields.",
+        variant: "destructive"
+      });
+      return;
+    }
     
     if (!user) {
       toast({
@@ -328,6 +374,13 @@ export function ContactDialog({
   const isPersonType = getContactTypeName(formValues.contact_type_id) === 'Person';
   console.log('Current contact type:', isPersonType ? 'Person' : 'Company');
   
+  const RequiredLabel: React.FC<{ htmlFor?: string, children: React.ReactNode }> = ({ htmlFor, children }) => (
+    <Label htmlFor={htmlFor} className="flex">
+      {children}
+      <span className="text-red-500 ml-1">*</span>
+    </Label>
+  );
+  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[750px] max-h-[90vh] overflow-y-auto">
@@ -412,14 +465,18 @@ export function ContactDialog({
                       </Select>
                     </div>
                     <div>
-                      <Label htmlFor="first_name">First name</Label>
+                      <RequiredLabel htmlFor="first_name">First name</RequiredLabel>
                       <Input
                         id="first_name"
                         name="first_name"
                         value={formValues.first_name || ''}
                         onChange={handleChange}
                         placeholder="John"
+                        className={errors.first_name ? "border-red-500" : ""}
                       />
+                      {errors.first_name && (
+                        <p className="text-red-500 text-xs mt-1">{errors.first_name}</p>
+                      )}
                     </div>
                     <div>
                       <Label htmlFor="middle_name">Middle name</Label>
@@ -432,14 +489,18 @@ export function ContactDialog({
                       />
                     </div>
                     <div>
-                      <Label htmlFor="last_name">Last name</Label>
+                      <RequiredLabel htmlFor="last_name">Last name</RequiredLabel>
                       <Input
                         id="last_name"
                         name="last_name"
                         value={formValues.last_name || ''}
                         onChange={handleChange}
                         placeholder="Doe"
+                        className={errors.last_name ? "border-red-500" : ""}
                       />
+                      {errors.last_name && (
+                        <p className="text-red-500 text-xs mt-1">{errors.last_name}</p>
+                      )}
                     </div>
                   </div>
                   
@@ -478,14 +539,18 @@ export function ContactDialog({
                 </div>
               ) : (
                 <div>
-                  <Label htmlFor="company_name">Name</Label>
+                  <RequiredLabel htmlFor="company_name">Name</RequiredLabel>
                   <Input
                     id="company_name"
                     name="company_name"
                     value={formValues.company_name || ''}
                     onChange={handleChange}
                     placeholder="Acme Corporation"
+                    className={errors.company_name ? "border-red-500" : ""}
                   />
+                  {errors.company_name && (
+                    <p className="text-red-500 text-xs mt-1">{errors.company_name}</p>
+                  )}
                 </div>
               )}
               
