@@ -15,19 +15,21 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/components/ui/use-toast';
-import { User, UserRound, Mail, Key, Shield } from 'lucide-react';
+import { User, UserRound, Mail, Key, Shield, Image, Camera } from 'lucide-react';
 
 // Form schema for profile update
 const profileFormSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required" }),
   lastName: z.string().min(1, { message: "Last name is required" }),
   email: z.string().email({ message: "Please enter a valid email" }).optional(),
+  designation: z.string().optional(),
   role: z.string().optional(),
+  organization: z.string().optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -38,13 +40,19 @@ interface ProfileData {
   first_name: string | null;
   last_name: string | null;
   email_alias: string | null;
+  designation: string | null;
   created_at: string | null;
+  avatar_url: string | null;
+  organization_id: string | null;
+  organization_name?: string | null;
 }
 
 export default function AccountSettings() {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [organizationName, setOrganizationName] = useState<string | null>(null);
   
   // Initialize the form
   const form = useForm<ProfileFormValues>({
@@ -53,9 +61,32 @@ export default function AccountSettings() {
       firstName: '',
       lastName: '',
       email: user?.email || '',
+      designation: '',
       role: 'User',
+      organization: '',
     },
   });
+
+  // Fetch organization info
+  const fetchOrganizationInfo = async (orgId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('name')
+        .eq('id', orgId)
+        .maybeSingle();
+      
+      if (error) {
+        console.error('Error fetching organization:', error);
+        return null;
+      }
+      
+      return data?.name;
+    } catch (error) {
+      console.error('Error fetching organization:', error);
+      return null;
+    }
+  };
 
   // Fetch profile data
   useEffect(() => {
@@ -78,11 +109,19 @@ export default function AccountSettings() {
         if (data) {
           setProfileData(data);
           
+          // Fetch organization name if there's an organization_id
+          if (data.organization_id) {
+            const orgName = await fetchOrganizationInfo(data.organization_id);
+            setOrganizationName(orgName);
+          }
+          
           // Update form values
           form.reset({
             firstName: data.first_name || '',
             lastName: data.last_name || '',
             email: user.email || '',
+            designation: data.designation || '',
+            organization: organizationName || 'Harvey and Partners',
           });
         } else {
           // No profile found, create one
@@ -93,7 +132,8 @@ export default function AccountSettings() {
               id: user.id,
               first_name: '',
               last_name: '',
-              email_alias: user.email
+              email_alias: user.email,
+              organization_id: (await getDefaultOrganizationId()) || null,
             })
             .select()
             .single();
@@ -110,10 +150,13 @@ export default function AccountSettings() {
           
           if (newProfile) {
             setProfileData(newProfile);
+            setOrganizationName('Harvey and Partners');
             form.reset({
               firstName: newProfile.first_name || '',
               lastName: newProfile.last_name || '',
               email: user.email || '',
+              designation: '',
+              organization: 'Harvey and Partners',
             });
           }
         }
@@ -131,6 +174,111 @@ export default function AccountSettings() {
     
     getProfileData();
   }, [user, form]);
+  
+  // Get default organization ID
+  const getDefaultOrganizationId = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('id')
+        .eq('name', 'Harvey and Partners')
+        .maybeSingle();
+      
+      if (error || !data) {
+        console.error('Error fetching default organization:', error);
+        return null;
+      }
+      
+      return data.id;
+    } catch (error) {
+      console.error('Error fetching default organization:', error);
+      return null;
+    }
+  };
+
+  // Handle profile picture upload
+  const handleUploadProfilePicture = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!event.target.files || !event.target.files.length || !user) {
+      return;
+    }
+    
+    const file = event.target.files[0];
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${user.id}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+    const filePath = `avatars/${fileName}`;
+    
+    setUploading(true);
+    
+    try {
+      // Check if 'avatars' storage bucket exists
+      const { data: bucketExists } = await supabase
+        .storage
+        .getBucket('avatars');
+      
+      // If bucket doesn't exist, create it
+      if (!bucketExists) {
+        const { error: createBucketError } = await supabase
+          .storage
+          .createBucket('avatars', { 
+            public: true,
+            fileSizeLimit: 1024 * 1024 * 2 // 2MB limit
+          });
+        
+        if (createBucketError) {
+          throw createBucketError;
+        }
+      }
+      
+      // Upload file
+      const { error: uploadError } = await supabase
+        .storage
+        .from('avatars')
+        .upload(filePath, file);
+      
+      if (uploadError) {
+        throw uploadError;
+      }
+      
+      // Get public URL
+      const { data } = supabase
+        .storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+      
+      // Update profile with new avatar URL
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: data.publicUrl })
+        .eq('id', user.id);
+      
+      if (updateError) {
+        throw updateError;
+      }
+      
+      // Update local state
+      if (profileData) {
+        setProfileData({
+          ...profileData,
+          avatar_url: data.publicUrl,
+        });
+      }
+      
+      toast({
+        title: "Profile picture updated",
+        description: "Your profile picture has been updated successfully",
+      });
+      
+    } catch (error: any) {
+      console.error('Error uploading profile picture:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to upload profile picture",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
 
   // Handle form submission
   const onSubmit = async (values: ProfileFormValues) => {
@@ -145,6 +293,7 @@ export default function AccountSettings() {
         .update({
           first_name: values.firstName,
           last_name: values.lastName,
+          designation: values.designation || null,
         })
         .eq('id', user.id);
       
@@ -163,6 +312,7 @@ export default function AccountSettings() {
           ...profileData,
           first_name: values.firstName,
           last_name: values.lastName,
+          designation: values.designation || null,
         });
       }
       
@@ -217,15 +367,37 @@ export default function AccountSettings() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center space-x-4">
-                    <Avatar className="h-20 w-20 border-2 border-gray-200">
-                      <AvatarFallback className="bg-yorpro-600 text-white text-xl">
-                        {getInitials()}
-                      </AvatarFallback>
-                    </Avatar>
+                    <div className="relative group">
+                      <Avatar className="h-20 w-20 border-2 border-gray-200">
+                        {profileData?.avatar_url ? (
+                          <AvatarImage src={profileData.avatar_url} alt="Profile Picture" />
+                        ) : (
+                          <AvatarFallback className="bg-yorpro-600 text-white text-xl">
+                            {getInitials()}
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                      
+                      <label 
+                        htmlFor="avatar-upload" 
+                        className="absolute bottom-0 right-0 bg-yorpro-600 rounded-full p-1 text-white cursor-pointer hover:bg-yorpro-700 transition-colors"
+                      >
+                        <input 
+                          id="avatar-upload" 
+                          type="file" 
+                          accept="image/*"
+                          className="hidden" 
+                          onChange={handleUploadProfilePicture}
+                          disabled={uploading}
+                        />
+                        <Camera size={16} />
+                      </label>
+                    </div>
+                    
                     <div>
                       <h3 className="font-medium">Profile Picture</h3>
                       <p className="text-sm text-muted-foreground">
-                        Your profile picture is automatically generated from your initials
+                        {uploading ? 'Uploading...' : 'Click the camera icon to upload a new profile picture'}
                       </p>
                     </div>
                   </div>
@@ -263,6 +435,34 @@ export default function AccountSettings() {
                           )}
                         />
                       </div>
+
+                      <FormField
+                        control={form.control}
+                        name="designation"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Designation/Title</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Your designation" {...field} value={field.value || ''} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="organization"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Organization</FormLabel>
+                            <FormControl>
+                              <Input value={organizationName || 'Harvey and Partners'} disabled />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
                       <FormField
                         control={form.control}

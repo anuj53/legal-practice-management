@@ -267,29 +267,64 @@ export type Database = {
           },
         ]
       }
-      profiles: {
+      organizations: {
         Row: {
           created_at: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          designation: string | null
           email_alias: string | null
           first_name: string | null
           id: string
           last_name: string | null
+          organization_id: string | null
         }
         Insert: {
+          avatar_url?: string | null
           created_at?: string | null
+          designation?: string | null
           email_alias?: string | null
           first_name?: string | null
           id: string
           last_name?: string | null
+          organization_id?: string | null
         }
         Update: {
+          avatar_url?: string | null
           created_at?: string | null
+          designation?: string | null
           email_alias?: string | null
           first_name?: string | null
           id?: string
           last_name?: string | null
+          organization_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       task_templates: {
         Row: {

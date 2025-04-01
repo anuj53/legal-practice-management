@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -17,6 +17,9 @@ interface ProfileData {
   first_name: string | null;
   last_name: string | null;
   email_alias: string | null;
+  designation: string | null;
+  avatar_url: string | null;
+  organization_id: string | null;
 }
 
 export function UserProfile({ collapsed = false }: UserProfileProps) {
@@ -32,7 +35,7 @@ export function UserProfile({ collapsed = false }: UserProfileProps) {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('id, first_name, last_name, email_alias')
+          .select('id, first_name, last_name, email_alias, designation, avatar_url, organization_id')
           .eq('id', user.id)
           .maybeSingle();
           
@@ -46,13 +49,24 @@ export function UserProfile({ collapsed = false }: UserProfileProps) {
         // If no profile was found, we'll create one for the user
         if (!data) {
           console.log('No profile found, creating one...');
+          
+          // Get the default organization ID
+          const { data: orgData } = await supabase
+            .from('organizations')
+            .select('id')
+            .eq('name', 'Harvey and Partners')
+            .maybeSingle();
+            
+          const organizationId = orgData?.id;
+          
           const { error: insertError } = await supabase
             .from('profiles')
             .insert({
               id: user.id,
               first_name: '',
               last_name: '',
-              email_alias: user.email
+              email_alias: user.email,
+              organization_id: organizationId
             });
             
           if (insertError) {
@@ -68,7 +82,7 @@ export function UserProfile({ collapsed = false }: UserProfileProps) {
           // Fetch the newly created profile
           const { data: newProfile } = await supabase
             .from('profiles')
-            .select('id, first_name, last_name, email_alias')
+            .select('id, first_name, last_name, email_alias, designation, avatar_url, organization_id')
             .eq('id', user.id)
             .maybeSingle();
             
@@ -105,7 +119,7 @@ export function UserProfile({ collapsed = false }: UserProfileProps) {
   
   // Get user role (placeholder for now)
   const getUserRole = () => {
-    return 'Attorney';
+    return profileData?.designation || 'Attorney';
   };
   
   // Get user initials for avatar
@@ -129,8 +143,16 @@ export function UserProfile({ collapsed = false }: UserProfileProps) {
     <div className={cn("flex-shrink-0 p-4 relative z-10", collapsed && "p-2")}>
       <div className="rounded-xl bg-gradient-to-r from-yorpro-700/30 to-yorpro-800/30 backdrop-blur-md p-4 border border-white/10 shadow-lg hover:shadow-xl transition-all duration-300 group">
         <div className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-yorpro-400/80 to-yorpro-500/80 flex items-center justify-center shadow-lg border border-white/20 group-hover:scale-105 transition-all duration-300">
-            <span className="font-semibold text-white">{getInitials()}</span>
+          <div className="h-12 w-12 overflow-hidden rounded-xl bg-gradient-to-br from-yorpro-400/80 to-yorpro-500/80 flex items-center justify-center shadow-lg border border-white/20 group-hover:scale-105 transition-all duration-300">
+            {profileData?.avatar_url ? (
+              <AvatarImage 
+                src={profileData.avatar_url} 
+                alt={getDisplayName()} 
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <span className="font-semibold text-white">{getInitials()}</span>
+            )}
           </div>
           {!collapsed && (
             <div>
