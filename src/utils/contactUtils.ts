@@ -32,6 +32,32 @@ export function prepareContactForDatabase(contactData: Partial<Contact>): Record
  * Processes contact data from Supabase to ensure proper typing
  */
 export function processContactFromDatabase(contactData: any): Contact {
+  // Log the raw data
+  console.log('Processing contact data:', contactData);
+  
+  // Parse JSON fields if they're stored as strings
+  let emails = contactData.emails;
+  let phones = contactData.phones;
+  let websites = contactData.websites;
+  let addresses = contactData.addresses;
+  
+  // Handle case where JSON fields might be stored as strings
+  if (typeof emails === 'string') {
+    try { emails = JSON.parse(emails); } catch (e) { emails = []; }
+  }
+  
+  if (typeof phones === 'string') {
+    try { phones = JSON.parse(phones); } catch (e) { phones = []; }
+  }
+  
+  if (typeof websites === 'string') {
+    try { websites = JSON.parse(websites); } catch (e) { websites = []; }
+  }
+  
+  if (typeof addresses === 'string') {
+    try { addresses = JSON.parse(addresses); } catch (e) { addresses = []; }
+  }
+  
   return {
     id: contactData.id,
     contact_type_id: contactData.contact_type_id,
@@ -60,9 +86,13 @@ export function processContactFromDatabase(contactData: any): Contact {
       (assignment: any) => assignment.contact_tags
     ) || [],
     // Parse JSON data into typed arrays
-    emails: Array.isArray(contactData.emails) ? contactData.emails : [],
-    phones: Array.isArray(contactData.phones) ? contactData.phones : [],
-    websites: Array.isArray(contactData.websites) ? contactData.websites : [],
-    addresses: Array.isArray(contactData.addresses) ? contactData.addresses : [],
+    emails: Array.isArray(emails) ? emails : [],
+    phones: Array.isArray(phones) ? phones : [],
+    websites: Array.isArray(websites) ? websites : [],
+    addresses: Array.isArray(addresses) ? addresses : [],
+    // Billing information
+    payment_profile: contactData.payment_profile || null,
+    billing_rate: contactData.billing_rate || null,
+    ledes_client_id: contactData.ledes_client_id || null,
   };
 }

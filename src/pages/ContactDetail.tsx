@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -17,6 +18,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { 
   ChevronLeft, 
   Mail, 
@@ -28,7 +30,9 @@ import {
   FileText,
   Edit,
   UserPlus,
-  Users
+  Users,
+  Trash2,
+  Calendar
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { PageHeader } from '@/components/ui/page-header';
@@ -54,6 +58,9 @@ export default function ContactDetail() {
   const [employees, setEmployees] = useState<CompanyEmployee[]>([]);
   const [matters, setMatters] = useState<Matter[]>([]);
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchContactTypes = async () => {
@@ -98,7 +105,9 @@ export default function ContactDetail() {
           
         if (contactError) throw contactError;
 
+        console.log('Contact data from database:', contactData);
         const processedContact = processContactFromDatabase(contactData);
+        console.log('Processed contact data:', processedContact);
         
         setContact(processedContact);
 
@@ -123,6 +132,7 @@ export default function ContactDetail() {
           setEmployees(typedEmployees);
         }
 
+        // Fetch matters - placeholder for future implementation
         setMatters([]);
         
       } catch (error) {
@@ -153,7 +163,7 @@ export default function ContactDetail() {
     const isCompany = getContactTypeName(contact.contact_type_id) === 'Company';
     return isCompany 
       ? contact.company_name || 'Unnamed Company'
-      : `${contact.first_name || ''} ${contact.last_name || ''}`.trim() || 'Unnamed Contact';
+      : `${contact.prefix ? contact.prefix + ' ' : ''}${contact.first_name || ''} ${contact.middle_name ? contact.middle_name + ' ' : ''}${contact.last_name || ''}`.trim() || 'Unnamed Contact';
   };
 
   const getInitials = () => {
@@ -192,6 +202,62 @@ export default function ContactDetail() {
     if (contact.country) parts.push(contact.country);
     
     return parts.length > 0 ? parts.join(', ') : '—';
+  };
+
+  const handleDelete = async () => {
+    if (!contact || isDeleting) return;
+
+    try {
+      setIsDeleting(true);
+      setDeleteError(null);
+
+      // Check if company has employees
+      if (getContactTypeName(contact.contact_type_id) === 'Company') {
+        const { data: employeeData, error: employeeCheckError, count } = await supabase
+          .from('company_employees')
+          .select('id', { count: 'exact' })
+          .eq('company_id', contact.id);
+        
+        if (employeeCheckError) throw employeeCheckError;
+        
+        if (count && count > 0) {
+          setDeleteError(
+            `Cannot delete this company because it has ${count} employee${count > 1 ? 's' : ''} linked to it. ` +
+            'Please remove all employee links first.'
+          );
+          setIsDeleting(false);
+          return;
+        }
+      }
+
+      // Delete any tag assignments for this contact
+      await supabase
+        .from('contact_tag_assignments')
+        .delete()
+        .eq('contact_id', contact.id);
+      
+      // Now delete the contact
+      const { error } = await supabase
+        .from('contacts')
+        .delete()
+        .eq('id', contact.id);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Contact deleted",
+        description: "The contact has been removed successfully."
+      });
+      
+      // Navigate back to contacts list
+      navigate('/contacts');
+      
+    } catch (error: any) {
+      console.error('Error deleting contact:', error);
+      setDeleteError(error.message || 'Failed to delete contact. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   if (loading) {
@@ -271,9 +337,13 @@ export default function ContactDetail() {
         <Button variant="outline">
           New trust request
         </Button>
-        <Button onClick={() => navigate(`/contacts/${id}/edit`)}>
+        <Button variant="outline" onClick={() => navigate(`/contacts/${id}/edit`)}>
           <Edit className="mr-2 h-4 w-4" />
           Edit contact
+        </Button>
+        <Button variant="destructive" onClick={() => setDeleteConfirmOpen(true)}>
+          <Trash2 className="mr-2 h-4 w-4" />
+          Delete
         </Button>
       </div>
 
@@ -299,6 +369,23 @@ export default function ContactDetail() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
+                    {!isCompany && contact.job_title && (
+                      <div>
+                        <div className="text-sm font-medium text-muted-foreground mb-1">Job Title</div>
+                        <span>{contact.job_title}</span>
+                      </div>
+                    )}
+                    
+                    {!isCompany && contact.date_of_birth && (
+                      <div>
+                        <div className="text-sm font-medium text-muted-foreground mb-1">Date of Birth</div>
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-gray-400" />
+                          <span>{contact.date_of_birth}</span>
+                        </div>
+                      </div>
+                    )}
+
                     <div>
                       <div className="text-sm font-medium text-muted-foreground mb-1">Phone</div>
                       {contact.phone ? (
@@ -307,7 +394,20 @@ export default function ContactDetail() {
                           <a href={`tel:${contact.phone}`} className="text-yorpro-600 hover:underline">
                             {contact.phone}
                           </a>
-                          <span className="text-sm text-gray-500">(Work)</span>
+                          <span className="text-sm text-gray-500">(Primary)</span>
+                        </div>
+                      ) : contact.phones && contact.phones.length > 0 ? (
+                        <div className="space-y-2">
+                          {contact.phones.map((phone, index) => (
+                            <div key={index} className="flex items-center gap-2">
+                              <Phone className="h-4 w-4 text-gray-400" />
+                              <a href={`tel:${phone.phone}`} className="text-yorpro-600 hover:underline">
+                                {phone.phone}
+                              </a>
+                              {phone.type && <span className="text-sm text-gray-500">({phone.type})</span>}
+                              {phone.is_primary && <Badge variant="outline" className="ml-2 bg-blue-50 text-blue-700 text-xs">Primary</Badge>}
+                            </div>
+                          ))}
                         </div>
                       ) : (
                         <span className="text-gray-400">—</span>
@@ -322,7 +422,20 @@ export default function ContactDetail() {
                           <a href={`mailto:${contact.email}`} className="text-yorpro-600 hover:underline">
                             {contact.email}
                           </a>
-                          <span className="text-sm text-gray-500">(Work)</span>
+                          <span className="text-sm text-gray-500">(Primary)</span>
+                        </div>
+                      ) : contact.emails && contact.emails.length > 0 ? (
+                        <div className="space-y-2">
+                          {contact.emails.map((email, index) => (
+                            <div key={index} className="flex items-center gap-2">
+                              <Mail className="h-4 w-4 text-gray-400" />
+                              <a href={`mailto:${email.email}`} className="text-yorpro-600 hover:underline">
+                                {email.email}
+                              </a>
+                              {email.type && <span className="text-sm text-gray-500">({email.type})</span>}
+                              {email.is_primary && <Badge variant="outline" className="ml-2 bg-blue-50 text-blue-700 text-xs">Primary</Badge>}
+                            </div>
+                          ))}
                         </div>
                       ) : (
                         <span className="text-gray-400">—</span>
@@ -331,12 +444,48 @@ export default function ContactDetail() {
 
                     <div>
                       <div className="text-sm font-medium text-muted-foreground mb-1">Website</div>
-                      <span className="text-gray-400">—</span>
+                      {contact.websites && contact.websites.length > 0 ? (
+                        <div className="space-y-2">
+                          {contact.websites.map((website, index) => (
+                            <div key={index} className="flex items-center gap-2">
+                              <Globe className="h-4 w-4 text-gray-400" />
+                              <a href={website.url.startsWith('http') ? website.url : `https://${website.url}`} 
+                                 target="_blank" 
+                                 rel="noopener noreferrer" 
+                                 className="text-yorpro-600 hover:underline">
+                                {website.url}
+                              </a>
+                              {website.type && <span className="text-sm text-gray-500">({website.type})</span>}
+                              {website.is_primary && <Badge variant="outline" className="ml-2 bg-blue-50 text-blue-700 text-xs">Primary</Badge>}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
                     </div>
 
                     <div>
                       <div className="text-sm font-medium text-muted-foreground mb-1">Address</div>
-                      {formatAddress() !== '—' ? (
+                      {contact.addresses && contact.addresses.length > 0 ? (
+                        <div className="space-y-3">
+                          {contact.addresses.map((address, index) => (
+                            <div key={index} className="flex items-start gap-2">
+                              <MapPin className="h-4 w-4 text-gray-400 mt-1" />
+                              <div>
+                                <div>{address.street}</div>
+                                <div>
+                                  {address.city}{address.city && address.state ? ', ' : ''}
+                                  {address.state} {address.zip}
+                                </div>
+                                {address.country && <div>{address.country}</div>}
+                                {address.type && <div className="text-sm text-gray-500 mt-1">{address.type} Address</div>}
+                                {address.is_primary && <Badge variant="outline" className="mt-1 bg-blue-50 text-blue-700 text-xs">Primary</Badge>}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : formatAddress() !== '—' ? (
                         <div className="flex items-start gap-2">
                           <MapPin className="h-4 w-4 text-gray-400 mt-1" />
                           <span>{formatAddress()}</span>
@@ -360,21 +509,43 @@ export default function ContactDetail() {
                   <div className="space-y-4">
                     <div>
                       <div className="text-sm font-medium text-muted-foreground mb-1">LEDES client ID</div>
-                      <span className="text-gray-400">—</span>
+                      {contact.ledes_client_id ? (
+                        <span>{contact.ledes_client_id}</span>
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
                     </div>
 
                     <div>
                       <div className="text-sm font-medium text-muted-foreground mb-1">Payment profile</div>
-                      <span>Default (30 days)</span>
+                      <span>{contact.payment_profile || 'Default (30 days)'}</span>
                     </div>
 
                     <div>
-                      <div className="text-sm font-medium text-muted-foreground mb-1">Rates</div>
-                      <span className="text-gray-400">—</span>
+                      <div className="text-sm font-medium text-muted-foreground mb-1">Billing rate</div>
+                      {contact.billing_rate ? (
+                        <span>${contact.billing_rate}/hour</span>
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
                     </div>
                   </div>
                 </CardContent>
               </Card>
+
+              {contact.notes && (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center text-lg font-medium">
+                      <FileText className="h-5 w-5 mr-2" />
+                      Notes
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="whitespace-pre-wrap">{contact.notes}</p>
+                  </CardContent>
+                </Card>
+              )}
             </div>
 
             <div className="space-y-6 col-span-1 lg:col-span-2">
@@ -542,11 +713,22 @@ export default function ContactDetail() {
         </TabsContent>
         
         <TabsContent value="notes">
-          <EmptyState
-            title="Notes"
-            description="Add notes related to this contact."
-            icon={<FileText className="h-10 w-10 text-gray-400" />}
-          />
+          {contact.notes ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Notes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="whitespace-pre-wrap">{contact.notes}</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <EmptyState
+              title="Notes"
+              description="Add notes related to this contact."
+              icon={<FileText className="h-10 w-10 text-gray-400" />}
+            />
+          )}
         </TabsContent>
         
         <TabsContent value="documents">
@@ -573,6 +755,44 @@ export default function ContactDetail() {
           />
         </TabsContent>
       </Tabs>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the contact 
+              {contact ? ` "${getContactName()}"` : ''} and all associated data.
+            </AlertDialogDescription>
+            {deleteError && (
+              <div className="mt-2 p-3 border border-red-200 bg-red-50 text-red-600 rounded-md">
+                {deleteError}
+              </div>
+            )}
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={(e) => {
+                e.preventDefault(); // Prevent form submission
+                handleDelete();
+              }} 
+              className="bg-red-600 hover:bg-red-700"
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
