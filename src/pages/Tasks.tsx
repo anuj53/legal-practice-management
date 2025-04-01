@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { 
   Tabs, 
@@ -18,7 +19,6 @@ import { TaskBoard } from '@/components/tasks/TaskBoard';
 import { NewTaskDialog } from '@/components/tasks/NewTaskDialog';
 import { TaskTypeDialog } from '@/components/tasks/TaskTypeDialog';
 import { NewWorkflowTemplateDialog } from '@/components/tasks/NewWorkflowTemplateDialog';
-import { WorkflowTemplatesView } from '@/components/tasks/WorkflowTemplatesView';
 import { TaskTypeProvider } from '@/contexts/TaskTypeContext';
 import { TaskFilters, TaskFilters as TaskFiltersType, SortConfig } from '@/components/tasks/TaskFilters';
 import { fetchTasks } from '@/components/tasks/TaskService';
@@ -227,9 +227,11 @@ export default function Tasks() {
                 <ListChecks className="mr-2 h-4 w-4" />
                 Task Types
               </Button>
-              <Button variant="outline" onClick={() => setIsNewTemplateOpen(true)}>
-                <ClipboardList className="mr-2 h-4 w-4" />
-                Workflow Templates
+              <Button variant="outline" asChild>
+                <Link to="/workflow-templates">
+                  <ClipboardList className="mr-2 h-4 w-4" />
+                  Workflow Templates
+                </Link>
               </Button>
             </div>
           </div>
@@ -268,10 +270,9 @@ export default function Tasks() {
             value={activeTab}
             onValueChange={setActiveTab}
           >
-            <TabsList className="grid grid-cols-3 w-full md:w-fit">
+            <TabsList className="grid grid-cols-2 w-full md:w-fit">
               <TabsTrigger value="my-tasks">My Tasks</TabsTrigger>
               <TabsTrigger value="all-tasks">All Tasks</TabsTrigger>
-              <TabsTrigger value="workflow-templates">Workflow Templates</TabsTrigger>
             </TabsList>
             
             <TabsContent value="my-tasks" className="mt-4">
@@ -297,10 +298,6 @@ export default function Tasks() {
                 <TaskBoard tasks={filteredTasks} onCloseTask={handleCloseTask} />
               )}
             </TabsContent>
-            
-            <TabsContent value="workflow-templates" className="mt-4">
-              <WorkflowTemplatesView />
-            </TabsContent>
           </Tabs>
 
           <NewTaskDialog 
@@ -309,7 +306,10 @@ export default function Tasks() {
             onTaskCreated={handleTaskCreated} 
           />
           <TaskTypeDialog open={isTaskTypeOpen} onOpenChange={setIsTaskTypeOpen} />
-          <NewWorkflowTemplateDialog open={isNewTemplateOpen} onOpenChange={setIsNewTemplateOpen} />
+          <NewWorkflowTemplateDialog 
+            open={isNewTemplateOpen} 
+            onOpenChange={setIsNewTemplateOpen} 
+          />
         </div>
       </div>
     </TaskTypeProvider>
