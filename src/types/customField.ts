@@ -45,3 +45,12 @@ export type DbTables = 'calendars' | 'company_employees' | 'contacts' |
   'contact_types' | 'custom_field_definitions' | 'custom_field_values' | 
   'custom_field_sets' | 'event_attendees' | 'event_documents' | 'event_reminders' | 
   'event_types' | 'events' | 'profiles' | 'task_templates' | 'tasks' | 'workflow_templates';
+
+// Create a type for selected custom fields on a contact
+export interface ContactCustomField {
+  contact_id: string;
+  field_definition_id: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
