@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -100,7 +99,6 @@ export function UserProfile({ collapsed = false }: UserProfileProps) {
     fetchProfileData();
   }, [user]);
   
-  // Get display name or fallback
   const getDisplayName = () => {
     if (loading) return 'Loading...';
     
@@ -119,12 +117,10 @@ export function UserProfile({ collapsed = false }: UserProfileProps) {
     return 'User';
   };
   
-  // Get user role (placeholder for now)
   const getUserRole = () => {
     return profileData?.designation || 'Attorney';
   };
   
-  // Get user initials for avatar
   const getInitials = () => {
     if (profileData?.first_name && profileData?.last_name) {
       return `${profileData.first_name[0]}${profileData.last_name[0]}`.toUpperCase();
@@ -163,7 +159,7 @@ export function UserProfile({ collapsed = false }: UserProfileProps) {
     <div className={cn("flex-shrink-0 p-4 relative z-10", collapsed && "p-2")}>
       <div className="rounded-xl bg-gradient-to-r from-yorpro-700/30 to-yorpro-800/30 backdrop-blur-md p-4 border border-white/10 shadow-lg hover:shadow-xl transition-all duration-300 group">
         <div className="flex items-center gap-3">
-          <div className="h-12 w-12 overflow-hidden rounded-xl bg-gradient-to-br from-yorpro-400/80 to-yorpro-500/80 flex items-center justify-center shadow-lg border border-white/20 group-hover:scale-105 transition-all duration-300">
+          <div className="rounded-full bg-gradient-to-br from-yorpro-400/80 to-yorpro-500/80 flex items-center justify-center shadow-lg border border-white/20 group-hover:scale-105 transition-all duration-300 overflow-hidden h-12 w-12">
             <Avatar className="h-full w-full">
               {profileData?.avatar_url ? (
                 <AvatarImage 
