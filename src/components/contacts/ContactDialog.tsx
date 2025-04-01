@@ -356,6 +356,7 @@ export function ContactDialog({
             </TabsList>
             
             <TabsContent value="contact-info" className="mt-4 space-y-6">
+              {/* Person/Company selector */}
               <div className="space-y-2">
                 <Label>Is this contact a person or a company?</Label>
                 <RadioGroup 
@@ -386,6 +387,7 @@ export function ContactDialog({
                 </RadioGroup>
               </div>
               
+              {/* Profile photo section */}
               <div className="space-y-2">
                 <Label>Profile photo</Label>
                 <div className="flex items-center gap-2">
@@ -395,8 +397,8 @@ export function ContactDialog({
                 </div>
               </div>
               
+              {/* Person/Company specific fields */}
               {isPersonType ? (
-                
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                     <div>
@@ -495,8 +497,7 @@ export function ContactDialog({
                 </div>
               )}
               
-              
-              
+              {/* Email section */}
               <div className="space-y-4">
                 <Label>Email</Label>
                 {formValues.emails?.map((email, index) => (
@@ -558,7 +559,7 @@ export function ContactDialog({
                 </Button>
               </div>
               
-              
+              {/* Phone section */}
               <div className="space-y-4">
                 <Label>Phone</Label>
                 {formValues.phones?.map((phone, index) => (
@@ -622,7 +623,7 @@ export function ContactDialog({
                 </Button>
               </div>
               
-              
+              {/* Website section */}
               <div className="space-y-4">
                 <Label>Website</Label>
                 {formValues.websites?.map((website, index) => (
@@ -684,7 +685,7 @@ export function ContactDialog({
                 </Button>
               </div>
               
-              
+              {/* Address section */}
               <div className="space-y-4">
                 <Label>Address</Label>
                 {formValues.addresses?.map((address, index) => (
@@ -770,7 +771,7 @@ export function ContactDialog({
                 </Button>
               </div>
               
-              
+              {/* Tags section */}
               <div className="space-y-2">
                 <Label>Tags</Label>
                 <div className="p-4 border border-gray-100 rounded-md">
@@ -790,7 +791,7 @@ export function ContactDialog({
                 </div>
               </div>
               
-              
+              {/* Notes section */}
               <div className="space-y-2">
                 <Label htmlFor="notes">Notes</Label>
                 <Textarea
@@ -804,7 +805,7 @@ export function ContactDialog({
               </div>
             </TabsContent>
             
-            
+            {/* Custom Fields tab */}
             <TabsContent value="custom-fields" className="mt-4 space-y-4">
               <div className="p-4 border border-gray-100 rounded-md">
                 <div className="flex items-start">
@@ -820,7 +821,7 @@ export function ContactDialog({
               </div>
             </TabsContent>
             
-            
+            {/* Billing preferences tab */}
             <TabsContent value="billing-prefs" className="mt-4 space-y-4">
               {!isPersonType && (
                 <div className="space-y-4 mb-6">
