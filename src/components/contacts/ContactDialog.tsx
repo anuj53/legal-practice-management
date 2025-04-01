@@ -275,9 +275,17 @@ export function ContactDialog({
         ledes_client_id: formValues.ledes_client_id,
       });
       
-      const operation = contact 
-        ? supabase.from('contacts').update(databaseContactData).eq('id', contact.id)
-        : supabase.from('contacts').insert(databaseContactData);
+      let operation;
+      if (contact) {
+        operation = supabase
+          .from('contacts')
+          .update({ ...databaseContactData })
+          .eq('id', contact.id);
+      } else {
+        operation = supabase
+          .from('contacts')
+          .insert({ ...databaseContactData });
+      }
       
       const { data: newContact, error } = await operation.select().single();
       

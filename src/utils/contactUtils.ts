@@ -1,11 +1,12 @@
 
-import { Contact, EmailAddress, PhoneNumber, Website, Address, Json } from '@/types/contact';
+import { Contact, EmailAddress, PhoneNumber, Website, Address } from '@/types/contact';
+import { Json } from '@/integrations/supabase/types';
 
 /**
  * Prepares contact data for Supabase by converting typed arrays to JSON
  */
 export function prepareContactForDatabase(contactData: Partial<Contact>): Record<string, any> {
-  return {
+  const result = {
     ...contactData,
     // Convert typed arrays to JSON stringifiable format
     emails: contactData.emails ? JSON.parse(JSON.stringify(contactData.emails)) : null,
@@ -13,6 +14,13 @@ export function prepareContactForDatabase(contactData: Partial<Contact>): Record
     websites: contactData.websites ? JSON.parse(JSON.stringify(contactData.websites)) : null,
     addresses: contactData.addresses ? JSON.parse(JSON.stringify(contactData.addresses)) : null,
   };
+
+  // Ensure required fields are present
+  if (!result.contact_type_id) {
+    throw new Error('contact_type_id is required');
+  }
+
+  return result;
 }
 
 /**
