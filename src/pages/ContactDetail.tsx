@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -43,6 +42,7 @@ import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { EmptyState } from '@/components/contacts/EmptyState';
 import { Loader2 } from 'lucide-react';
+import { processContactFromDatabase } from '@/utils/contactUtils';
 
 export default function ContactDetail() {
   const { id } = useParams<{ id: string }>();
@@ -101,39 +101,8 @@ export default function ContactDetail() {
           
         if (contactError) throw contactError;
 
-        // Transform tags data and ensure all required fields are present
-        const processedContact: Contact = {
-          id: contactData.id,
-          contact_type_id: contactData.contact_type_id,
-          prefix: contactData.prefix || null,
-          first_name: contactData.first_name || null,
-          middle_name: contactData.middle_name || null,
-          last_name: contactData.last_name || null,
-          company_name: contactData.company_name || null,
-          job_title: contactData.job_title || null,
-          date_of_birth: contactData.date_of_birth || null,
-          profile_image_url: contactData.profile_image_url || null,
-          email: contactData.email || null,
-          phone: contactData.phone || null,
-          address: contactData.address || null,
-          city: contactData.city || null,
-          state: contactData.state || null,
-          zip: contactData.zip || null,
-          country: contactData.country || null,
-          notes: contactData.notes || null,
-          is_client: Boolean(contactData.is_client),
-          created_at: contactData.created_at,
-          updated_at: contactData.updated_at,
-          created_by: contactData.created_by,
-          organization_id: contactData.organization_id || null,
-          tags: contactData.contact_tag_assignments?.map(
-            (assignment: any) => assignment.contact_tags
-          ) || [],
-          emails: contactData.emails || [],
-          phones: contactData.phones || [],
-          websites: contactData.websites || [],
-          addresses: contactData.addresses || [],
-        };
+        // Process contact data for type safety
+        const processedContact = processContactFromDatabase(contactData);
         
         setContact(processedContact);
 

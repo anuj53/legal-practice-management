@@ -1,4 +1,6 @@
 
+import { Json } from '@/integrations/supabase/types';
+
 export interface ContactType {
   id: string;
   name: string;
@@ -60,10 +62,10 @@ export interface Contact {
   country: string | null;
   
   // New detailed fields (will be stored as JSON in the contact record)
-  emails?: EmailAddress[];
-  phones?: PhoneNumber[];
-  websites?: Website[];
-  addresses?: Address[];
+  emails: EmailAddress[];
+  phones: PhoneNumber[];
+  websites: Website[];
+  addresses: Address[];
   
   notes: string | null;
   is_client: boolean | null;

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,6 +20,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { format } from 'date-fns';
+import { prepareContactForDatabase, processContactFromDatabase } from '@/utils/contactUtils';
 
 interface ContactDialogProps {
   open: boolean;
@@ -41,7 +41,6 @@ export function ContactDialog({
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('contact-info');
   
-  // Form state
   const [formValues, setFormValues] = useState<ContactFormValues>(
     contact ? {
       contact_type_id: contact.contact_type_id,
@@ -96,28 +95,23 @@ export function ContactDialog({
     }
   );
 
-  // Utility function to get contact type name
   const getContactTypeName = (id: string) => {
     return contactTypes.find(t => t.id === id)?.name || '';
   };
 
-  // Handle form field changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormValues(prev => ({ ...prev, [name]: value }));
   };
 
-  // Handle switch (boolean) fields
   const handleSwitchChange = (checked: boolean, name: string) => {
     setFormValues(prev => ({ ...prev, [name]: checked }));
   };
 
-  // Handle contact type selection
   const handleContactTypeChange = (value: string) => {
     setFormValues(prev => ({ ...prev, contact_type_id: value }));
   };
   
-  // Handle email changes
   const handleEmailChange = (index: number, field: keyof EmailAddress, value: string | boolean) => {
     setFormValues(prev => {
       const newEmails = [...(prev.emails || [])];
@@ -126,7 +120,6 @@ export function ContactDialog({
     });
   };
   
-  // Add new email
   const addEmail = () => {
     setFormValues(prev => ({
       ...prev,
@@ -134,7 +127,6 @@ export function ContactDialog({
     }));
   };
   
-  // Remove email
   const removeEmail = (index: number) => {
     setFormValues(prev => {
       const newEmails = [...(prev.emails || [])];
@@ -143,7 +135,6 @@ export function ContactDialog({
     });
   };
   
-  // Handle phone changes
   const handlePhoneChange = (index: number, field: keyof PhoneNumber, value: string | boolean) => {
     setFormValues(prev => {
       const newPhones = [...(prev.phones || [])];
@@ -152,7 +143,6 @@ export function ContactDialog({
     });
   };
   
-  // Add new phone
   const addPhone = () => {
     setFormValues(prev => ({
       ...prev,
@@ -160,7 +150,6 @@ export function ContactDialog({
     }));
   };
   
-  // Remove phone
   const removePhone = (index: number) => {
     setFormValues(prev => {
       const newPhones = [...(prev.phones || [])];
@@ -169,7 +158,6 @@ export function ContactDialog({
     });
   };
   
-  // Handle website changes
   const handleWebsiteChange = (index: number, field: keyof Website, value: string | boolean) => {
     setFormValues(prev => {
       const newWebsites = [...(prev.websites || [])];
@@ -178,7 +166,6 @@ export function ContactDialog({
     });
   };
   
-  // Add new website
   const addWebsite = () => {
     setFormValues(prev => ({
       ...prev,
@@ -186,7 +173,6 @@ export function ContactDialog({
     }));
   };
   
-  // Remove website
   const removeWebsite = (index: number) => {
     setFormValues(prev => {
       const newWebsites = [...(prev.websites || [])];
@@ -195,7 +181,6 @@ export function ContactDialog({
     });
   };
   
-  // Handle address changes
   const handleAddressChange = (index: number, field: keyof Address, value: string | boolean) => {
     setFormValues(prev => {
       const newAddresses = [...(prev.addresses || [])];
@@ -204,7 +189,6 @@ export function ContactDialog({
     });
   };
   
-  // Add new address
   const addAddress = () => {
     setFormValues(prev => ({
       ...prev,
@@ -220,7 +204,6 @@ export function ContactDialog({
     }));
   };
   
-  // Remove address
   const removeAddress = (index: number) => {
     setFormValues(prev => {
       const newAddresses = [...(prev.addresses || [])];
@@ -229,7 +212,6 @@ export function ContactDialog({
     });
   };
 
-  // Submit form
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -245,7 +227,6 @@ export function ContactDialog({
     try {
       setLoading(true);
       
-      // Get organization ID
       const { data: profileData } = await supabase
         .from('profiles')
         .select('organization_id')
@@ -256,7 +237,6 @@ export function ContactDialog({
         throw new Error("Organization not found");
       }
       
-      // Prepare contact data - use the first values of detailed fields for backward compatibility
       const primaryEmail = formValues.emails?.find(e => e.is_primary)?.email || formValues.emails?.[0]?.email || '';
       const primaryPhone = formValues.phones?.find(p => p.is_primary)?.phone || formValues.phones?.[0]?.phone || '';
       const primaryAddress = formValues.addresses?.find(a => a.is_primary) || formValues.addresses?.[0];
@@ -282,7 +262,10 @@ export function ContactDialog({
         is_client: formValues.is_client || false,
         organization_id: profileData.organization_id,
         created_by: user.id,
-        // Store the detailed contact info as JSON in the metadata fields
+      };
+
+      const databaseContactData = prepareContactForDatabase({
+        ...contactData,
         emails: formValues.emails,
         phones: formValues.phones,
         websites: formValues.websites,
@@ -290,50 +273,18 @@ export function ContactDialog({
         payment_profile: formValues.payment_profile,
         billing_rate: formValues.billing_rate,
         ledes_client_id: formValues.ledes_client_id,
-      };
+      });
       
-      // Insert or update contact
       const operation = contact 
-        ? supabase.from('contacts').update(contactData).eq('id', contact.id)
-        : supabase.from('contacts').insert(contactData);
+        ? supabase.from('contacts').update(databaseContactData).eq('id', contact.id)
+        : supabase.from('contacts').insert(databaseContactData);
       
       const { data: newContact, error } = await operation.select().single();
       
       if (error) throw error;
       
-      // Transform the response to a Contact object with all required fields
-      const processedContact: Contact = {
-        id: newContact.id,
-        contact_type_id: newContact.contact_type_id,
-        prefix: newContact.prefix || null,
-        first_name: newContact.first_name || null,
-        middle_name: newContact.middle_name || null,
-        last_name: newContact.last_name || null,
-        company_name: newContact.company_name || null,
-        job_title: newContact.job_title || null,
-        date_of_birth: newContact.date_of_birth || null,
-        profile_image_url: newContact.profile_image_url || null,
-        email: newContact.email || null,
-        phone: newContact.phone || null,
-        address: newContact.address || null,
-        city: newContact.city || null,
-        state: newContact.state || null,
-        zip: newContact.zip || null,
-        country: newContact.country || null,
-        notes: newContact.notes || null,
-        is_client: Boolean(newContact.is_client),
-        created_at: newContact.created_at,
-        updated_at: newContact.updated_at,
-        created_by: newContact.created_by,
-        organization_id: newContact.organization_id || null,
-        tags: [], // No tags initially
-        emails: newContact.emails || [],
-        phones: newContact.phones || [],
-        websites: newContact.websites || [],
-        addresses: newContact.addresses || [],
-      };
+      const processedContact = processContactFromDatabase(newContact);
       
-      // Success
       onSuccess(processedContact);
       
     } catch (error) {
@@ -374,7 +325,6 @@ export function ContactDialog({
             </TabsList>
             
             <TabsContent value="contact-info" className="mt-4 space-y-6">
-              {/* Contact Type Selection */}
               <div className="space-y-2">
                 <Label>Is this contact a person or a company?</Label>
                 <RadioGroup 
@@ -414,7 +364,6 @@ export function ContactDialog({
                 </div>
               </div>
               
-              {/* Person or Company specific fields */}
               {isPersonType ? (
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
@@ -514,7 +463,6 @@ export function ContactDialog({
                 </div>
               )}
               
-              {/* Email Addresses */}
               <div className="space-y-4">
                 <Label>Email</Label>
                 {formValues.emails?.map((email, index) => (
@@ -544,11 +492,9 @@ export function ContactDialog({
                       <Switch
                         checked={email.is_primary}
                         onCheckedChange={(checked) => {
-                          // Update all emails to not primary first
                           formValues.emails?.forEach((e, i) => {
                             if (i !== index) handleEmailChange(i, 'is_primary', false);
                           });
-                          // Then set this one as primary
                           handleEmailChange(index, 'is_primary', checked);
                         }}
                       />
@@ -578,7 +524,6 @@ export function ContactDialog({
                 </Button>
               </div>
               
-              {/* Phone Numbers */}
               <div className="space-y-4">
                 <Label>Phone</Label>
                 {formValues.phones?.map((phone, index) => (
@@ -610,11 +555,9 @@ export function ContactDialog({
                       <Switch
                         checked={phone.is_primary}
                         onCheckedChange={(checked) => {
-                          // Update all phones to not primary first
                           formValues.phones?.forEach((p, i) => {
                             if (i !== index) handlePhoneChange(i, 'is_primary', false);
                           });
-                          // Then set this one as primary
                           handlePhoneChange(index, 'is_primary', checked);
                         }}
                       />
@@ -644,7 +587,6 @@ export function ContactDialog({
                 </Button>
               </div>
               
-              {/* Websites */}
               <div className="space-y-4">
                 <Label>Website</Label>
                 {formValues.websites?.map((website, index) => (
@@ -674,11 +616,9 @@ export function ContactDialog({
                       <Switch
                         checked={website.is_primary}
                         onCheckedChange={(checked) => {
-                          // Update all websites to not primary first
                           formValues.websites?.forEach((w, i) => {
                             if (i !== index) handleWebsiteChange(i, 'is_primary', false);
                           });
-                          // Then set this one as primary
                           handleWebsiteChange(index, 'is_primary', checked);
                         }}
                       />
@@ -708,7 +648,6 @@ export function ContactDialog({
                 </Button>
               </div>
               
-              {/* Addresses */}
               <div className="space-y-4">
                 <Label>Address</Label>
                 {formValues.addresses?.map((address, index) => (
@@ -773,11 +712,9 @@ export function ContactDialog({
                         <Switch
                           checked={address.is_primary}
                           onCheckedChange={(checked) => {
-                            // Update all addresses to not primary first
                             formValues.addresses?.forEach((a, i) => {
                               if (i !== index) handleAddressChange(i, 'is_primary', false);
                             });
-                            // Then set this one as primary
                             handleAddressChange(index, 'is_primary', checked);
                           }}
                         />
@@ -796,7 +733,6 @@ export function ContactDialog({
                 </Button>
               </div>
               
-              {/* Tags */}
               <div className="space-y-2">
                 <Label>Tags</Label>
                 <div className="p-4 border border-gray-100 rounded-md">
@@ -816,7 +752,6 @@ export function ContactDialog({
                 </div>
               </div>
               
-              {/* Notes */}
               <div className="space-y-2">
                 <Label htmlFor="notes">Notes</Label>
                 <Textarea
@@ -928,7 +863,6 @@ export function ContactDialog({
             </TabsContent>
           </Tabs>
           
-          {/* Client indicator */}
           <div className="pt-3 border-t flex items-center space-x-2">
             <Switch
               id="is_client"
@@ -938,7 +872,6 @@ export function ContactDialog({
             <Label htmlFor="is_client">This is a client</Label>
           </div>
           
-          {/* Form actions */}
           <div className="flex justify-end gap-2 pt-3 border-t">
             <Button
               type="button"
