@@ -38,3 +38,10 @@ export interface CustomFieldSet {
   created_at: string;
   updated_at: string;
 }
+
+// Add a type helper for Supabase database tables
+export type DbTables = 'calendars' | 'company_employees' | 'contacts' | 
+  'contact_tag_assignments' | 'contact_tags' | 'organizations' | 
+  'contact_types' | 'custom_field_definitions' | 'custom_field_values' | 
+  'custom_field_sets' | 'event_attendees' | 'event_documents' | 'event_reminders' | 
+  'event_types' | 'events' | 'profiles' | 'task_templates' | 'tasks' | 'workflow_templates';

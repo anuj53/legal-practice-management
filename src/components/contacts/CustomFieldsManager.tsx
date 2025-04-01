@@ -11,7 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/hooks/use-toast';
 import { Plus, Settings, Loader2 } from 'lucide-react';
 import { CustomFieldDialog } from './CustomFieldDialog';
-import { CustomFieldDefinition, CustomFieldFormValue, CustomFieldSet } from '@/types/customField';
+import { CustomFieldDefinition, CustomFieldFormValue, CustomFieldSet, DbTables } from '@/types/customField';
 import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
@@ -55,7 +55,7 @@ export function CustomFieldsManager({
 
         // Fetch field sets
         const { data: fieldSetData, error: fieldSetError } = await supabase
-          .from('custom_field_sets')
+          .from('custom_field_sets' as DbTables)
           .select('*')
           .eq('organization_id', profileData.organization_id)
           .eq('entity_type', entityType)
@@ -64,7 +64,7 @@ export function CustomFieldsManager({
         if (fieldSetError) throw fieldSetError;
         
         if (fieldSetData) {
-          setFieldSets(fieldSetData as CustomFieldSet[]);
+          setFieldSets(fieldSetData as unknown as CustomFieldSet[]);
         } else {
           setFieldSets([]);
         }
@@ -112,6 +112,8 @@ export function CustomFieldsManager({
             id,
             definition_id,
             value,
+            created_at,
+            updated_at,
             definition:custom_field_definitions(*)
           `)
           .eq('entity_id', entityId);
@@ -388,14 +390,14 @@ export function CustomFieldsManager({
               if (profileData?.organization_id) {
                 // Fetch field sets
                 supabase
-                  .from('custom_field_sets')
+                  .from('custom_field_sets' as DbTables)
                   .select('*')
                   .eq('organization_id', profileData.organization_id)
                   .eq('entity_type', entityType)
                   .order('position')
                   .then(({ data, error }) => {
                     if (!error && data) {
-                      setFieldSets(data as CustomFieldSet[]);
+                      setFieldSets(data as unknown as CustomFieldSet[]);
                     }
                   });
                 

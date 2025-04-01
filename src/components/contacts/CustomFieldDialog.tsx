@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { toast } from '@/hooks/use-toast';
 import { Loader2, Plus, X } from 'lucide-react';
-import { CustomFieldDefinition, CustomFieldSet } from '@/types/customField';
+import { CustomFieldDefinition, CustomFieldSet, DbTables } from '@/types/customField';
 
 interface CustomFieldDialogProps {
   open: boolean;
@@ -58,7 +58,7 @@ export function CustomFieldDialog({
       }
 
       const { data, error } = await supabase
-        .from('custom_field_sets')
+        .from('custom_field_sets' as DbTables)
         .select('*')
         .eq('organization_id', profileData.organization_id)
         .eq('entity_type', entityType)
@@ -67,7 +67,7 @@ export function CustomFieldDialog({
       if (error) throw error;
       
       if (data) {
-        setFieldSets(data as CustomFieldSet[]);
+        setFieldSets(data as unknown as CustomFieldSet[]);
         // Set default field set if available
         if (data.length > 0) {
           setSelectedFieldSet(data[0].id);
@@ -124,7 +124,7 @@ export function CustomFieldDialog({
       }
 
       const { data, error } = await supabase
-        .from('custom_field_sets')
+        .from('custom_field_sets' as DbTables)
         .insert({
           name: newFieldSetName.trim(),
           entity_type: entityType,
@@ -137,7 +137,7 @@ export function CustomFieldDialog({
       if (error) throw error;
       
       // Update local state with new field set
-      const newFieldSet = data as CustomFieldSet;
+      const newFieldSet = data as unknown as CustomFieldSet;
       setFieldSets([...fieldSets, newFieldSet]);
       return newFieldSet.id;
     } catch (error) {
@@ -204,9 +204,8 @@ export function CustomFieldDialog({
         .limit(1);
       
       let position = 0;
-      if (existingFields && existingFields.length > 0) {
-        const highestPosition = existingFields[0]?.position || 0;
-        position = highestPosition + 1;
+      if (existingFields && existingFields.length > 0 && existingFields[0]?.position !== null) {
+        position = (existingFields[0].position as number) + 1;
       }
 
       const fieldData = {
