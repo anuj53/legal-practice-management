@@ -185,62 +185,89 @@ export type Database = {
       contacts: {
         Row: {
           address: string | null
+          addresses: Json | null
           city: string | null
           company_name: string | null
           contact_type_id: string
           country: string | null
           created_at: string | null
           created_by: string
+          date_of_birth: string | null
           email: string | null
+          emails: Json | null
           first_name: string | null
           id: string
           is_client: boolean | null
+          job_title: string | null
           last_name: string | null
+          middle_name: string | null
           notes: string | null
           organization_id: string | null
           phone: string | null
+          phones: Json | null
+          prefix: string | null
+          profile_image_url: string | null
           state: string | null
           updated_at: string | null
+          websites: Json | null
           zip: string | null
         }
         Insert: {
           address?: string | null
+          addresses?: Json | null
           city?: string | null
           company_name?: string | null
           contact_type_id: string
           country?: string | null
           created_at?: string | null
           created_by: string
+          date_of_birth?: string | null
           email?: string | null
+          emails?: Json | null
           first_name?: string | null
           id?: string
           is_client?: boolean | null
+          job_title?: string | null
           last_name?: string | null
+          middle_name?: string | null
           notes?: string | null
           organization_id?: string | null
           phone?: string | null
+          phones?: Json | null
+          prefix?: string | null
+          profile_image_url?: string | null
           state?: string | null
           updated_at?: string | null
+          websites?: Json | null
           zip?: string | null
         }
         Update: {
           address?: string | null
+          addresses?: Json | null
           city?: string | null
           company_name?: string | null
           contact_type_id?: string
           country?: string | null
           created_at?: string | null
           created_by?: string
+          date_of_birth?: string | null
           email?: string | null
+          emails?: Json | null
           first_name?: string | null
           id?: string
           is_client?: boolean | null
+          job_title?: string | null
           last_name?: string | null
+          middle_name?: string | null
           notes?: string | null
           organization_id?: string | null
           phone?: string | null
+          phones?: Json | null
+          prefix?: string | null
+          profile_image_url?: string | null
           state?: string | null
           updated_at?: string | null
+          websites?: Json | null
           zip?: string | null
         }
         Relationships: [
