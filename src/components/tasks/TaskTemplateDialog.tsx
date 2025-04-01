@@ -179,12 +179,12 @@ export function TaskTemplateDialog({
             description: data.description || null,
             priority: data.priority,
             is_private: data.isPrivate,
-            task_type: data.taskType || null,
+            task_type: data.taskType === "none" ? null : data.taskType,
             time_estimate: data.timeEstimate || null,
-            default_assignee: data.defaultAssignee || null,
+            default_assignee: data.defaultAssignee === "use_workflow_assignee" ? null : data.defaultAssignee,
             due_date_type: data.dueDateType,
             due_date_offset: data.dueDateOffset,
-            depends_on_task_id: data.dependsOnTaskId || null,
+            depends_on_task_id: data.dependsOnTaskId === "no_dependency" ? null : data.dependsOnTaskId,
           })
           .eq('id', editTask.id);
         
@@ -204,12 +204,12 @@ export function TaskTemplateDialog({
             description: data.description || null,
             priority: data.priority,
             is_private: data.isPrivate,
-            task_type: data.taskType || null,
+            task_type: data.taskType === "none" ? null : data.taskType,
             time_estimate: data.timeEstimate || null,
-            default_assignee: data.defaultAssignee || null,
+            default_assignee: data.defaultAssignee === "use_workflow_assignee" ? null : data.defaultAssignee,
             due_date_type: data.dueDateType,
             due_date_offset: data.dueDateOffset,
-            depends_on_task_id: data.dependsOnTaskId || null,
+            depends_on_task_id: data.dependsOnTaskId === "no_dependency" ? null : data.dependsOnTaskId,
             position
           });
         
