@@ -101,8 +101,14 @@ export function NewWorkflowTemplateDialog({
     }
   }
 
+  // Close handler that resets the form
+  const handleClose = () => {
+    form.reset();
+    onOpenChange(false);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create New Workflow Template</DialogTitle>
@@ -112,7 +118,7 @@ export function NewWorkflowTemplateDialog({
         </DialogHeader>
         
         <Form {...form}>
-          <form className="space-y-6">
+          <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
             <FormField
               control={form.control}
               name="name"
@@ -169,13 +175,24 @@ export function NewWorkflowTemplateDialog({
             />
             
             <DialogFooter className="gap-2 sm:gap-0">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button type="button" variant="outline" onClick={handleClose}>
                 Cancel
               </Button>
-              <Button type="button" onClick={() => onSubmit(form.getValues(), 'close')}>
+              <Button 
+                type="button" 
+                onClick={() => {
+                  form.handleSubmit((data) => onSubmit(data, 'close'))();
+                }}
+              >
                 Save and Close
               </Button>
-              <Button type="button" variant="secondary" onClick={() => onSubmit(form.getValues(), 'add-tasks')}>
+              <Button 
+                type="button" 
+                variant="secondary" 
+                onClick={() => {
+                  form.handleSubmit((data) => onSubmit(data, 'add-tasks'))();
+                }}
+              >
                 Save and Add Tasks
               </Button>
             </DialogFooter>
