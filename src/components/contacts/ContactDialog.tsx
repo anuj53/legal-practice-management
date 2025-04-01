@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -391,13 +392,13 @@ export function ContactDialog({
                     <div>
                       <Label htmlFor="prefix">Prefix</Label>
                       <Select 
-                        value={formValues.prefix || ''} 
-                        onValueChange={(value) => setFormValues(prev => ({ ...prev, prefix: value }))}>
+                        value={formValues.prefix || "none"} 
+                        onValueChange={(value) => setFormValues(prev => ({ ...prev, prefix: value === "none" ? '' : value }))}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select..." />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">None</SelectItem>
+                          <SelectItem value="none">None</SelectItem>
                           <SelectItem value="Mr.">Mr.</SelectItem>
                           <SelectItem value="Mrs.">Mrs.</SelectItem>
                           <SelectItem value="Ms.">Ms.</SelectItem>
