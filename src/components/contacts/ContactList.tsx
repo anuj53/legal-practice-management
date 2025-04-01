@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -113,30 +112,7 @@ export function ContactList({ contacts, contactTypes, onContactDeleted }: Contac
   };
 
   const checkAndDeleteEmployeeLinks = async (contactId: string) => {
-    try {
-      // First check if this contact is an employee somewhere
-      const { data: employeeData, error: employeeError } = await supabase
-        .from('company_employees')
-        .select('id, company_id')
-        .eq('person_id', contactId);
-        
-      if (employeeError) throw employeeError;
-      
-      // If it's an employee, delete those relationships first
-      if (employeeData && employeeData.length > 0) {
-        const { error: deleteError } = await supabase
-          .from('company_employees')
-          .delete()
-          .in('id', employeeData.map(item => item.id));
-          
-        if (deleteError) throw deleteError;
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('Error handling employee links:', error);
-      return false;
-    }
+    return true; // Always return true since the database will handle cascade deletion
   };
 
   const handleDeleteConfirm = async () => {
@@ -165,15 +141,7 @@ export function ContactList({ contacts, contactTypes, onContactDeleted }: Contac
           setIsDeleting(false);
           return;
         }
-      } else {
-        // If it's a person, check if they're an employee anywhere and remove those links
-        const success = await checkAndDeleteEmployeeLinks(contactToDelete.id);
-        if (!success) {
-          setDeleteErrorMessage('Failed to remove employee relationships. Please try again.');
-          setIsDeleting(false);
-          return;
-        }
-      }
+      } 
       
       // Delete any tag assignments for this contact
       await supabase
