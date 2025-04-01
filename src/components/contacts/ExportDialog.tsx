@@ -6,7 +6,8 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Contact } from '@/types/contact';
 import { exportContactsToCSV, exportContactsToPDF, ExportColumnOption } from '@/utils/exportUtils';
-import { Info } from 'lucide-react';
+import { Info, Loader2 } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 interface ExportDialogProps {
   open: boolean;
@@ -17,17 +18,28 @@ interface ExportDialogProps {
 export function ExportDialog({ open, onOpenChange, contacts }: ExportDialogProps) {
   const [exportFormat, setExportFormat] = useState<'csv' | 'pdf'>('csv');
   const [columnOption, setColumnOption] = useState<ExportColumnOption>('all');
+  const [isExporting, setIsExporting] = useState(false);
 
-  const handleExport = () => {
+  const handleExport = async () => {
     try {
+      setIsExporting(true);
+      
       if (exportFormat === 'csv') {
         exportContactsToCSV(contacts, columnOption);
+        onOpenChange(false);
       } else {
-        exportContactsToPDF(contacts);
+        await exportContactsToPDF(contacts);
+        onOpenChange(false);
       }
-      onOpenChange(false);
     } catch (error) {
       console.error('Error exporting contacts:', error);
+      toast({
+        title: "Export Failed",
+        description: "There was an error exporting your contacts. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -93,6 +105,7 @@ export function ExportDialog({ open, onOpenChange, contacts }: ExportDialogProps
             variant="outline" 
             onClick={() => onOpenChange(false)}
             className="mr-2"
+            disabled={isExporting}
           >
             Cancel
           </Button>
@@ -100,8 +113,16 @@ export function ExportDialog({ open, onOpenChange, contacts }: ExportDialogProps
             variant="default" 
             onClick={handleExport}
             className="bg-blue-600 hover:bg-blue-700"
+            disabled={isExporting}
           >
-            Export
+            {isExporting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Exporting...
+              </>
+            ) : (
+              'Export'
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

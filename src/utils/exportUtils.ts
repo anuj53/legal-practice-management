@@ -1,8 +1,8 @@
-
 import { Contact } from '@/types/contact';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import autoTable from 'jspdf-autotable';
+import { supabase } from '@/integrations/supabase/client';
 
 export type ExportColumnOption = 'all' | 'visible';
 
@@ -101,13 +101,49 @@ export function exportContactsToCSV(contacts: Contact[], columnOption: ExportCol
 }
 
 /**
+ * Gets the organization name for the current user
+ */
+async function getOrganizationName(): Promise<string> {
+  try {
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) return "Legal Case Management System";
+    
+    // Get user's profile with organization_id
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('organization_id')
+      .eq('id', user.id)
+      .maybeSingle();
+      
+    if (!profileData?.organization_id) return "Legal Case Management System";
+    
+    // Get organization name
+    const { data: orgData } = await supabase
+      .from('organizations')
+      .select('name')
+      .eq('id', profileData.organization_id)
+      .maybeSingle();
+      
+    return orgData?.name || "Legal Case Management System";
+  } catch (error) {
+    console.error('Error fetching organization name:', error);
+    return "Legal Case Management System";
+  }
+}
+
+/**
  * Exports contacts to PDF format with direct download
  */
-export function exportContactsToPDF(contacts: Contact[]): void {
+export async function exportContactsToPDF(contacts: Contact[]): Promise<void> {
   const formattedData = formatContactsForExport(contacts, 'visible');
   if (formattedData.length === 0) return;
   
   try {
+    // Get organization name for the footer
+    const organizationName = await getOrganizationName();
+    
     // Create new PDF document
     const doc = new jsPDF();
     
@@ -149,7 +185,7 @@ export function exportContactsToPDF(contacts: Contact[]): void {
       doc.setPage(i);
       doc.setFontSize(8);
       doc.text(
-        'YorPro Legal Case Management System',
+        organizationName,
         doc.internal.pageSize.getWidth() / 2,
         doc.internal.pageSize.getHeight() - 10,
         { align: 'center' }
