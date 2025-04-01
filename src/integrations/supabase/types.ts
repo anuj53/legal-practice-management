@@ -186,6 +186,7 @@ export type Database = {
         Row: {
           address: string | null
           addresses: Json | null
+          billing_rate: number | null
           city: string | null
           company_name: string | null
           contact_type_id: string
@@ -200,9 +201,11 @@ export type Database = {
           is_client: boolean | null
           job_title: string | null
           last_name: string | null
+          ledes_client_id: string | null
           middle_name: string | null
           notes: string | null
           organization_id: string | null
+          payment_profile: string | null
           phone: string | null
           phones: Json | null
           prefix: string | null
@@ -215,6 +218,7 @@ export type Database = {
         Insert: {
           address?: string | null
           addresses?: Json | null
+          billing_rate?: number | null
           city?: string | null
           company_name?: string | null
           contact_type_id: string
@@ -229,9 +233,11 @@ export type Database = {
           is_client?: boolean | null
           job_title?: string | null
           last_name?: string | null
+          ledes_client_id?: string | null
           middle_name?: string | null
           notes?: string | null
           organization_id?: string | null
+          payment_profile?: string | null
           phone?: string | null
           phones?: Json | null
           prefix?: string | null
@@ -244,6 +250,7 @@ export type Database = {
         Update: {
           address?: string | null
           addresses?: Json | null
+          billing_rate?: number | null
           city?: string | null
           company_name?: string | null
           contact_type_id?: string
@@ -258,9 +265,11 @@ export type Database = {
           is_client?: boolean | null
           job_title?: string | null
           last_name?: string | null
+          ledes_client_id?: string | null
           middle_name?: string | null
           notes?: string | null
           organization_id?: string | null
+          payment_profile?: string | null
           phone?: string | null
           phones?: Json | null
           prefix?: string | null

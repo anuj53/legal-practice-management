@@ -77,8 +77,6 @@ export interface Contact {
   employees?: Contact[];
   
   // Billing information fields
-  client_id?: string | null;
-  payment_terms?: string | null;
   payment_profile?: string | null;
   billing_rate?: number | null;
   ledes_client_id?: string | null;
@@ -129,6 +127,8 @@ export interface ContactFormValues {
   notes?: string;
   is_client?: boolean;
   tags?: string[];
+  
+  // Billing information fields
   payment_profile?: string;
   billing_rate?: number;
   ledes_client_id?: string;

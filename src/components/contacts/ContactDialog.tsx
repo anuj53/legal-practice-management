@@ -75,7 +75,7 @@ export function ContactDialog({
         type: 'Work',
         is_primary: true
       }],
-      // These fields are kept in the form for UI purposes but won't be sent to the database
+      // These fields are now stored in the database
       payment_profile: contact.payment_profile || 'Default',
       billing_rate: contact.billing_rate || undefined,
       ledes_client_id: contact.ledes_client_id || '',
@@ -94,7 +94,7 @@ export function ContactDialog({
         type: 'Work', 
         is_primary: true 
       }],
-      // These fields are kept in the form for UI purposes but won't be sent to the database
+      // These fields are now stored in the database
       payment_profile: 'Default',
     }
   );
@@ -320,10 +320,10 @@ export function ContactDialog({
         phones: formValues.phones,
         websites: formValues.websites,
         addresses: formValues.addresses,
-        // Remove these fields from the data sent to the database
-        // payment_profile: formValues.payment_profile,
-        // billing_rate: formValues.billing_rate,
-        // ledes_client_id: formValues.ledes_client_id,
+        // Now include these fields in the data sent to the database
+        payment_profile: formValues.payment_profile || 'Default',
+        billing_rate: formValues.billing_rate,
+        ledes_client_id: formValues.ledes_client_id || null,
       };
 
       const databaseContactData = prepareContactForDatabase(contactData);
