@@ -6,6 +6,12 @@ import { Json } from '@/integrations/supabase/types';
  * Prepares contact data for Supabase by converting typed arrays to JSON
  */
 export function prepareContactForDatabase(contactData: Partial<Contact>): Record<string, any> {
+  // Make sure required fields are present before preparing data
+  if (!contactData.contact_type_id) {
+    throw new Error('contact_type_id is required');
+  }
+  
+  // Create a new object with all original properties
   const result = {
     ...contactData,
     // Convert typed arrays to JSON stringifiable format
@@ -14,11 +20,6 @@ export function prepareContactForDatabase(contactData: Partial<Contact>): Record
     websites: contactData.websites ? JSON.parse(JSON.stringify(contactData.websites)) : null,
     addresses: contactData.addresses ? JSON.parse(JSON.stringify(contactData.addresses)) : null,
   };
-
-  // Ensure required fields are present
-  if (!result.contact_type_id) {
-    throw new Error('contact_type_id is required');
-  }
 
   return result;
 }

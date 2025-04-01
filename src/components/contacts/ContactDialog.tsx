@@ -262,10 +262,6 @@ export function ContactDialog({
         is_client: formValues.is_client || false,
         organization_id: profileData.organization_id,
         created_by: user.id,
-      };
-
-      const databaseContactData = prepareContactForDatabase({
-        ...contactData,
         emails: formValues.emails,
         phones: formValues.phones,
         websites: formValues.websites,
@@ -273,17 +269,20 @@ export function ContactDialog({
         payment_profile: formValues.payment_profile,
         billing_rate: formValues.billing_rate,
         ledes_client_id: formValues.ledes_client_id,
-      });
+      };
+
+      const databaseContactData = prepareContactForDatabase(contactData);
       
-      let operation;
       let result;
       
       if (contact) {
-        const updateData = { ...databaseContactData };
-        
         const { data, error } = await supabase
           .from('contacts')
-          .update(updateData)
+          .update({
+            ...databaseContactData,
+            created_by: contact.created_by,
+            contact_type_id: contactData.contact_type_id
+          })
           .eq('id', contact.id)
           .select()
           .single();
@@ -293,7 +292,11 @@ export function ContactDialog({
       } else {
         const { data, error } = await supabase
           .from('contacts')
-          .insert(databaseContactData)
+          .insert({
+            ...databaseContactData,
+            contact_type_id: contactData.contact_type_id,
+            created_by: user.id
+          })
           .select()
           .single();
           
