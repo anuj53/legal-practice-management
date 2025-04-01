@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
   BarChart, 
@@ -25,6 +24,8 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { UserProfile } from './UserProfile';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 const SidebarItem = ({ 
   icon: Icon, 
@@ -60,14 +61,14 @@ const SidebarItem = ({
   </NavLink>
 );
 
-const LPMLogo = ({ collapsed }: { collapsed?: boolean }) => (
+const LPMLogo = ({ collapsed, organizationName = "Legal Practice Management" }: { collapsed?: boolean, organizationName?: string }) => (
   <div className={cn("flex items-center gap-3 px-4 py-6", collapsed && "justify-center")}>
     <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-white/30 to-white/5 backdrop-blur-md shadow-lg border border-white/20 hover:scale-105 transition-all duration-300">
       <span className="text-white font-bold text-2xl">L</span>
     </div>
     {!collapsed && (
       <div className="flex flex-col">
-        <span className="font-bold text-white text-2xl tracking-tight">LPM</span>
+        <span className="font-bold text-white text-2xl tracking-tight">{organizationName}</span>
         <span className="text-xs text-white/70 tracking-wide uppercase">Legal Practice Management</span>
       </div>
     )}
@@ -80,12 +81,52 @@ interface SidebarProps {
 }
 
 export function Sidebar({ collapsed = false, onToggleCollapse }: SidebarProps) {
+  const [organizationName, setOrganizationName] = useState<string>("Legal Practice Management");
+  const { user } = useAuth();
+  
+  useEffect(() => {
+    const fetchOrganizationName = async () => {
+      if (!user) return;
+      
+      try {
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('organization_id')
+          .eq('id', user.id)
+          .maybeSingle();
+          
+        if (profileError || !profileData?.organization_id) {
+          console.error('Error fetching profile:', profileError);
+          return;
+        }
+        
+        const { data: orgData, error: orgError } = await supabase
+          .from('organizations')
+          .select('name')
+          .eq('id', profileData.organization_id)
+          .maybeSingle();
+          
+        if (orgError) {
+          console.error('Error fetching organization:', orgError);
+          return;
+        }
+        
+        if (orgData && orgData.name) {
+          setOrganizationName(orgData.name);
+        }
+      } catch (error) {
+        console.error('Error fetching organization details:', error);
+      }
+    };
+    
+    fetchOrganizationName();
+  }, [user]);
+  
   return (
     <div className={cn(
       "bg-gradient-to-b from-yorpro-800 via-yorpro-900 to-yorpro-950 text-white h-screen flex flex-col border-r border-white/10 shadow-xl relative overflow-hidden",
       collapsed ? "w-24" : "w-72"
     )}>
-      {/* Toggle collapse button */}
       {onToggleCollapse && (
         <Button 
           variant="glass" 
@@ -100,28 +141,20 @@ export function Sidebar({ collapsed = false, onToggleCollapse }: SidebarProps) {
         </Button>
       )}
       
-      {/* Decorative elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Glowing orb in top right */}
         <div className="absolute -top-20 -right-20 w-40 h-40 rounded-full bg-yorpro-400/20 blur-3xl"></div>
-        
-        {/* Bottom left decorative element */}
         <div className="absolute bottom-0 left-0 w-full h-64 bg-gradient-to-t from-yorpro-950/50 to-transparent"></div>
-        
-        {/* Subtle grid pattern */}
         <div className="absolute inset-0 opacity-5">
           <div className="h-full w-full bg-grid-gray-100"></div>
         </div>
       </div>
       
       <div className="relative z-10 flex flex-1 flex-col h-full overflow-hidden">
-        {/* Logo section - fixed at top */}
         <div className="flex-shrink-0">
-          <LPMLogo collapsed={collapsed} />
+          <LPMLogo collapsed={collapsed} organizationName={organizationName} />
           <Separator className="bg-white/10 mx-4 my-2" />
         </div>
         
-        {/* Navigation section - scrollable */}
         <div className="flex-1 overflow-hidden flex flex-col min-h-0">
           <ScrollArea className="flex-1 px-4 py-2">
             <div className="space-y-1">
@@ -160,12 +193,10 @@ export function Sidebar({ collapsed = false, onToggleCollapse }: SidebarProps) {
               <SidebarItem icon={Palette} label="Appearance" to="/appearance" collapsed={collapsed} />
             </div>
             
-            {/* Add padding at the bottom to ensure last items are visible when scrolled */}
             <div className="h-6"></div>
           </ScrollArea>
         </div>
         
-        {/* User profile section - fixed at bottom */}
         <div className="flex-shrink-0">
           <UserProfile collapsed={collapsed} />
         </div>

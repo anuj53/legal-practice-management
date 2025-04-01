@@ -44,10 +44,9 @@ export function UserProfile({ collapsed = false }: UserProfileProps) {
           return;
         }
         
-        setProfileData(data);
-        
-        // If no profile was found, we'll create one for the user
-        if (!data) {
+        if (data) {
+          setProfileData(data);
+        } else {
           console.log('No profile found, creating one...');
           
           // Get the default organization ID
@@ -55,7 +54,7 @@ export function UserProfile({ collapsed = false }: UserProfileProps) {
             .from('organizations')
             .select('id')
             .eq('name', 'Harvey and Partners')
-            .maybeSingle();
+            .single();
             
           const organizationId = orgData?.id;
           
@@ -86,7 +85,9 @@ export function UserProfile({ collapsed = false }: UserProfileProps) {
             .eq('id', user.id)
             .maybeSingle();
             
-          setProfileData(newProfile);
+          if (newProfile) {
+            setProfileData(newProfile);
+          }
         }
       } catch (error) {
         console.error('Failed to fetch profile data:', error);
