@@ -42,6 +42,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Profile, TaskTemplate } from '@/types/workflow';
+import { useAuth } from '@/hooks/useAuth';
 
 interface AssignWorkflowDialogProps {
   open: boolean;
@@ -71,6 +72,7 @@ export function AssignWorkflowDialog({
   const [users, setUsers] = useState<Profile[]>([]);
   const [matters, setMatters] = useState<any[]>([]);
   const { toast } = useToast();
+  const { user } = useAuth();
   
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -100,7 +102,18 @@ export function AssignWorkflowDialog({
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        console.log('Fetching users from profiles table');
+        console.log('Fetching users from profiles table, current user:', user?.email);
+        
+        // First, add current user as a fallback if available
+        if (user?.id) {
+          const currentUserProfile: Profile = {
+            id: user.id,
+            first_name: user.email?.split('@')[0] || 'Current',
+            last_name: 'User'
+          };
+          setUsers([currentUserProfile]);
+        }
+        
         const { data, error } = await supabase
           .from('profiles')
           .select('id, first_name, last_name')
@@ -111,13 +124,18 @@ export function AssignWorkflowDialog({
           throw error;
         }
         
-        console.log('Fetched users:', data);
-        // Cast the data to match the Profile interface
-        setUsers((data || []) as Profile[]);
+        console.log('Fetched profiles:', data);
+        
+        if (data && data.length > 0) {
+          // Cast the data to match the Profile interface
+          setUsers(data as Profile[]);
+        } else {
+          console.log('No profiles found in the database');
+          // We already set current user as fallback above
+        }
       } catch (error) {
         console.error('Error in fetchUsers:', error);
-        // Show an empty list with current user as fallback
-        setUsers([]);
+        // Current user fallback is already set above
       }
     };
     
@@ -135,7 +153,7 @@ export function AssignWorkflowDialog({
       fetchUsers();
       fetchMatters();
     }
-  }, [open]);
+  }, [open, user]);
   
   async function onSubmit(data: FormData) {
     try {
@@ -198,7 +216,7 @@ export function AssignWorkflowDialog({
                       {users.length > 0 ? (
                         users.map(user => (
                           <SelectItem key={user.id} value={user.id}>
-                            {user.first_name} {user.last_name}
+                            {user.first_name || 'User'} {user.last_name || ''}
                           </SelectItem>
                         ))
                       ) : (
