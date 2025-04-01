@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -128,10 +129,10 @@ export default function ContactDetail() {
           tags: contactData.contact_tag_assignments?.map(
             (assignment: any) => assignment.contact_tags
           ) || [],
-          emails: contactData.emails,
-          phones: contactData.phones,
-          websites: contactData.websites,
-          addresses: contactData.addresses,
+          emails: contactData.emails || [],
+          phones: contactData.phones || [],
+          websites: contactData.websites || [],
+          addresses: contactData.addresses || [],
         };
         
         setContact(processedContact);

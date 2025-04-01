@@ -9,7 +9,7 @@ import { PageHeader } from '@/components/ui/page-header';
 import { ContactList } from '@/components/contacts/ContactList';
 import { ContactDialog } from '@/components/contacts/ContactDialog';
 import { ContactsFilters } from '@/components/contacts/ContactsFilters';
-import { Loader2, Users, Building2, Plus, Download, Upload } from 'lucide-react';
+import { Loader2, Users, Building2, Plus, Download } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 export default function Contacts() {
@@ -112,10 +112,10 @@ export default function Contacts() {
             created_by: contact.created_by,
             organization_id: contact.organization_id || null,
             tags: tags,
-            emails: contact.emails,
-            phones: contact.phones,
-            websites: contact.websites,
-            addresses: contact.addresses,
+            emails: contact.emails || [],
+            phones: contact.phones || [],
+            websites: contact.websites || [],
+            addresses: contact.addresses || [],
           };
           
           return typedContact;

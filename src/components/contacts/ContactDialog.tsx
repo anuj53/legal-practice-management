@@ -297,25 +297,44 @@ export function ContactDialog({
         ? supabase.from('contacts').update(contactData).eq('id', contact.id)
         : supabase.from('contacts').insert(contactData);
       
-      const { data, error } = await operation.select().single();
+      const { data: newContact, error } = await operation.select().single();
       
       if (error) throw error;
       
       // Transform the response to a Contact object with all required fields
-      const newContact: Contact = {
-        ...data,
-        // Ensure all required fields are present
-        prefix: data.prefix || null,
-        middle_name: data.middle_name || null,
-        job_title: data.job_title || null,
-        date_of_birth: data.date_of_birth || null,
-        profile_image_url: data.profile_image_url || null,
-        // Make sure tags are correctly handled
-        tags: [],
+      const processedContact: Contact = {
+        id: newContact.id,
+        contact_type_id: newContact.contact_type_id,
+        prefix: newContact.prefix || null,
+        first_name: newContact.first_name || null,
+        middle_name: newContact.middle_name || null,
+        last_name: newContact.last_name || null,
+        company_name: newContact.company_name || null,
+        job_title: newContact.job_title || null,
+        date_of_birth: newContact.date_of_birth || null,
+        profile_image_url: newContact.profile_image_url || null,
+        email: newContact.email || null,
+        phone: newContact.phone || null,
+        address: newContact.address || null,
+        city: newContact.city || null,
+        state: newContact.state || null,
+        zip: newContact.zip || null,
+        country: newContact.country || null,
+        notes: newContact.notes || null,
+        is_client: Boolean(newContact.is_client),
+        created_at: newContact.created_at,
+        updated_at: newContact.updated_at,
+        created_by: newContact.created_by,
+        organization_id: newContact.organization_id || null,
+        tags: [], // No tags initially
+        emails: newContact.emails || [],
+        phones: newContact.phones || [],
+        websites: newContact.websites || [],
+        addresses: newContact.addresses || [],
       };
       
       // Success
-      onSuccess(newContact);
+      onSuccess(processedContact);
       
     } catch (error) {
       console.error('Error saving contact:', error);
