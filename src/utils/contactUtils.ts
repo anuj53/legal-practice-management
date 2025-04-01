@@ -11,6 +11,10 @@ export function prepareContactForDatabase(contactData: Partial<Contact>): Record
     throw new Error('contact_type_id is required');
   }
   
+  if (!contactData.created_by) {
+    throw new Error('created_by is required');
+  }
+  
   // Create a new object with all original properties
   const result = {
     ...contactData,

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -112,6 +111,7 @@ export function ContactDialog({
   const handleContactTypeChange = (value: string) => {
     setFormValues(prev => ({ ...prev, contact_type_id: value }));
   };
+  
   
   const handleEmailChange = (index: number, field: keyof EmailAddress, value: string | boolean) => {
     setFormValues(prev => {
@@ -885,34 +885,4 @@ export function ContactDialog({
             </TabsContent>
           </Tabs>
           
-          <div className="pt-3 border-t flex items-center space-x-2">
-            <Switch
-              id="is_client"
-              checked={Boolean(formValues.is_client)}
-              onCheckedChange={(checked) => handleSwitchChange(checked, 'is_client')}
-            />
-            <Label htmlFor="is_client">This is a client</Label>
-          </div>
-          
-          <div className="flex justify-end gap-2 pt-3 border-t">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={loading}
-            >
-              Cancel
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={loading}
-            >
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {contact ? 'Update Contact' : 'Create Contact'}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
+          <div className="pt-3 border-t flex items-center space-
