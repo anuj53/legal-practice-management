@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
+import { LogOut } from 'lucide-react';
 
 interface UserProfileProps {
   collapsed?: boolean;
@@ -23,7 +24,7 @@ interface ProfileData {
 }
 
 export function UserProfile({ collapsed = false }: UserProfileProps) {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -139,6 +140,24 @@ export function UserProfile({ collapsed = false }: UserProfileProps) {
   const handleManageAccount = () => {
     navigate('/account-settings');
   };
+  
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      navigate('/auth');
+      toast({
+        title: "Signed out successfully",
+        description: "You have been logged out of your account",
+      });
+    } catch (error) {
+      console.error('Error signing out:', error);
+      toast({
+        title: "Sign out failed",
+        description: "There was a problem signing out. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className={cn("flex-shrink-0 p-4 relative z-10", collapsed && "p-2")}>
@@ -163,14 +182,36 @@ export function UserProfile({ collapsed = false }: UserProfileProps) {
           )}
         </div>
         {!collapsed && (
-          <div className="mt-3 pt-3 border-t border-white/10">
+          <div className="mt-3 pt-3 border-t border-white/10 flex gap-2">
             <Button 
               variant="glass" 
               size="sm" 
-              className="w-full justify-center text-xs font-medium hover:bg-white/20"
+              className="flex-1 justify-center text-xs font-medium hover:bg-white/20"
               onClick={handleManageAccount}
             >
               Manage Account
+            </Button>
+            <Button
+              variant="glass"
+              size="sm"
+              className="w-8 h-8 p-0 flex items-center justify-center hover:bg-white/20 hover:text-red-300"
+              onClick={handleSignOut}
+              title="Sign Out"
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+        {collapsed && (
+          <div className="mt-2 flex justify-center">
+            <Button
+              variant="glass"
+              size="sm"
+              className="w-8 h-8 p-0 flex items-center justify-center hover:bg-white/20 hover:text-red-300"
+              onClick={handleSignOut}
+              title="Sign Out"
+            >
+              <LogOut className="h-4 w-4" />
             </Button>
           </div>
         )}

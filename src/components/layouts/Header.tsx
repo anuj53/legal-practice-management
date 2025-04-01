@@ -3,7 +3,6 @@ import React, { useState, ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Bell, ChevronDown, Plus, Search, Clock } from 'lucide-react';
-import { UserMenu } from './UserMenu';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -79,8 +78,6 @@ export function Header({ children }: HeaderProps) {
           <Bell className="h-5 w-5 text-gray-700" />
           <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
         </Button>
-        
-        <UserMenu />
       </div>
     </header>
   );
