@@ -55,7 +55,7 @@ const formSchema = z.object({
   assigneeId: z.string().min(1, { message: "Assignee is required" }),
   assignAllToOne: z.boolean().default(false),
   notifyAssignees: z.boolean().default(false),
-  matterId: z.string().optional(),
+  matterId: z.string().optional().nullable(),
   triggerDate: z.date({ required_error: "Trigger date is required" }),
 });
 
@@ -78,7 +78,7 @@ export function AssignWorkflowDialog({
       assigneeId: '',
       assignAllToOne: false,
       notifyAssignees: false,
-      matterId: undefined, // Changed from empty string to undefined
+      matterId: null,
       triggerDate: new Date(),
     },
   });
@@ -90,7 +90,7 @@ export function AssignWorkflowDialog({
         assigneeId: '',
         assignAllToOne: false,
         notifyAssignees: false,
-        matterId: undefined, // Changed from empty string to undefined
+        matterId: null,
         triggerDate: new Date(),
       });
     }
@@ -181,7 +181,7 @@ export function AssignWorkflowDialog({
                   <FormLabel className="text-base font-medium">
                     Assign to <span className="text-red-500">*</span>
                   </FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger className="h-12">
                         <SelectValue placeholder="Select an assignee" />
@@ -248,7 +248,7 @@ export function AssignWorkflowDialog({
                   <FormLabel className="text-base font-medium">Matter</FormLabel>
                   <Select 
                     onValueChange={field.onChange} 
-                    value={field.value}
+                    value={field.value || undefined}
                   >
                     <FormControl>
                       <SelectTrigger className="h-12">
@@ -256,8 +256,7 @@ export function AssignWorkflowDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {/* Replaced empty string with a value "none" */}
-                      <SelectItem value="none">No matter</SelectItem>
+                      <SelectItem value="no_matter">No matter</SelectItem>
                       {matters.map(matter => (
                         <SelectItem key={matter.id} value={matter.id}>
                           {matter.name}
