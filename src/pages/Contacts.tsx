@@ -47,7 +47,9 @@ export default function Contacts() {
   }, []);
 
   useEffect(() => {
-    fetchContacts();
+    if (user) {
+      fetchContacts();
+    }
   }, [user, isClientOnly, refreshKey]);
 
   const fetchContacts = async () => {
@@ -124,8 +126,10 @@ export default function Contacts() {
   };
 
   const handleContactDeleted = () => {
-    // Trigger a refresh of the contacts list
-    setRefreshKey(prev => prev + 1);
+    // Use a shorter timeout to prevent UI freeze but allow time for Supabase operation to complete
+    setTimeout(() => {
+      setRefreshKey(prev => prev + 1);
+    }, 100);
   };
 
   const handleExportContacts = () => {
