@@ -30,6 +30,7 @@ function App() {
               <Route path="/contacts/:id" element={<ContactDetail />} />
               <Route path="/workflow-templates" element={<WorkflowTemplates />} />
               <Route path="/account-settings" element={<AccountSettings />} />
+              <Route path="/matter" element={<NotFound />} />
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>

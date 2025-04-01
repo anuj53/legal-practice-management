@@ -55,7 +55,7 @@ export default function ContactDetail() {
   const [matters, setMatters] = useState<Matter[]>([]);
   const [activeTab, setActiveTab] = useState('dashboard');
 
-  // Fetch the contact and related data
+  // Fetch contact types once on component mount
   useEffect(() => {
     const fetchContactTypes = async () => {
       try {
@@ -75,7 +75,12 @@ export default function ContactDetail() {
         });
       }
     };
-    
+
+    fetchContactTypes();
+  }, []); // Only run once on mount
+
+  // Separate effect for fetching contact and related data
+  useEffect(() => {
     const fetchContact = async () => {
       if (!id || !user) return;
       
@@ -107,8 +112,8 @@ export default function ContactDetail() {
         
         setContact(processedContact);
 
-        // If it's a company, fetch its employees
-        if (processedContact.contact_type_id === contactTypes.find(t => t.name === 'Company')?.id) {
+        // Check if we have contact types and it's a company before fetching employees
+        if (contactTypes.length > 0 && processedContact.contact_type_id === contactTypes.find(t => t.name === 'Company')?.id) {
           // Fixed query - specify the relationship explicitly
           const { data: employeeData, error: employeeError } = await supabase
             .from('company_employees')
@@ -147,9 +152,10 @@ export default function ContactDetail() {
       }
     };
     
-    fetchContactTypes();
-    fetchContact();
-  }, [id, user, contactTypes]);
+    if (contactTypes.length > 0) {
+      fetchContact();
+    }
+  }, [id, user, contactTypes]); // Only run when id, user, or contactTypes change
 
   const getContactTypeName = (typeId: string | undefined) => {
     if (!typeId) return 'Unknown';
