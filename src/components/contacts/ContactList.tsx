@@ -25,7 +25,8 @@ import {
   Trash2, 
   UserPlus, 
   Building,
-  User
+  User,
+  Loader2
 } from 'lucide-react';
 import { Contact, ContactType } from '@/types/contact';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -44,6 +45,7 @@ export function ContactList({ contacts, contactTypes, onContactDeleted }: Contac
   const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
   const [contactToDelete, setContactToDelete] = React.useState<Contact | null>(null);
   const [isDeleting, setIsDeleting] = React.useState(false);
+  const [deleteErrorMessage, setDeleteErrorMessage] = React.useState<string | null>(null);
   
   if (contacts.length === 0) {
     return (
@@ -106,7 +108,35 @@ export function ContactList({ contacts, contactTypes, onContactDeleted }: Contac
   const handleDeleteClick = (e: React.MouseEvent, contact: Contact) => {
     e.stopPropagation(); // Prevent row click event
     setContactToDelete(contact);
+    setDeleteErrorMessage(null);
     setDeleteConfirmOpen(true);
+  };
+
+  const checkAndDeleteEmployeeLinks = async (contactId: string) => {
+    try {
+      // First check if this contact is an employee somewhere
+      const { data: employeeData, error: employeeError } = await supabase
+        .from('company_employees')
+        .select('id, company_id')
+        .eq('person_id', contactId);
+        
+      if (employeeError) throw employeeError;
+      
+      // If it's an employee, delete those relationships first
+      if (employeeData && employeeData.length > 0) {
+        const { error: deleteError } = await supabase
+          .from('company_employees')
+          .delete()
+          .in('id', employeeData.map(item => item.id));
+          
+        if (deleteError) throw deleteError;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error handling employee links:', error);
+      return false;
+    }
   };
 
   const handleDeleteConfirm = async () => {
@@ -114,45 +144,32 @@ export function ContactList({ contacts, contactTypes, onContactDeleted }: Contac
     
     try {
       setIsDeleting(true);
+      setDeleteErrorMessage(null);
       
-      // First, check if the contact is a person that might be an employee of a company
-      const { error: checkError, count } = await supabase
-        .from('company_employees')
-        .select('id', { count: 'exact', head: true })
-        .eq('person_id', contactToDelete.id);
+      const isCompany = contactToDelete.contact_type_id === contactTypes.find(t => t.name === 'Company')?.id;
       
-      if (checkError) throw checkError;
-      
-      // If the contact is linked as an employee, show error
-      if (count && count > 0) {
-        toast({
-          title: "Cannot delete contact",
-          description: "This contact is linked as an employee to one or more companies. Remove these links first.",
-          variant: "destructive"
-        });
-        setDeleteConfirmOpen(false);
-        setContactToDelete(null);
-        setIsDeleting(false);
-        return;
-      }
-      
-      // If the contact is a company, check for employees
-      if (contactTypes.find(t => t.name === 'Company')?.id === contactToDelete.contact_type_id) {
-        const { error: companyCheckError, count: employeeCount } = await supabase
+      // If it's a company, check for employees
+      if (isCompany) {
+        const { data: employeeData, error: employeeCheckError, count } = await supabase
           .from('company_employees')
-          .select('id', { count: 'exact', head: true })
+          .select('id', { count: 'exact' })
           .eq('company_id', contactToDelete.id);
         
-        if (companyCheckError) throw companyCheckError;
+        if (employeeCheckError) throw employeeCheckError;
         
-        if (employeeCount && employeeCount > 0) {
-          toast({
-            title: "Cannot delete company",
-            description: "This company has employees linked to it. Remove these links first.",
-            variant: "destructive"
-          });
-          setDeleteConfirmOpen(false);
-          setContactToDelete(null);
+        if (count && count > 0) {
+          setDeleteErrorMessage(
+            `Cannot delete this company because it has ${count} employee${count > 1 ? 's' : ''} linked to it. ` +
+            'Please remove all employee links first.'
+          );
+          setIsDeleting(false);
+          return;
+        }
+      } else {
+        // If it's a person, check if they're an employee anywhere and remove those links
+        const success = await checkAndDeleteEmployeeLinks(contactToDelete.id);
+        if (!success) {
+          setDeleteErrorMessage('Failed to remove employee relationships. Please try again.');
           setIsDeleting(false);
           return;
         }
@@ -177,20 +194,18 @@ export function ContactList({ contacts, contactTypes, onContactDeleted }: Contac
         description: "The contact has been removed successfully."
       });
       
-      // Refresh contact list
+      // Close dialog first before refreshing
+      setDeleteConfirmOpen(false);
+      setContactToDelete(null);
+      
+      // Then refresh contact list
       if (onContactDeleted) {
         onContactDeleted();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting contact:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete contact. Please try again.",
-        variant: "destructive"
-      });
+      setDeleteErrorMessage(error.message || 'Failed to delete contact. Please try again.');
     } finally {
-      setDeleteConfirmOpen(false);
-      setContactToDelete(null);
       setIsDeleting(false);
     }
   };
@@ -326,15 +341,30 @@ export function ContactList({ contacts, contactTypes, onContactDeleted }: Contac
               This action cannot be undone. This will permanently delete the contact 
               {contactToDelete ? ` "${getContactName(contactToDelete)}"` : ''} and all associated data.
             </AlertDialogDescription>
+            {deleteErrorMessage && (
+              <div className="mt-2 p-3 border border-red-200 bg-red-50 text-red-600 rounded-md">
+                {deleteErrorMessage}
+              </div>
+            )}
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction 
-              onClick={handleDeleteConfirm} 
+              onClick={(e) => {
+                e.preventDefault(); // Prevent form submission
+                handleDeleteConfirm();
+              }} 
               className="bg-red-600 hover:bg-red-700"
               disabled={isDeleting}
             >
-              {isDeleting ? "Deleting..." : "Delete"}
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
