@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,15 +7,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
-import { Loader2, Plus, X } from 'lucide-react';
-import { CustomFieldDefinition } from '@/types/customField';
+import { Loader2 } from 'lucide-react';
+import { CustomFieldDefinition, mapToCustomFieldDefinition } from '@/types/customField';
 
 interface CustomFieldDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   entityType: 'contact' | 'matter' | 'task';
   fieldSetId?: string;
+  field?: CustomFieldDefinition;
   onSuccess?: () => void;
 }
 
@@ -25,39 +26,74 @@ export function CustomFieldDialog({
   onOpenChange,
   entityType,
   fieldSetId,
+  field,
   onSuccess
 }: CustomFieldDialogProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState('');
-  const [fieldType, setFieldType] = useState<CustomFieldDefinition['field_type']>('text');
-  const [isRequired, setIsRequired] = useState(false);
+  const [fieldType, setFieldType] = useState<'text' | 'number' | 'date' | 'select' | 'checkbox' | 'email' | 'phone' | 'url'>('text');
   const [defaultValue, setDefaultValue] = useState('');
-  const [options, setOptions] = useState<string[]>([]);
-  const [optionInput, setOptionInput] = useState('');
-
-  const handleAddOption = () => {
-    if (optionInput.trim() && !options.includes(optionInput.trim())) {
-      setOptions([...options, optionInput.trim()]);
-      setOptionInput('');
+  const [isRequired, setIsRequired] = useState(false);
+  const [options, setOptions] = useState<string>('');
+  const [fieldSet, setFieldSet] = useState<string | null>(fieldSetId || null);
+  const [availableFieldSets, setAvailableFieldSets] = useState<{ id: string; name: string }[]>([]);
+  
+  const isEditing = !!field;
+  
+  useEffect(() => {
+    if (open) {
+      if (field) {
+        setName(field.name || '');
+        setFieldType(field.field_type);
+        setDefaultValue(field.default_value || '');
+        setIsRequired(field.is_required || false);
+        setOptions(field.options ? field.options.join('\n') : '');
+        setFieldSet(field.field_set || null);
+      } else {
+        setName('');
+        setFieldType('text');
+        setDefaultValue('');
+        setIsRequired(false);
+        setOptions('');
+        setFieldSet(fieldSetId || null);
+      }
+      
+      if (!fieldSetId) {
+        fetchFieldSets();
+      }
+    }
+  }, [open, field, fieldSetId]);
+  
+  const fetchFieldSets = async () => {
+    if (!user) return;
+    
+    try {
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user.id)
+        .maybeSingle();
+        
+      if (!profileData?.organization_id) return;
+      
+      const { data: sets, error } = await supabase
+        .from('custom_field_sets')
+        .select('id, name')
+        .eq('organization_id', profileData.organization_id)
+        .eq('entity_type', entityType)
+        .order('name');
+        
+      if (error) throw error;
+      
+      if (sets) {
+        setAvailableFieldSets(sets);
+      }
+    } catch (error) {
+      console.error('Error fetching field sets:', error);
     }
   };
-
-  const handleRemoveOption = (index: number) => {
-    const newOptions = [...options];
-    newOptions.splice(index, 1);
-    setOptions(newOptions);
-  };
-
-  const resetForm = () => {
-    setName('');
-    setFieldType('text');
-    setIsRequired(false);
-    setDefaultValue('');
-    setOptions([]);
-    setOptionInput('');
-  };
-
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -69,7 +105,7 @@ export function CustomFieldDialog({
       });
       return;
     }
-
+    
     if (!name.trim()) {
       toast({
         title: "Validation Error",
@@ -78,11 +114,10 @@ export function CustomFieldDialog({
       });
       return;
     }
-
+    
     try {
       setLoading(true);
       
-      // Get user's organization ID
       const { data: profileData } = await supabase
         .from('profiles')
         .select('organization_id')
@@ -92,66 +127,98 @@ export function CustomFieldDialog({
       if (!profileData?.organization_id) {
         throw new Error("Organization not found");
       }
-
-      // Get the next position for the field
-      const positionQuery = supabase
-        .from('custom_field_definitions')
-        .select('position')
-        .eq('organization_id', profileData.organization_id)
-        .eq('entity_type', entityType);
-        
-      if (fieldSetId) {
-        positionQuery.eq('field_set', fieldSetId);
-      } else {
-        positionQuery.is('field_set', null);
+      
+      let parsedOptions: string[] | null = null;
+      if (fieldType === 'select' && options.trim()) {
+        parsedOptions = options.split('\n')
+          .filter(option => option.trim())
+          .map(option => option.trim());
       }
       
-      const { data: positionData } = await positionQuery
-        .order('position', { ascending: false })
-        .limit(1);
+      let nextPosition = 0;
+      
+      if (isEditing) {
+        nextPosition = field.position;
+      } else {
+        const positionQuery = supabase
+          .from('custom_field_definitions')
+          .select('position')
+          .eq('organization_id', profileData.organization_id)
+          .eq('entity_type', entityType);
+          
+        if (fieldSet) {
+          positionQuery.eq('field_set', fieldSet);
+        } else {
+          positionQuery.is('field_set', null);
+        }
         
-      const nextPosition = (positionData && positionData.length > 0 && positionData[0]?.position != null)
-        ? (positionData[0].position + 1)
-        : 0;
+        positionQuery.order('position', { ascending: false }).limit(1);
+        
+        const { data: fields } = await positionQuery;
+          
+        nextPosition = (fields && fields.length > 0 && fields[0]?.position != null)
+          ? (fields[0].position + 1)
+          : 0;
+      }
       
       const fieldData = {
-        organization_id: profileData.organization_id,
         name: name.trim(),
         field_type: fieldType,
         entity_type: entityType,
-        field_set: fieldSetId || null,
-        default_value: defaultValue || null,
+        organization_id: profileData.organization_id,
+        default_value: defaultValue.trim() || null,
         is_required: isRequired,
-        options: fieldType === 'select' ? options : null,
+        options: parsedOptions,
+        field_set: fieldSet,
         position: nextPosition
       };
-
-      const { error } = await supabase
-        .from('custom_field_definitions')
-        .insert(fieldData);
-        
-      if (error) {
-        if (error.code === '23505') {
-          // Unique constraint violation
-          throw new Error("A field with this name already exists");
-        }
-        throw error;
-      }
-
-      toast({
-        title: "Success",
-        description: "Custom field created successfully."
-      });
       
-      if (onSuccess) onSuccess();
-      resetForm();
+      let result;
+      
+      if (isEditing) {
+        const { data, error } = await supabase
+          .from('custom_field_definitions')
+          .update(fieldData)
+          .eq('id', field.id)
+          .select('*')
+          .single();
+          
+        if (error) throw error;
+        result = data;
+        
+        toast({
+          title: "Success",
+          description: "Custom field updated successfully."
+        });
+      } else {
+        const { data, error } = await supabase
+          .from('custom_field_definitions')
+          .insert(fieldData)
+          .select('*')
+          .single();
+          
+        if (error) throw error;
+        result = data;
+        
+        toast({
+          title: "Success",
+          description: "Custom field created successfully."
+        });
+      }
+      
+      const typedResult = mapToCustomFieldDefinition(result);
+      
+      if (onSuccess) {
+        onSuccess();
+      }
+      
       onOpenChange(false);
       
     } catch (error: any) {
-      console.error('Error creating custom field:', error);
+      console.error('Error saving custom field:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to create custom field.",
+        description: error.message || "Failed to save custom field.",
         variant: "destructive"
       });
     } finally {
@@ -161,12 +228,14 @@ export function CustomFieldDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Create Custom Field</DialogTitle>
+          <DialogTitle>{isEditing ? "Edit Custom Field" : "Create Custom Field"}</DialogTitle>
           <DialogDescription>
-            Add a new custom field for {entityType === 'contact' ? 'contacts' : entityType === 'matter' ? 'matters' : 'tasks'}.
-            {fieldSetId ? " This field will be added to the selected field set." : " This field will be available for all items of this type."}
+            {isEditing 
+              ? "Update this custom field's properties." 
+              : `Add a new custom field for ${entityType === 'contact' ? 'contacts' : entityType === 'matter' ? 'matters' : 'tasks'}.`
+            }
           </DialogDescription>
         </DialogHeader>
         
@@ -177,91 +246,87 @@ export function CustomFieldDialog({
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g., Referral Source"
+              placeholder="e.g., Client ID"
               required
             />
           </div>
           
-          <div className="space-y-2">
-            <Label htmlFor="fieldType">Field Type <span className="text-red-500">*</span></Label>
-            <Select 
-              value={fieldType} 
-              onValueChange={(value) => setFieldType(value as CustomFieldDefinition['field_type'])}>
-              <SelectTrigger id="fieldType">
-                <SelectValue placeholder="Select field type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="text">Text</SelectItem>
-                <SelectItem value="number">Number</SelectItem>
-                <SelectItem value="date">Date</SelectItem>
-                <SelectItem value="select">Dropdown</SelectItem>
-                <SelectItem value="checkbox">Checkbox</SelectItem>
-                <SelectItem value="email">Email</SelectItem>
-                <SelectItem value="phone">Phone</SelectItem>
-                <SelectItem value="url">URL</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="field-type">Field Type <span className="text-red-500">*</span></Label>
+              <Select
+                value={fieldType}
+                onValueChange={(value) => setFieldType(value as any)}
+              >
+                <SelectTrigger id="field-type">
+                  <SelectValue placeholder="Select a field type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="text">Text</SelectItem>
+                  <SelectItem value="number">Number</SelectItem>
+                  <SelectItem value="date">Date</SelectItem>
+                  <SelectItem value="select">Dropdown</SelectItem>
+                  <SelectItem value="checkbox">Checkbox</SelectItem>
+                  <SelectItem value="email">Email</SelectItem>
+                  <SelectItem value="phone">Phone</SelectItem>
+                  <SelectItem value="url">URL</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {!fieldSetId && availableFieldSets.length > 0 && (
+              <div className="space-y-2">
+                <Label htmlFor="field-set">Field Set (Optional)</Label>
+                <Select
+                  value={fieldSet || ""}
+                  onValueChange={(value) => setFieldSet(value || null)}
+                >
+                  <SelectTrigger id="field-set">
+                    <SelectValue placeholder="No Field Set" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">No Field Set</SelectItem>
+                    {availableFieldSets.map(set => (
+                      <SelectItem key={set.id} value={set.id}>{set.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
           
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="isRequired"
-              checked={isRequired}
-              onCheckedChange={setIsRequired}
-            />
-            <Label htmlFor="isRequired">Required Field</Label>
-          </div>
-          
           <div className="space-y-2">
-            <Label htmlFor="defaultValue">Default Value</Label>
+            <Label htmlFor="default-value">Default Value</Label>
             <Input
-              id="defaultValue"
+              id="default-value"
               value={defaultValue}
               onChange={(e) => setDefaultValue(e.target.value)}
-              placeholder="Default value (optional)"
+              placeholder={fieldType === 'email' ? 'example@email.com' : 'Default value'}
             />
           </div>
-
+          
           {fieldType === 'select' && (
-            <div className="space-y-3 border border-gray-200 rounded-md p-3">
-              <Label>Options</Label>
-              <div className="flex space-x-2">
-                <Input
-                  value={optionInput}
-                  onChange={(e) => setOptionInput(e.target.value)}
-                  placeholder="Add option"
-                  className="flex-1"
-                />
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleAddOption}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-              
-              <div className="space-y-2">
-                {options.map((option, index) => (
-                  <div key={index} className="flex justify-between items-center bg-gray-50 p-2 rounded">
-                    <span>{option}</span>
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={() => handleRemoveOption(index)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-                {options.length === 0 && (
-                  <p className="text-sm text-gray-500 italic">No options added yet</p>
-                )}
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="options">Options</Label>
+              <Textarea
+                id="options"
+                value={options}
+                onChange={(e) => setOptions(e.target.value)}
+                placeholder="Enter each option on a new line"
+                className="min-h-[100px]"
+              />
+              <p className="text-xs text-muted-foreground">Enter each option on a new line.</p>
             </div>
           )}
+          
+          <div className="flex items-center space-x-2 pt-2">
+            <Switch
+              checked={isRequired}
+              onCheckedChange={setIsRequired}
+              id="required"
+            />
+            <Label htmlFor="required">Required field</Label>
+          </div>
           
           <DialogFooter className="pt-4">
             <Button variant="outline" type="button" onClick={() => onOpenChange(false)}>
@@ -269,7 +334,7 @@ export function CustomFieldDialog({
             </Button>
             <Button type="submit" disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create Field
+              {isEditing ? "Update" : "Create"}
             </Button>
           </DialogFooter>
         </form>

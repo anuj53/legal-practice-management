@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,7 +19,7 @@ import { toast } from '@/hooks/use-toast';
 import { CustomFieldDialog } from '@/components/contacts/CustomFieldDialog';
 import { Badge } from '@/components/ui/badge';
 import { CustomFieldCard } from './CustomFieldCard';
-import { CustomFieldSet } from '@/types/customField';
+import { CustomFieldSet, mapToCustomFieldSet, mapToCustomFieldDefinition } from '@/types/customField';
 
 interface CustomFieldSetCardProps {
   fieldSet: CustomFieldSet;
@@ -89,6 +90,30 @@ export function CustomFieldSetCard({ fieldSet, onEdit, onRefresh }: CustomFieldS
   
   const handleAddField = () => {
     setIsFieldDialogOpen(true);
+  };
+
+  const handleFieldDialogSuccess = async () => {
+    // After adding a field, we need to refetch the field set data to update the UI
+    try {
+      // Fetch the fields for this specific field set
+      const { data, error } = await supabase
+        .from('custom_field_definitions')
+        .select('*')
+        .eq('field_set', fieldSet.id)
+        .order('position');
+        
+      if (error) throw error;
+      
+      // Update the fieldSet.fields locally
+      if (fieldSet && data) {
+        fieldSet.fields = data.map(mapToCustomFieldDefinition);
+      }
+      
+      // Trigger the parent component to refresh all data
+      onRefresh();
+    } catch (error) {
+      console.error('Error refreshing fields after adding:', error);
+    }
   };
 
   return (
@@ -186,7 +211,7 @@ export function CustomFieldSetCard({ fieldSet, onEdit, onRefresh }: CustomFieldS
         onOpenChange={setIsFieldDialogOpen}
         entityType={fieldSet.entity_type}
         fieldSetId={fieldSet.id}
-        onSuccess={onRefresh}
+        onSuccess={handleFieldDialogSuccess}
       />
     </>
   );

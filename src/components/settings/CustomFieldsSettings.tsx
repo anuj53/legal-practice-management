@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -54,54 +55,56 @@ export function CustomFieldsSettings() {
     fetchOrgId();
   }, [user]);
   
-  // Fetch field sets and standalone fields
-  useEffect(() => {
-    const fetchCustomFields = async () => {
-      if (!organizationId) return;
-      
-      try {
-        setLoading(true);
-        
-        // Add custom_field_sets table to Supabase
-        // Fetch field sets
-        const { data: setsData, error: setsError } = await supabase
-          .from('custom_field_sets')
-          .select('*')
-          .eq('organization_id', organizationId)
-          .eq('entity_type', activeEntity)
-          .order('position');
-        
-        if (setsError) throw setsError;
-        
-        const mappedSets = (setsData || []).map(mapToCustomFieldSet);
-        setCustomFieldSets(mappedSets);
-        
-        // Fetch standalone fields (fields with no set)
-        const { data: fieldsData, error: fieldsError } = await supabase
-          .from('custom_field_definitions')
-          .select('*')
-          .eq('organization_id', organizationId)
-          .eq('entity_type', activeEntity)
-          .is('field_set', null)
-          .order('position');
-        
-        if (fieldsError) throw fieldsError;
-        
-        const mappedFields = (fieldsData || []).map(mapToCustomFieldDefinition);
-        setCustomFields(mappedFields);
-      } catch (error) {
-        console.error('Error fetching custom fields:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load custom fields.",
-          variant: "destructive"
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Main function to fetch field sets and standalone fields
+  const fetchCustomFields = async () => {
+    if (!organizationId) return;
     
-    fetchCustomFields();
+    try {
+      setLoading(true);
+      
+      // Fetch field sets
+      const { data: setsData, error: setsError } = await supabase
+        .from('custom_field_sets')
+        .select('*')
+        .eq('organization_id', organizationId)
+        .eq('entity_type', activeEntity)
+        .order('position');
+      
+      if (setsError) throw setsError;
+      
+      const mappedSets = (setsData || []).map(mapToCustomFieldSet);
+      setCustomFieldSets(mappedSets);
+      
+      // Fetch standalone fields (fields with no set)
+      const { data: fieldsData, error: fieldsError } = await supabase
+        .from('custom_field_definitions')
+        .select('*')
+        .eq('organization_id', organizationId)
+        .eq('entity_type', activeEntity)
+        .is('field_set', null)
+        .order('position');
+      
+      if (fieldsError) throw fieldsError;
+      
+      const mappedFields = (fieldsData || []).map(mapToCustomFieldDefinition);
+      setCustomFields(mappedFields);
+    } catch (error) {
+      console.error('Error fetching custom fields:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load custom fields.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Initial fetch of field sets and fields
+  useEffect(() => {
+    if (organizationId) {
+      fetchCustomFields();
+    }
   }, [organizationId, activeEntity]);
   
   // Fetch fields for each field set
@@ -146,34 +149,35 @@ export function CustomFieldsSettings() {
     setIsSetDialogOpen(true);
   };
   
+  // Main refresh function
   const handleRefresh = async () => {
     if (!organizationId) return;
+    await fetchCustomFields();
     
-    setLoading(true);
+    // After fetching the field sets, fetch fields for each set
+    const updatedSets = [...customFieldSets];
     
-    // Fetch field sets
-    const { data: setsData, error: setsError } = await supabase
-      .from('custom_field_sets')
-      .select('*')
-      .eq('organization_id', organizationId)
-      .eq('entity_type', activeEntity)
-      .order('position');
-    
-    if (setsError) throw setsError;
-    setCustomFieldSets((setsData || []).map(mapToCustomFieldSet));
-    
-    // Fetch standalone fields
-    const { data: fieldsData, error: fieldsError } = await supabase
-      .from('custom_field_definitions')
-      .select('*')
-      .eq('organization_id', organizationId)
-      .eq('entity_type', activeEntity)
-      .is('field_set', null)
-      .order('position');
-    
-    if (fieldsError) throw fieldsError;
-    setCustomFields((fieldsData || []).map(mapToCustomFieldDefinition));
-    setLoading(false);
+    try {
+      for (const [index, set] of updatedSets.entries()) {
+        const { data: fieldsData, error: fieldsError } = await supabase
+          .from('custom_field_definitions')
+          .select('*')
+          .eq('organization_id', organizationId)
+          .eq('field_set', set.id)
+          .order('position');
+        
+        if (fieldsError) throw fieldsError;
+        
+        updatedSets[index] = {
+          ...set,
+          fields: (fieldsData || []).map(mapToCustomFieldDefinition)
+        };
+      }
+      
+      setCustomFieldSets(updatedSets);
+    } catch (error) {
+      console.error('Error refreshing fields for sets:', error);
+    }
   };
   
   const handleEditSet = (fieldSet: CustomFieldSet) => {
