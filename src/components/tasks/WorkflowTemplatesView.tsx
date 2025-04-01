@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -15,7 +16,6 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { 
   Copy, 
-  Edit, 
   Eye, 
   MoreHorizontal, 
   Pencil, 
@@ -30,14 +30,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -48,6 +40,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { NewWorkflowTemplateDialog } from './NewWorkflowTemplateDialog';
+import { EditWorkflowTemplateDialog } from './EditWorkflowTemplateDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { WorkflowTemplateDetailView } from './WorkflowTemplateDetailView';
@@ -56,9 +49,9 @@ import { WorkflowTemplate, TaskTemplate } from '@/types/workflow';
 export function WorkflowTemplatesView() {
   const [workflowTemplates, setWorkflowTemplates] = useState<WorkflowTemplate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [previewTemplate, setPreviewTemplate] = useState<WorkflowTemplate | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [isNewTemplateOpen, setIsNewTemplateOpen] = useState(false);
+  const [editTemplateData, setEditTemplateData] = useState<WorkflowTemplate | null>(null);
   const [detailViewId, setDetailViewId] = useState<string | null>(null);
   const { toast } = useToast();
   
@@ -232,6 +225,10 @@ export function WorkflowTemplatesView() {
     fetchWorkflowTemplates();
     setDetailViewId(id);
   };
+  
+  const handleEditTemplate = (template: WorkflowTemplate) => {
+    setEditTemplateData(template);
+  };
 
   return (
     <div className="space-y-6">
@@ -308,7 +305,7 @@ export function WorkflowTemplatesView() {
                           variant="ghost" 
                           size="icon"
                           title="Edit template"
-                          onClick={() => handleViewDetails(template.id)}
+                          onClick={() => handleEditTemplate(template)}
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -349,6 +346,18 @@ export function WorkflowTemplatesView() {
         onOpenChange={setIsNewTemplateOpen}
         onSuccess={handleTemplateCreated}
       />
+
+      {/* Edit Workflow Template Dialog */}
+      {editTemplateData && (
+        <EditWorkflowTemplateDialog
+          open={!!editTemplateData}
+          onOpenChange={(open) => {
+            if (!open) setEditTemplateData(null);
+          }}
+          onSuccess={fetchWorkflowTemplates}
+          template={editTemplateData}
+        />
+      )}
 
       {/* Workflow Template Detail View */}
       {detailViewId && (
