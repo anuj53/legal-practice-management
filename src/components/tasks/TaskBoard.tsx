@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -17,10 +18,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { useToast, toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { EditTaskDialog } from './EditTaskDialog';
 import { Task } from './TaskList';
 import { useTaskTypes } from '@/contexts/TaskTypeContext';
+import { updateTask } from './TaskService';
 
 interface TaskBoardProps {
   tasks: Task[];
@@ -33,7 +35,7 @@ export function TaskBoard({ tasks: initialTasks, onCloseTask }: TaskBoardProps) 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
   const { taskTypes } = useTaskTypes();
-  const { toast: toastFunction } = useToast();
+  const { toast } = useToast();
   
   useEffect(() => {
     console.log('TaskBoard received tasks:', initialTasks);
@@ -83,7 +85,7 @@ export function TaskBoard({ tasks: initialTasks, onCloseTask }: TaskBoardProps) 
     }
   };
 
-  const onDragEnd = (result: any) => {
+  const onDragEnd = async (result: any) => {
     const { destination, source, draggableId } = result;
 
     if (!destination || 
@@ -102,10 +104,31 @@ export function TaskBoard({ tasks: initialTasks, onCloseTask }: TaskBoardProps) 
       
       if (oldStatus !== newStatus) {
         draggedTask.status = newStatus;
-        toastFunction({
-          title: "Task Updated",
-          description: `Task moved to ${newStatus}`,
-        });
+        
+        try {
+          // Persist the change to the database
+          const dbUpdatedTask = await updateTask(draggedTask.id, {
+            status: newStatus
+          });
+          
+          console.log('Task status updated in database:', dbUpdatedTask);
+          
+          toast({
+            title: "Task Updated",
+            description: `Task moved to ${newStatus}`,
+          });
+        } catch (error) {
+          console.error('Failed to update task status in database:', error);
+          
+          // Revert the change in local state if database update fails
+          draggedTask.status = oldStatus;
+          
+          toast({
+            title: "Update Failed",
+            description: "Failed to update task status. Please try again.",
+            variant: "destructive"
+          });
+        }
       }
       
       setTasks(updatedTasks);
