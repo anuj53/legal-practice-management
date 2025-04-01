@@ -108,8 +108,15 @@ export function ContactDialog({
     setFormValues(prev => ({ ...prev, [name]: checked }));
   };
 
+  // Updated function to properly handle contact type changes
   const handleContactTypeChange = (value: string) => {
-    setFormValues(prev => ({ ...prev, contact_type_id: value }));
+    const contactTypeName = contactTypes.find(t => t.id === value)?.name || '';
+    
+    // Make sure UI updates when switching back to Person
+    setFormValues(prev => ({ 
+      ...prev,
+      contact_type_id: value
+    }));
   };
   
   
@@ -213,6 +220,7 @@ export function ContactDialog({
     });
   };
 
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -387,6 +395,7 @@ export function ContactDialog({
               </div>
               
               {isPersonType ? (
+                
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                     <div>
@@ -484,6 +493,7 @@ export function ContactDialog({
                   />
                 </div>
               )}
+              
               
               
               <div className="space-y-4">
@@ -883,32 +893,4 @@ export function ContactDialog({
                     <Input
                       id="ledes_client_id"
                       value={formValues.ledes_client_id || ''}
-                      onChange={(e) => setFormValues(prev => ({ ...prev, ledes_client_id: e.target.value }))}
-                      placeholder="Enter LEDES ID"
-                      className="max-w-xs"
-                    />
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
-
-          <div className="pt-6 space-x-2 flex items-center justify-end border-t">
-            <Button 
-              variant="outline" 
-              type="button" 
-              onClick={() => onOpenChange(false)}
-              disabled={loading}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {contact ? 'Update Contact' : 'Create Contact'}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
+                      onChange={(e) => setFormValues(prev => ({ ...prev,
