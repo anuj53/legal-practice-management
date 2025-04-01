@@ -1,0 +1,119 @@
+
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+
+interface UserProfileProps {
+  collapsed?: boolean;
+}
+
+interface ProfileData {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  email_alias: string | null;
+}
+
+export function UserProfile({ collapsed = false }: UserProfileProps) {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [profileData, setProfileData] = useState<ProfileData | null>(null);
+  
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, email_alias')
+          .eq('id', user.id)
+          .single();
+          
+        if (error) {
+          console.error('Error fetching profile data:', error);
+          return;
+        }
+        
+        setProfileData(data);
+      } catch (error) {
+        console.error('Failed to fetch profile data:', error);
+      }
+    };
+    
+    fetchProfileData();
+  }, [user]);
+  
+  // Get display name or fallback
+  const getDisplayName = () => {
+    if (profileData?.first_name && profileData?.last_name) {
+      return `${profileData.first_name} ${profileData.last_name}`;
+    }
+    
+    if (profileData?.first_name) {
+      return profileData.first_name;
+    }
+    
+    if (user?.email) {
+      return user.email.split('@')[0];
+    }
+    
+    return 'User';
+  };
+  
+  // Get user role (placeholder for now)
+  const getUserRole = () => {
+    return 'Attorney';
+  };
+  
+  // Get user initials for avatar
+  const getInitials = () => {
+    if (profileData?.first_name && profileData?.last_name) {
+      return `${profileData.first_name[0]}${profileData.last_name[0]}`.toUpperCase();
+    }
+    
+    if (user?.email) {
+      return user.email.substring(0, 2).toUpperCase();
+    }
+    
+    return "U";
+  };
+  
+  const handleManageAccount = () => {
+    navigate('/account-settings');
+  };
+
+  return (
+    <div className={cn("flex-shrink-0 p-4 relative z-10", collapsed && "p-2")}>
+      <div className="rounded-xl bg-gradient-to-r from-yorpro-700/30 to-yorpro-800/30 backdrop-blur-md p-4 border border-white/10 shadow-lg hover:shadow-xl transition-all duration-300 group">
+        <div className="flex items-center gap-3">
+          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-yorpro-400/80 to-yorpro-500/80 flex items-center justify-center shadow-lg border border-white/20 group-hover:scale-105 transition-all duration-300">
+            <span className="font-semibold text-white">{getInitials()}</span>
+          </div>
+          {!collapsed && (
+            <div>
+              <p className="text-sm font-medium text-white">{getDisplayName()}</p>
+              <p className="text-xs text-white/70">{getUserRole()}</p>
+            </div>
+          )}
+        </div>
+        {!collapsed && (
+          <div className="mt-3 pt-3 border-t border-white/10">
+            <Button 
+              variant="glass" 
+              size="sm" 
+              className="w-full justify-center text-xs font-medium hover:bg-white/20"
+              onClick={handleManageAccount}
+            >
+              Manage Account
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
