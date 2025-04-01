@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -106,7 +105,6 @@ export function TaskBoard({ tasks: initialTasks, onCloseTask }: TaskBoardProps) 
         draggedTask.status = newStatus;
         
         try {
-          // Persist the change to the database
           const dbUpdatedTask = await updateTask(draggedTask.id, {
             status: newStatus
           });
@@ -120,7 +118,6 @@ export function TaskBoard({ tasks: initialTasks, onCloseTask }: TaskBoardProps) 
         } catch (error) {
           console.error('Failed to update task status in database:', error);
           
-          // Revert the change in local state if database update fails
           draggedTask.status = oldStatus;
           
           toast({
@@ -158,7 +155,7 @@ export function TaskBoard({ tasks: initialTasks, onCloseTask }: TaskBoardProps) 
       );
     }
     
-    toastFunction({
+    toast({
       title: "Task Completed",
       description: "Task marked as complete and removed from view",
     });
