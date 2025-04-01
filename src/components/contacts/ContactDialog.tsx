@@ -276,22 +276,32 @@ export function ContactDialog({
       });
       
       let operation;
+      let result;
+      
       if (contact) {
-        operation = supabase
+        const updateData = { ...databaseContactData };
+        
+        const { data, error } = await supabase
           .from('contacts')
-          .update({ ...databaseContactData })
-          .eq('id', contact.id);
+          .update(updateData)
+          .eq('id', contact.id)
+          .select()
+          .single();
+          
+        if (error) throw error;
+        result = data;
       } else {
-        operation = supabase
+        const { data, error } = await supabase
           .from('contacts')
-          .insert({ ...databaseContactData });
+          .insert(databaseContactData)
+          .select()
+          .single();
+          
+        if (error) throw error;
+        result = data;
       }
       
-      const { data: newContact, error } = await operation.select().single();
-      
-      if (error) throw error;
-      
-      const processedContact = processContactFromDatabase(newContact);
+      const processedContact = processContactFromDatabase(result);
       
       onSuccess(processedContact);
       
