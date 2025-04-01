@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
@@ -68,7 +69,7 @@ const LPMLogo = ({ collapsed, organizationName = "Legal Practice Management" }: 
     </div>
     {!collapsed && (
       <div className="flex flex-col">
-        <span className="font-bold text-white text-2xl tracking-tight">{organizationName}</span>
+        <span className="font-bold text-white text-xl tracking-tight truncate max-w-[170px]">{organizationName}</span>
         <span className="text-xs text-white/70 tracking-wide uppercase">Legal Practice Management</span>
       </div>
     )}
