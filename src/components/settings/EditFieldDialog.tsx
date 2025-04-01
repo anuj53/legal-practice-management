@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { toast } from '@/hooks/use-toast';
 import { Loader2, Plus, X } from 'lucide-react';
-import { CustomFieldDefinition } from '@/types/customField';
+import { CustomFieldDefinition, mapToCustomFieldDefinition } from '@/types/customField';
 
 interface EditFieldDialogProps {
   open: boolean;
@@ -27,23 +27,22 @@ export function EditFieldDialog({
 }: EditFieldDialogProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [name, setName] = useState('');
-  const [fieldType, setFieldType] = useState<CustomFieldDefinition['field_type']>('text');
-  const [isRequired, setIsRequired] = useState(false);
-  const [defaultValue, setDefaultValue] = useState('');
-  const [options, setOptions] = useState<string[]>([]);
+  const [name, setName] = useState(field.name);
+  const [fieldType, setFieldType] = useState<CustomFieldDefinition['field_type']>(field.field_type);
+  const [isRequired, setIsRequired] = useState(field.is_required);
+  const [defaultValue, setDefaultValue] = useState(field.default_value || '');
+  const [options, setOptions] = useState<string[]>(field.options || []);
   const [optionInput, setOptionInput] = useState('');
-  
+
   useEffect(() => {
-    if (field) {
-      setName(field.name || '');
-      setFieldType(field.field_type);
-      setIsRequired(field.is_required || false);
-      setDefaultValue(field.default_value || '');
-      setOptions(field.options || []);
-    }
+    // Update form state when field prop changes
+    setName(field.name);
+    setFieldType(field.field_type);
+    setIsRequired(field.is_required);
+    setDefaultValue(field.default_value || '');
+    setOptions(field.options || []);
   }, [field]);
-  
+
   const handleAddOption = () => {
     if (optionInput.trim() && !options.includes(optionInput.trim())) {
       setOptions([...options, optionInput.trim()]);
@@ -56,7 +55,7 @@ export function EditFieldDialog({
     newOptions.splice(index, 1);
     setOptions(newOptions);
   };
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -77,14 +76,15 @@ export function EditFieldDialog({
       });
       return;
     }
-    
+
     try {
       setLoading(true);
       
       const fieldData = {
         name: name.trim(),
-        is_required: isRequired,
+        field_type: fieldType,
         default_value: defaultValue || null,
+        is_required: isRequired,
         options: fieldType === 'select' ? options : null,
         updated_at: new Date().toISOString()
       };
@@ -95,6 +95,10 @@ export function EditFieldDialog({
         .eq('id', field.id);
         
       if (error) {
+        if (error.code === '23505') {
+          // Unique constraint violation
+          throw new Error("A field with this name already exists");
+        }
         throw error;
       }
 
@@ -124,7 +128,7 @@ export function EditFieldDialog({
         <DialogHeader>
           <DialogTitle>Edit Custom Field</DialogTitle>
           <DialogDescription>
-            Update the details of this custom field.
+            Update the settings for this custom field.
           </DialogDescription>
         </DialogHeader>
         
@@ -140,13 +144,15 @@ export function EditFieldDialog({
             />
           </div>
           
+          {/* Field type is read-only in edit mode */}
           <div className="space-y-2">
             <Label htmlFor="fieldType">Field Type</Label>
             <Input
               id="fieldType"
-              value={getFieldTypeLabel(fieldType)}
+              value={fieldType.charAt(0).toUpperCase() + fieldType.slice(1)}
+              readOnly
               disabled
-              className="bg-muted"
+              className="bg-gray-100"
             />
             <p className="text-xs text-muted-foreground">Field type cannot be changed after creation.</p>
           </div>
@@ -224,27 +230,4 @@ export function EditFieldDialog({
       </DialogContent>
     </Dialog>
   );
-}
-
-function getFieldTypeLabel(fieldType: string) {
-  switch (fieldType) {
-    case 'text':
-      return 'Text';
-    case 'number':
-      return 'Number';
-    case 'date':
-      return 'Date';
-    case 'select':
-      return 'Dropdown';
-    case 'checkbox':
-      return 'Checkbox';
-    case 'email':
-      return 'Email';
-    case 'phone':
-      return 'Phone';
-    case 'url':
-      return 'URL';
-    default:
-      return fieldType;
-  }
 }

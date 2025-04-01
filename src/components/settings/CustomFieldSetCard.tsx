@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,9 +18,10 @@ import { toast } from '@/hooks/use-toast';
 import { CustomFieldDialog } from '@/components/contacts/CustomFieldDialog';
 import { Badge } from '@/components/ui/badge';
 import { CustomFieldCard } from './CustomFieldCard';
+import { CustomFieldSet } from '@/types/customField';
 
 interface CustomFieldSetCardProps {
-  fieldSet: any;
+  fieldSet: CustomFieldSet;
   onEdit: () => void;
   onRefresh: () => void;
 }
@@ -39,7 +39,7 @@ export function CustomFieldSetCard({ fieldSet, onEdit, onRefresh }: CustomFieldS
       // Check if the set has any fields
       if (fieldSet.fields && fieldSet.fields.length > 0) {
         // First, get all field definition IDs in this set
-        const fieldIds = fieldSet.fields.map((field: any) => field.id);
+        const fieldIds = fieldSet.fields.map((field) => field.id);
         
         // Delete all field values associated with these definitions
         if (fieldIds.length > 0) {
@@ -60,7 +60,7 @@ export function CustomFieldSetCard({ fieldSet, onEdit, onRefresh }: CustomFieldS
         if (deleteFieldsError) throw deleteFieldsError;
       }
       
-      // Delete the field set
+      // Delete the field set from custom_field_sets table
       const { error } = await supabase
         .from('custom_field_sets')
         .delete()
@@ -133,7 +133,7 @@ export function CustomFieldSetCard({ fieldSet, onEdit, onRefresh }: CustomFieldS
             <div className="px-4 pb-4">
               {fieldSet.fields && fieldSet.fields.length > 0 ? (
                 <div className="space-y-3">
-                  {fieldSet.fields.map((field: any) => (
+                  {fieldSet.fields.map((field) => (
                     <CustomFieldCard key={field.id} field={field} onRefresh={onRefresh} />
                   ))}
                 </div>

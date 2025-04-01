@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,7 +10,13 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/hooks/use-toast';
 import { Plus, Settings, Loader2 } from 'lucide-react';
 import { CustomFieldDialog } from './CustomFieldDialog';
-import { CustomFieldDefinition, CustomFieldFormValue } from '@/types/customField';
+import { 
+  CustomFieldDefinition, 
+  CustomFieldFormValue, 
+  CustomFieldSet,
+  mapToCustomFieldDefinition,
+  mapToCustomFieldSet 
+} from '@/types/customField';
 import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
@@ -31,7 +36,7 @@ export function CustomFieldsManager({
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [fields, setFields] = useState<CustomFieldDefinition[]>([]);
-  const [fieldSets, setFieldSets] = useState<any[]>([]);
+  const [fieldSets, setFieldSets] = useState<CustomFieldSet[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   
   // Fetch available custom fields and field sets
@@ -56,7 +61,7 @@ export function CustomFieldsManager({
         
         const organizationId = profileData.organization_id;
         
-        // Fetch field sets first
+        // Fetch field sets first using custom_field_sets table
         const { data: setsData, error: setsError } = await supabase
           .from('custom_field_sets')
           .select('*')
@@ -66,7 +71,7 @@ export function CustomFieldsManager({
         
         if (setsError) throw setsError;
         
-        const sets = setsData || [];
+        const sets = (setsData || []).map(mapToCustomFieldSet);
         setFieldSets(sets);
         
         // Fetch fields for each set
@@ -81,7 +86,10 @@ export function CustomFieldsManager({
             .order('position');
           
           if (fieldsInSetError) throw fieldsInSetError;
-          updatedSets[index].fields = fieldsInSetData || [];
+          updatedSets[index] = {
+            ...set,
+            fields: (fieldsInSetData || []).map(mapToCustomFieldDefinition)
+          };
         }
         
         setFieldSets(updatedSets);
@@ -96,7 +104,9 @@ export function CustomFieldsManager({
           .order('position');
         
         if (standaloneFieldsError) throw standaloneFieldsError;
-        setFields(standaloneFieldsData || []);
+        
+        const mappedFields = (standaloneFieldsData || []).map(mapToCustomFieldDefinition);
+        setFields(mappedFields);
       } catch (error) {
         console.error('Error fetching custom fields:', error);
         toast({
@@ -272,6 +282,83 @@ export function CustomFieldsManager({
     }
   };
 
+  const handleRefreshFields = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    setFields([]);
+    setFieldSets([]);
+    
+    try {
+      // Get user's organization ID
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user?.id)
+        .maybeSingle();
+        
+      if (!profileData?.organization_id) {
+        setLoading(false);
+        return;
+      }
+      
+      const organizationId = profileData.organization_id;
+      
+      // Fetch field sets using custom_field_sets table
+      const { data: setsData, error: setsError } = await supabase
+        .from('custom_field_sets')
+        .select('*')
+        .eq('organization_id', organizationId)
+        .eq('entity_type', entityType)
+        .order('position');
+        
+      if (setsError) {
+        console.error('Error fetching field sets:', setsError);
+        setLoading(false);
+        return;
+      }
+      
+      const sets = (setsData || []).map(mapToCustomFieldSet);
+      setFieldSets(sets);
+      
+      // Fetch fields for each set
+      const updatedSets = [...sets];
+      
+      for (const [index, set] of updatedSets.entries()) {
+        const { data: fieldsInSetData } = await supabase
+          .from('custom_field_definitions')
+          .select('*')
+          .eq('organization_id', organizationId)
+          .eq('field_set', set.id)
+          .order('position');
+        
+        updatedSets[index] = {
+          ...set,
+          fields: (fieldsInSetData || []).map(mapToCustomFieldDefinition)
+        };
+      }
+      
+      setFieldSets(updatedSets);
+      
+      // Fetch standalone fields
+      const { data: fieldsData, error: fieldsError } = await supabase
+        .from('custom_field_definitions')
+        .select('*')
+        .eq('organization_id', organizationId)
+        .eq('entity_type', entityType)
+        .is('field_set', null)
+        .order('position');
+        
+      setLoading(false);
+      if (!fieldsError && fieldsData) {
+        setFields(fieldsData.map(mapToCustomFieldDefinition));
+      }
+    } catch (error) {
+      console.error('Error refreshing custom fields:', error);
+      setLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center p-4">
@@ -350,80 +437,7 @@ export function CustomFieldsManager({
         open={dialogOpen} 
         onOpenChange={setDialogOpen} 
         entityType={entityType}
-        onSuccess={() => {
-          // Refresh the fields list
-          setLoading(true);
-          setFields([]);
-          setFieldSets([]);
-          
-          // Get user's organization ID
-          supabase
-            .from('profiles')
-            .select('organization_id')
-            .eq('id', user?.id)
-            .maybeSingle()
-            .then(({ data: profileData }) => {
-              if (!profileData?.organization_id) {
-                setLoading(false);
-                return;
-              }
-              
-              const organizationId = profileData.organization_id;
-              
-              // Fetch field sets
-              supabase
-                .from('custom_field_sets')
-                .select('*')
-                .eq('organization_id', organizationId)
-                .eq('entity_type', entityType)
-                .order('position')
-                .then(({ data: setsData, error: setsError }) => {
-                  if (setsError) {
-                    console.error('Error fetching field sets:', setsError);
-                    setLoading(false);
-                    return;
-                  }
-                  
-                  const sets = setsData || [];
-                  setFieldSets(sets);
-                  
-                  // Fetch fields for each set
-                  const fetchFieldsForSets = async () => {
-                    const updatedSets = [...sets];
-                    
-                    for (const [index, set] of updatedSets.entries()) {
-                      const { data: fieldsInSetData } = await supabase
-                        .from('custom_field_definitions')
-                        .select('*')
-                        .eq('organization_id', organizationId)
-                        .eq('field_set', set.id)
-                        .order('position');
-                      
-                      updatedSets[index].fields = fieldsInSetData || [];
-                    }
-                    
-                    setFieldSets(updatedSets);
-                  };
-                  
-                  fetchFieldsForSets();
-                  
-                  // Fetch standalone fields
-                  supabase
-                    .from('custom_field_definitions')
-                    .select('*')
-                    .eq('organization_id', organizationId)
-                    .eq('entity_type', entityType)
-                    .is('field_set', null)
-                    .order('position')
-                    .then(({ data: fieldsData, error: fieldsError }) => {
-                      setLoading(false);
-                      if (!fieldsError && fieldsData) {
-                        setFields(fieldsData);
-                      }
-                    });
-                });
-            });
-        }}
+        onSuccess={handleRefreshFields}
       />
     </div>
   );

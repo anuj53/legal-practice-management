@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Contact, ContactType, Matter, CompanyEmployee } from '@/types/contact';
-import { CustomFieldValue } from '@/types/customField';
+import { CustomFieldValue, mapToCustomFieldValue } from '@/types/customField';
 import { 
   Tabs, 
   TabsContent, 
@@ -165,13 +165,16 @@ export default function ContactDetail() {
             definition_id,
             entity_id,
             value,
+            created_at,
+            updated_at,
             definition:custom_field_definitions(*)
           `)
           .eq('entity_id', id);
           
         if (error) throw error;
         
-        setCustomFields(data || []);
+        const mappedValues = (data || []).map(mapToCustomFieldValue);
+        setCustomFields(mappedValues);
       } catch (error) {
         console.error('Error fetching custom fields:', error);
       }
@@ -312,7 +315,7 @@ export default function ContactDetail() {
               {field.definition?.name}
             </div>
             <div className="mt-1">
-              {field.field_type === 'checkbox' ? (
+              {field.definition?.field_type === 'checkbox' ? (
                 field.value === 'true' ? 'Yes' : 'No'
               ) : (
                 field.value || <span className="text-gray-400">Not specified</span>

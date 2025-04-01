@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,7 +11,12 @@ import { Separator } from '@/components/ui/separator';
 import { CustomFieldSetCard } from '@/components/settings/CustomFieldSetCard';
 import { CustomFieldCard } from '@/components/settings/CustomFieldCard';
 import { FieldSetDialog } from '@/components/settings/FieldSetDialog';
-import { CustomFieldDefinition } from '@/types/customField';
+import { 
+  CustomFieldDefinition, 
+  CustomFieldSet,
+  mapToCustomFieldDefinition, 
+  mapToCustomFieldSet 
+} from '@/types/customField';
 
 export function CustomFieldsSettings() {
   const { user } = useAuth();
@@ -20,11 +24,11 @@ export function CustomFieldsSettings() {
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [activeEntity, setActiveEntity] = useState<'contact' | 'matter' | 'task'>('contact');
   const [searchTerm, setSearchTerm] = useState('');
-  const [customFieldSets, setCustomFieldSets] = useState<any[]>([]);
+  const [customFieldSets, setCustomFieldSets] = useState<CustomFieldSet[]>([]);
   const [customFields, setCustomFields] = useState<CustomFieldDefinition[]>([]);
   const [isFieldDialogOpen, setIsFieldDialogOpen] = useState(false);
   const [isSetDialogOpen, setIsSetDialogOpen] = useState(false);
-  const [selectedFieldSet, setSelectedFieldSet] = useState<any | null>(null);
+  const [selectedFieldSet, setSelectedFieldSet] = useState<CustomFieldSet | null>(null);
   
   // Fetch organization ID
   useEffect(() => {
@@ -58,6 +62,7 @@ export function CustomFieldsSettings() {
       try {
         setLoading(true);
         
+        // Add custom_field_sets table to Supabase
         // Fetch field sets
         const { data: setsData, error: setsError } = await supabase
           .from('custom_field_sets')
@@ -67,7 +72,9 @@ export function CustomFieldsSettings() {
           .order('position');
         
         if (setsError) throw setsError;
-        setCustomFieldSets(setsData || []);
+        
+        const mappedSets = (setsData || []).map(mapToCustomFieldSet);
+        setCustomFieldSets(mappedSets);
         
         // Fetch standalone fields (fields with no set)
         const { data: fieldsData, error: fieldsError } = await supabase
@@ -79,7 +86,9 @@ export function CustomFieldsSettings() {
           .order('position');
         
         if (fieldsError) throw fieldsError;
-        setCustomFields(fieldsData || []);
+        
+        const mappedFields = (fieldsData || []).map(mapToCustomFieldDefinition);
+        setCustomFields(mappedFields);
       } catch (error) {
         console.error('Error fetching custom fields:', error);
         toast({
@@ -112,7 +121,11 @@ export function CustomFieldsSettings() {
             .order('position');
           
           if (fieldsError) throw fieldsError;
-          updatedSets[index].fields = fieldsData || [];
+          
+          updatedSets[index] = {
+            ...set,
+            fields: (fieldsData || []).map(mapToCustomFieldDefinition)
+          };
         }
         
         setCustomFieldSets(updatedSets);
@@ -147,7 +160,7 @@ export function CustomFieldsSettings() {
       .order('position');
     
     if (setsError) throw setsError;
-    setCustomFieldSets(setsData || []);
+    setCustomFieldSets((setsData || []).map(mapToCustomFieldSet));
     
     // Fetch standalone fields
     const { data: fieldsData, error: fieldsError } = await supabase
@@ -159,11 +172,11 @@ export function CustomFieldsSettings() {
       .order('position');
     
     if (fieldsError) throw fieldsError;
-    setCustomFields(fieldsData || []);
+    setCustomFields((fieldsData || []).map(mapToCustomFieldDefinition));
     setLoading(false);
   };
   
-  const handleEditSet = (fieldSet: any) => {
+  const handleEditSet = (fieldSet: CustomFieldSet) => {
     setSelectedFieldSet(fieldSet);
     setIsSetDialogOpen(true);
   };
@@ -176,7 +189,7 @@ export function CustomFieldsSettings() {
   // Filter field sets by search term
   const filteredSets = customFieldSets.filter(set => 
     set.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (set.fields && set.fields.some((field: any) => 
+    (set.fields && set.fields.some((field) => 
       field.name.toLowerCase().includes(searchTerm.toLowerCase())
     ))
   );

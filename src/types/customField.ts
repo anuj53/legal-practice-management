@@ -33,9 +33,57 @@ export interface CustomFieldValue {
   created_at: string;
   updated_at: string;
   definition?: CustomFieldDefinition;
+  field_type?: string; // Added this for ContactDetail.tsx
 }
 
 export interface CustomFieldFormValue {
   definition_id: string;
   value: string | null;
+}
+
+// Helper type for Supabase query responses to avoid TypeScript errors
+export type CustomFieldSetWithFields = CustomFieldSet & { fields: CustomFieldDefinition[] };
+
+// Define type-safe function to handle Supabase responses
+export function mapToCustomFieldDefinition(data: any): CustomFieldDefinition {
+  return {
+    id: data.id,
+    organization_id: data.organization_id,
+    name: data.name,
+    field_type: data.field_type,
+    entity_type: data.entity_type,
+    default_value: data.default_value,
+    is_required: data.is_required || false,
+    options: data.options,
+    created_at: data.created_at,
+    updated_at: data.updated_at,
+    field_set: data.field_set,
+    position: data.position || 0
+  };
+}
+
+export function mapToCustomFieldValue(data: any): CustomFieldValue {
+  return {
+    id: data.id,
+    definition_id: data.definition_id,
+    entity_id: data.entity_id,
+    value: data.value,
+    created_at: data.created_at || new Date().toISOString(),
+    updated_at: data.updated_at || new Date().toISOString(),
+    definition: data.definition ? mapToCustomFieldDefinition(data.definition) : undefined,
+    field_type: data.definition?.field_type
+  };
+}
+
+export function mapToCustomFieldSet(data: any): CustomFieldSet {
+  return {
+    id: data.id,
+    organization_id: data.organization_id,
+    name: data.name,
+    entity_type: data.entity_type,
+    position: data.position || 0,
+    created_at: data.created_at,
+    updated_at: data.updated_at,
+    fields: data.fields ? data.fields.map(mapToCustomFieldDefinition) : []
+  };
 }

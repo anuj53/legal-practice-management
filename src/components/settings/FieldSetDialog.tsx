@@ -8,12 +8,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { CustomFieldSet } from '@/types/customField';
 
 interface FieldSetDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   entityType: 'contact' | 'matter' | 'task';
-  fieldSet?: any;
+  fieldSet?: CustomFieldSet;
   onSuccess?: () => void;
 }
 
@@ -74,19 +75,7 @@ export function FieldSetDialog({
         throw new Error("Organization not found");
       }
       
-      // For field sets, we need to check the position
-      const { data: highestPositionData } = await supabase
-        .from('custom_field_sets')
-        .select('position')
-        .eq('organization_id', profileData.organization_id)
-        .eq('entity_type', entityType)
-        .order('position', { ascending: false })
-        .limit(1);
-        
-      const nextPosition = highestPositionData && highestPositionData.length > 0
-        ? (highestPositionData[0].position || 0) + 1
-        : 0;
-      
+      // Add custom_field_sets table to Supabase
       if (isEditing) {
         // Update existing field set
         const { error } = await supabase
@@ -104,6 +93,19 @@ export function FieldSetDialog({
           description: "Field set updated successfully."
         });
       } else {
+        // For field sets, we need to check the position
+        const { data: fieldSets } = await supabase
+          .from('custom_field_sets')
+          .select('position')
+          .eq('organization_id', profileData.organization_id)
+          .eq('entity_type', entityType)
+          .order('position', { ascending: false })
+          .limit(1);
+          
+        const nextPosition = (fieldSets && fieldSets.length > 0 && fieldSets[0]?.position != null)
+          ? (fieldSets[0].position + 1)
+          : 0;
+        
         // Create new field set
         const { error } = await supabase
           .from('custom_field_sets')

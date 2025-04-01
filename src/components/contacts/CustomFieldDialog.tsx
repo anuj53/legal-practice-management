@@ -110,8 +110,8 @@ export function CustomFieldDialog({
         .order('position', { ascending: false })
         .limit(1);
         
-      const nextPosition = positionData && positionData.length > 0
-        ? (positionData[0].position || 0) + 1
+      const nextPosition = (positionData && positionData.length > 0 && positionData[0]?.position != null)
+        ? (positionData[0].position + 1)
         : 0;
       
       const fieldData = {
