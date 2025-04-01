@@ -892,3 +892,23 @@ export function ContactDialog({
               </div>
             </TabsContent>
           </Tabs>
+
+          <div className="pt-6 space-x-2 flex items-center justify-end border-t">
+            <Button 
+              variant="outline" 
+              type="button" 
+              onClick={() => onOpenChange(false)}
+              disabled={loading}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {contact ? 'Update Contact' : 'Create Contact'}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
