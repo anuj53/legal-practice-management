@@ -485,6 +485,7 @@ export function ContactDialog({
                 </div>
               )}
               
+              
               <div className="space-y-4">
                 <Label>Email</Label>
                 {formValues.emails?.map((email, index) => (
@@ -545,6 +546,7 @@ export function ContactDialog({
                   <Plus className="h-4 w-4 mr-2" /> Add email address
                 </Button>
               </div>
+              
               
               <div className="space-y-4">
                 <Label>Phone</Label>
@@ -609,6 +611,7 @@ export function ContactDialog({
                 </Button>
               </div>
               
+              
               <div className="space-y-4">
                 <Label>Website</Label>
                 {formValues.websites?.map((website, index) => (
@@ -669,6 +672,7 @@ export function ContactDialog({
                   <Plus className="h-4 w-4 mr-2" /> Add website
                 </Button>
               </div>
+              
               
               <div className="space-y-4">
                 <Label>Address</Label>
@@ -755,6 +759,7 @@ export function ContactDialog({
                 </Button>
               </div>
               
+              
               <div className="space-y-2">
                 <Label>Tags</Label>
                 <div className="p-4 border border-gray-100 rounded-md">
@@ -774,6 +779,7 @@ export function ContactDialog({
                 </div>
               </div>
               
+              
               <div className="space-y-2">
                 <Label htmlFor="notes">Notes</Label>
                 <Textarea
@@ -786,6 +792,7 @@ export function ContactDialog({
                 />
               </div>
             </TabsContent>
+            
             
             <TabsContent value="custom-fields" className="mt-4 space-y-4">
               <div className="p-4 border border-gray-100 rounded-md">
@@ -801,6 +808,7 @@ export function ContactDialog({
                 </div>
               </div>
             </TabsContent>
+            
             
             <TabsContent value="billing-prefs" className="mt-4 space-y-4">
               {!isPersonType && (
@@ -884,5 +892,3 @@ export function ContactDialog({
               </div>
             </TabsContent>
           </Tabs>
-          
-          <div className="pt-3 border-t flex items-center space-
