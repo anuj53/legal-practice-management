@@ -8,6 +8,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogClose
 } from '@/components/ui/dialog';
 import {
   Form,
@@ -32,7 +33,6 @@ import {
 } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Calendar as CalendarIcon } from 'lucide-react';
-import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -165,9 +165,9 @@ export function AssignWorkflowDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[550px]">
         <DialogHeader>
-          <DialogTitle>Assign Workflow Template</DialogTitle>
+          <DialogTitle>Assign task list</DialogTitle>
           <DialogDescription>
-            Assign tasks from "{workflowName}" to a user or team members.
+            Assign tasks from "{workflowName}" to users.
           </DialogDescription>
         </DialogHeader>
         
@@ -178,11 +178,13 @@ export function AssignWorkflowDialog({
               name="assigneeId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Assign to *</FormLabel>
+                  <FormLabel className="text-base font-medium">
+                    Assign to <span className="text-red-500">*</span>
+                  </FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select assignee" />
+                      <SelectTrigger className="h-12">
+                        <SelectValue placeholder="Select an assignee" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -193,9 +195,7 @@ export function AssignWorkflowDialog({
                       ))}
                     </SelectContent>
                   </Select>
-                  <FormDescription>
-                    Select a valid firm user.
-                  </FormDescription>
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -204,20 +204,17 @@ export function AssignWorkflowDialog({
               control={form.control}
               name="assignAllToOne"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                   <FormControl>
                     <Checkbox
                       checked={field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel>
+                  <div className="space-y-1 leading-none pt-0.5">
+                    <FormLabel className="font-normal">
                       Assign all tasks in this list to this assignee
                     </FormLabel>
-                    <FormDescription>
-                      Override any task-specific assignee settings
-                    </FormDescription>
                   </div>
                 </FormItem>
               )}
@@ -227,20 +224,17 @@ export function AssignWorkflowDialog({
               control={form.control}
               name="notifyAssignees"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                   <FormControl>
                     <Checkbox
                       checked={field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel>
+                  <div className="space-y-1 leading-none pt-0.5">
+                    <FormLabel className="font-normal">
                       Notify task assignees via email
                     </FormLabel>
-                    <FormDescription>
-                      Send email notifications to all assigned users
-                    </FormDescription>
                   </div>
                 </FormItem>
               )}
@@ -251,14 +245,14 @@ export function AssignWorkflowDialog({
               name="matterId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Matter</FormLabel>
+                  <FormLabel className="text-base font-medium">Matter</FormLabel>
                   <Select 
                     onValueChange={field.onChange} 
                     defaultValue={field.value}
                   >
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a matter (optional)" />
+                      <SelectTrigger className="h-12">
+                        <SelectValue placeholder="Find a matter..." />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -270,9 +264,6 @@ export function AssignWorkflowDialog({
                       ))}
                     </SelectContent>
                   </Select>
-                  <FormDescription>
-                    Link these tasks to a specific legal matter
-                  </FormDescription>
                 </FormItem>
               )}
             />
@@ -281,22 +272,25 @@ export function AssignWorkflowDialog({
               control={form.control}
               name="triggerDate"
               render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Trigger date *</FormLabel>
+                <FormItem>
+                  <FormLabel className="text-base font-medium">
+                    Trigger date <span className="text-red-500">*</span> 
+                    <span className="inline-block ml-1 bg-blue-500 rounded-full text-white h-5 w-5 text-center text-xs font-bold leading-5">?</span>
+                  </FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
                           variant="outline"
                           className={cn(
-                            "w-full pl-3 text-left font-normal",
+                            "w-full justify-start text-left font-normal h-12",
                             !field.value && "text-muted-foreground"
                           )}
                         >
                           {field.value ? (
-                            format(field.value, "PPP")
+                            format(field.value, "MM/dd/yyyy")
                           ) : (
-                            <span>Pick a date</span>
+                            <span>Select date</span>
                           )}
                           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
@@ -311,19 +305,20 @@ export function AssignWorkflowDialog({
                       />
                     </PopoverContent>
                   </Popover>
-                  <FormDescription>
-                    Base date for calculating task due dates
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
             
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
+            <DialogFooter className="pt-4 gap-2">
+              <DialogClose asChild>
+                <Button type="button" variant="outline" className="w-24">
+                  Cancel
+                </Button>
+              </DialogClose>
+              <Button type="submit" className="w-32">
+                Assign task list
               </Button>
-              <Button type="submit">Assign Tasks</Button>
             </DialogFooter>
           </form>
         </Form>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -45,6 +44,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { WorkflowTemplateDetailView } from './WorkflowTemplateDetailView';
 import { WorkflowTemplate, TaskTemplate } from '@/types/workflow';
+import { AssignWorkflowDialog } from './AssignWorkflowDialog';
 
 export function WorkflowTemplatesView() {
   const [workflowTemplates, setWorkflowTemplates] = useState<WorkflowTemplate[]>([]);
@@ -53,6 +53,9 @@ export function WorkflowTemplatesView() {
   const [isNewTemplateOpen, setIsNewTemplateOpen] = useState(false);
   const [editTemplateData, setEditTemplateData] = useState<WorkflowTemplate | null>(null);
   const [detailViewId, setDetailViewId] = useState<string | null>(null);
+  const [assignWorkflowId, setAssignWorkflowId] = useState<string | null>(null);
+  const [workflowTasks, setWorkflowTasks] = useState<TaskTemplate[]>([]);
+  const [selectedWorkflow, setSelectedWorkflow] = useState<WorkflowTemplate | null>(null);
   const { toast } = useToast();
   
   const fetchWorkflowTemplates = async () => {
@@ -65,7 +68,6 @@ export function WorkflowTemplatesView() {
       
       if (error) throw error;
       
-      // Count tasks for each template
       const templatesWithTaskCounts = await Promise.all(
         templates.map(async (template) => {
           const { count, error: countError } = await supabase
@@ -125,7 +127,6 @@ export function WorkflowTemplatesView() {
   
   const handleDuplicateTemplate = async (templateId: string) => {
     try {
-      // Get template details
       const { data: template, error: templateError } = await supabase
         .from('workflow_templates')
         .select('*')
@@ -134,7 +135,6 @@ export function WorkflowTemplatesView() {
       
       if (templateError) throw templateError;
       
-      // Create duplicate template
       const { data: newTemplate, error: createError } = await supabase
         .from('workflow_templates')
         .insert({
@@ -147,7 +147,6 @@ export function WorkflowTemplatesView() {
       
       if (createError) throw createError;
       
-      // Get all tasks from original template
       const { data: tasks, error: tasksError } = await supabase
         .from('task_templates')
         .select('*')
@@ -155,11 +154,9 @@ export function WorkflowTemplatesView() {
       
       if (tasksError) throw tasksError;
       
-      // Create duplicate tasks
       if (tasks && tasks.length > 0) {
         const taskMappings: Record<string, string> = {};
         
-        // First pass: create all tasks with new workflow ID
         for (const task of tasks) {
           const { data: newTask, error: newTaskError } = await supabase
             .from('task_templates')
@@ -175,18 +172,15 @@ export function WorkflowTemplatesView() {
               due_date_type: task.due_date_type,
               due_date_offset: task.due_date_offset,
               position: task.position
-              // Don't set depends_on_task_id yet
             })
             .select()
             .single();
           
           if (newTaskError) throw newTaskError;
           
-          // Store mapping from old task ID to new task ID
           taskMappings[task.id] = newTask.id;
         }
         
-        // Second pass: update task dependencies
         for (const task of tasks) {
           if (task.depends_on_task_id) {
             const newDependsOnId = taskMappings[task.depends_on_task_id];
@@ -200,7 +194,6 @@ export function WorkflowTemplatesView() {
         }
       }
       
-      // Refresh the list
       fetchWorkflowTemplates();
       
       toast({
@@ -228,6 +221,29 @@ export function WorkflowTemplatesView() {
   
   const handleEditTemplate = (template: WorkflowTemplate) => {
     setEditTemplateData(template);
+  };
+
+  const handleAssignWorkflow = async (template: WorkflowTemplate) => {
+    try {
+      const { data: tasks, error } = await supabase
+        .from('task_templates')
+        .select('*')
+        .eq('workflow_id', template.id)
+        .order('position', { ascending: true });
+      
+      if (error) throw error;
+      
+      setWorkflowTasks(tasks || []);
+      setSelectedWorkflow(template);
+      setAssignWorkflowId(template.id);
+    } catch (error) {
+      console.error('Error fetching workflow tasks:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load workflow tasks.",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -316,7 +332,7 @@ export function WorkflowTemplatesView() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleAssignWorkflow(template)}>
                               <Share className="h-4 w-4 mr-2" />
                               Assign Template
                             </DropdownMenuItem>
@@ -340,14 +356,12 @@ export function WorkflowTemplatesView() {
         </CardContent>
       </Card>
 
-      {/* New Workflow Template Dialog */}
       <NewWorkflowTemplateDialog 
         open={isNewTemplateOpen} 
         onOpenChange={setIsNewTemplateOpen}
         onSuccess={handleTemplateCreated}
       />
 
-      {/* Edit Workflow Template Dialog */}
       {editTemplateData && (
         <EditWorkflowTemplateDialog
           open={!!editTemplateData}
@@ -359,7 +373,18 @@ export function WorkflowTemplatesView() {
         />
       )}
 
-      {/* Workflow Template Detail View */}
+      {assignWorkflowId && (
+        <AssignWorkflowDialog
+          open={!!assignWorkflowId}
+          onOpenChange={(open) => {
+            if (!open) setAssignWorkflowId(null);
+          }}
+          workflowId={assignWorkflowId}
+          workflowName={selectedWorkflow?.name}
+          tasks={workflowTasks}
+        />
+      )}
+
       {detailViewId && (
         <WorkflowTemplateDetailView
           templateId={detailViewId}
@@ -373,7 +398,6 @@ export function WorkflowTemplatesView() {
         />
       )}
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog
         open={deleteConfirm !== null}
         onOpenChange={() => setDeleteConfirm(null)}
