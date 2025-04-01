@@ -1,10 +1,9 @@
+import * as React from "react"
+import * as TabsPrimitive from "@radix-ui/react-tabs"
 
-import * as React from "react";
-import * as TabsPrimitive from "@radix-ui/react-tabs";
+import { cn } from "@/lib/utils"
 
-import { cn } from "@/lib/utils";
-
-const Tabs = TabsPrimitive.Root;
+const Tabs = TabsPrimitive.Root
 
 const TabsList = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.List>,
@@ -18,8 +17,8 @@ const TabsList = React.forwardRef<
     )}
     {...props}
   />
-));
-TabsList.displayName = TabsPrimitive.List.displayName;
+))
+TabsList.displayName = TabsPrimitive.List.displayName
 
 const TabsTrigger = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.Trigger>,
@@ -33,8 +32,8 @@ const TabsTrigger = React.forwardRef<
     )}
     {...props}
   />
-));
-TabsTrigger.displayName = TabsPrimitive.Trigger.displayName;
+))
+TabsTrigger.displayName = TabsPrimitive.Trigger.displayName
 
 const TabsContent = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.Content>,
@@ -48,30 +47,7 @@ const TabsContent = React.forwardRef<
     )}
     {...props}
   />
-));
-TabsContent.displayName = TabsPrimitive.Content.displayName;
+))
+TabsContent.displayName = TabsPrimitive.Content.displayName
 
-// Simple Tab component for use inside CustomFieldDialog
-const Tab: React.FC<{
-  value: string;
-  children: React.ReactNode;
-}> = ({ value, children }) => (
-  <TabsTrigger value={value}>{children}</TabsTrigger>
-);
-
-// Simple TabPanel component for use inside CustomFieldDialog
-const TabPanel: React.FC<{
-  value: string;
-  children: React.ReactNode;
-}> = ({ value, children }) => (
-  <TabsContent value={value}>{children}</TabsContent>
-);
-
-const TabList: React.FC<{
-  className?: string;
-  children: React.ReactNode;
-}> = ({ className, children }) => (
-  <TabsList className={className}>{children}</TabsList>
-);
-
-export { Tabs, TabsList, TabsTrigger, TabsContent, Tab, TabPanel, TabList };
+export { Tabs, TabsList, TabsTrigger, TabsContent }

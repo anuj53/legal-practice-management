@@ -165,17 +165,13 @@ export default function ContactDetail() {
             definition_id,
             entity_id,
             value,
-            created_at,
-            updated_at,
             definition:custom_field_definitions(*)
           `)
           .eq('entity_id', id);
-        
+          
         if (error) throw error;
         
-        if (data) {
-          setCustomFields(data as unknown as CustomFieldValue[]);
-        }
+        setCustomFields(data || []);
       } catch (error) {
         console.error('Error fetching custom fields:', error);
       }
@@ -316,7 +312,7 @@ export default function ContactDetail() {
               {field.definition?.name}
             </div>
             <div className="mt-1">
-              {field.definition?.field_type === 'checkbox' ? (
+              {field.field_type === 'checkbox' ? (
                 field.value === 'true' ? 'Yes' : 'No'
               ) : (
                 field.value || <span className="text-gray-400">Not specified</span>

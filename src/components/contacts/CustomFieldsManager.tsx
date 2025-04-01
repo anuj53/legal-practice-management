@@ -11,9 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/hooks/use-toast';
 import { Plus, Settings, Loader2 } from 'lucide-react';
 import { CustomFieldDialog } from './CustomFieldDialog';
-import { CustomFieldDefinition, CustomFieldFormValue, CustomFieldSet, DbTables } from '@/types/customField';
-import { Separator } from '@/components/ui/separator';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { CustomFieldDefinition, CustomFieldFormValue } from '@/types/customField';
 
 interface CustomFieldsManagerProps {
   entityType: 'contact' | 'matter' | 'task';
@@ -31,10 +29,9 @@ export function CustomFieldsManager({
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [fields, setFields] = useState<CustomFieldDefinition[]>([]);
-  const [fieldSets, setFieldSets] = useState<CustomFieldSet[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   
-  // Fetch available custom fields and field sets
+  // Fetch available custom fields
   useEffect(() => {
     const fetchCustomFields = async () => {
       if (!user) return;
@@ -42,49 +39,15 @@ export function CustomFieldsManager({
       try {
         setLoading(true);
         
-        // Get organization ID
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('organization_id')
-          .eq('id', user.id)
-          .maybeSingle();
-        
-        if (!profileData?.organization_id) {
-          throw new Error("Organization not found");
-        }
-
-        // Fetch field sets
-        const { data: fieldSetData, error: fieldSetError } = await supabase
-          .from('custom_field_sets' as DbTables)
-          .select('*')
-          .eq('organization_id', profileData.organization_id)
-          .eq('entity_type', entityType)
-          .order('position');
-        
-        if (fieldSetError) throw fieldSetError;
-        
-        if (fieldSetData) {
-          setFieldSets(fieldSetData as unknown as CustomFieldSet[]);
-        } else {
-          setFieldSets([]);
-        }
-
-        // Fetch fields
         const { data, error } = await supabase
           .from('custom_field_definitions')
           .select('*')
           .eq('entity_type', entityType)
-          .eq('organization_id', profileData.organization_id)
-          .order('field_set')
-          .order('position');
+          .order('name');
           
         if (error) throw error;
         
-        if (data) {
-          setFields(data as CustomFieldDefinition[]);
-        } else {
-          setFields([]);
-        }
+        setFields(data || []);
       } catch (error) {
         console.error('Error fetching custom fields:', error);
         toast({
@@ -112,8 +75,6 @@ export function CustomFieldsManager({
             id,
             definition_id,
             value,
-            created_at,
-            updated_at,
             definition:custom_field_definitions(*)
           `)
           .eq('entity_id', entityId);
@@ -156,33 +117,6 @@ export function CustomFieldsManager({
   const getFieldValue = (definitionId: string): string | null => {
     const field = values.find(v => v.definition_id === definitionId);
     return field ? field.value : null;
-  };
-
-  // Group fields by field set
-  const getFieldsBySet = () => {
-    const fieldsBySet: Record<string, CustomFieldDefinition[]> = {};
-    const unassignedFields: CustomFieldDefinition[] = [];
-    
-    // Initialize with empty arrays for each field set
-    fieldSets.forEach(set => {
-      fieldsBySet[set.id] = [];
-    });
-    
-    // Add fields to their respective sets
-    fields.forEach(field => {
-      if (field.field_set && fieldsBySet[field.field_set]) {
-        fieldsBySet[field.field_set].push(field);
-      } else {
-        unassignedFields.push(field);
-      }
-    });
-    
-    // Add unassigned fields if any
-    if (unassignedFields.length > 0) {
-      fieldsBySet['unassigned'] = unassignedFields;
-    }
-    
-    return fieldsBySet;
   };
 
   const renderFieldInput = (field: CustomFieldDefinition) => {
@@ -297,60 +231,20 @@ export function CustomFieldsManager({
     );
   }
 
-  const fieldsBySet = getFieldsBySet();
-  const hasAnyFields = Object.values(fieldsBySet).some(fields => fields.length > 0);
-
   return (
     <div className="space-y-4">
-      {hasAnyFields ? (
-        <Accordion type="single" collapsible className="w-full">
-          {fieldSets.map(fieldSet => {
-            const setFields = fieldsBySet[fieldSet.id] || [];
-            if (setFields.length === 0) return null;
-            
-            return (
-              <AccordionItem value={fieldSet.id} key={fieldSet.id}>
-                <AccordionTrigger className="text-md font-medium">
-                  {fieldSet.name} ({setFields.length})
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="space-y-4 pt-2">
-                    {setFields.map((field) => (
-                      <div key={field.id} className="space-y-1">
-                        <Label>
-                          {field.name}
-                          {field.is_required && <span className="text-red-500 ml-1">*</span>}
-                        </Label>
-                        {renderFieldInput(field)}
-                      </div>
-                    ))}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            );
-          })}
-          
-          {fieldsBySet['unassigned'] && fieldsBySet['unassigned'].length > 0 && (
-            <AccordionItem value="unassigned">
-              <AccordionTrigger className="text-md font-medium">
-                General Fields ({fieldsBySet['unassigned'].length})
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="space-y-4 pt-2">
-                  {fieldsBySet['unassigned'].map((field) => (
-                    <div key={field.id} className="space-y-1">
-                      <Label>
-                        {field.name}
-                        {field.is_required && <span className="text-red-500 ml-1">*</span>}
-                      </Label>
-                      {renderFieldInput(field)}
-                    </div>
-                  ))}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          )}
-        </Accordion>
+      {fields.length > 0 ? (
+        <div className="space-y-4">
+          {fields.map((field) => (
+            <div key={field.id} className="space-y-1">
+              <Label>
+                {field.name}
+                {field.is_required && <span className="text-red-500 ml-1">*</span>}
+              </Label>
+              {renderFieldInput(field)}
+            </div>
+          ))}
+        </div>
       ) : (
         <div className="text-center p-4 border border-dashed border-gray-200 rounded-md">
           <p className="text-gray-500 mb-2">No custom fields defined yet</p>
@@ -375,46 +269,18 @@ export function CustomFieldsManager({
         onOpenChange={setDialogOpen} 
         entityType={entityType}
         onSuccess={() => {
-          // Refresh the fields list and field sets
+          // Refresh the fields list
           setFields([]);
-          setFieldSets([]);
           setLoading(true);
-          
-          // Fetch organization ID first
           supabase
-            .from('profiles')
-            .select('organization_id')
-            .eq('id', user?.id)
-            .maybeSingle()
-            .then(({ data: profileData }) => {
-              if (profileData?.organization_id) {
-                // Fetch field sets
-                supabase
-                  .from('custom_field_sets' as DbTables)
-                  .select('*')
-                  .eq('organization_id', profileData.organization_id)
-                  .eq('entity_type', entityType)
-                  .order('position')
-                  .then(({ data, error }) => {
-                    if (!error && data) {
-                      setFieldSets(data as unknown as CustomFieldSet[]);
-                    }
-                  });
-                
-                // Fetch fields
-                supabase
-                  .from('custom_field_definitions')
-                  .select('*')
-                  .eq('entity_type', entityType)
-                  .eq('organization_id', profileData.organization_id)
-                  .order('field_set')
-                  .order('position')
-                  .then(({ data, error }) => {
-                    setLoading(false);
-                    if (!error && data) {
-                      setFields(data as CustomFieldDefinition[]);
-                    }
-                  });
+            .from('custom_field_definitions')
+            .select('*')
+            .eq('entity_type', entityType)
+            .order('name')
+            .then(({ data, error }) => {
+              setLoading(false);
+              if (!error && data) {
+                setFields(data);
               }
             });
         }}
