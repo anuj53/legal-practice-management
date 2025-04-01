@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/use-toast';
 
 interface UserProfileProps {
   collapsed?: boolean;
@@ -22,6 +23,7 @@ export function UserProfile({ collapsed = false }: UserProfileProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
+  const [loading, setLoading] = useState(true);
   
   useEffect(() => {
     const fetchProfileData = async () => {
@@ -32,7 +34,7 @@ export function UserProfile({ collapsed = false }: UserProfileProps) {
           .from('profiles')
           .select('id, first_name, last_name, email_alias')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
           
         if (error) {
           console.error('Error fetching profile data:', error);
@@ -40,8 +42,42 @@ export function UserProfile({ collapsed = false }: UserProfileProps) {
         }
         
         setProfileData(data);
+        
+        // If no profile was found, we'll create one for the user
+        if (!data) {
+          console.log('No profile found, creating one...');
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .insert({
+              id: user.id,
+              first_name: '',
+              last_name: '',
+              email_alias: user.email
+            });
+            
+          if (insertError) {
+            console.error('Error creating profile:', insertError);
+            toast({
+              title: "Error",
+              description: "Failed to create user profile",
+              variant: "destructive",
+            });
+            return;
+          }
+          
+          // Fetch the newly created profile
+          const { data: newProfile } = await supabase
+            .from('profiles')
+            .select('id, first_name, last_name, email_alias')
+            .eq('id', user.id)
+            .maybeSingle();
+            
+          setProfileData(newProfile);
+        }
       } catch (error) {
         console.error('Failed to fetch profile data:', error);
+      } finally {
+        setLoading(false);
       }
     };
     
@@ -50,6 +86,8 @@ export function UserProfile({ collapsed = false }: UserProfileProps) {
   
   // Get display name or fallback
   const getDisplayName = () => {
+    if (loading) return 'Loading...';
+    
     if (profileData?.first_name && profileData?.last_name) {
       return `${profileData.first_name} ${profileData.last_name}`;
     }

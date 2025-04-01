@@ -69,7 +69,7 @@ export default function AccountSettings() {
           .from('profiles')
           .select('*')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
         
         if (error) {
           throw error;
@@ -84,6 +84,38 @@ export default function AccountSettings() {
             lastName: data.last_name || '',
             email: user.email || '',
           });
+        } else {
+          // No profile found, create one
+          console.log('No profile found in settings page, creating one...');
+          const { error: insertError, data: newProfile } = await supabase
+            .from('profiles')
+            .insert({
+              id: user.id,
+              first_name: '',
+              last_name: '',
+              email_alias: user.email
+            })
+            .select()
+            .single();
+            
+          if (insertError) {
+            console.error('Error creating profile:', insertError);
+            toast({
+              title: "Error",
+              description: "Failed to create user profile",
+              variant: "destructive",
+            });
+            return;
+          }
+          
+          if (newProfile) {
+            setProfileData(newProfile);
+            form.reset({
+              firstName: newProfile.first_name || '',
+              lastName: newProfile.last_name || '',
+              email: user.email || '',
+            });
+          }
         }
       } catch (error) {
         console.error('Error fetching profile:', error);
