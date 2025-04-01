@@ -301,8 +301,21 @@ export function ContactDialog({
       
       if (error) throw error;
       
+      // Transform the response to a Contact object with all required fields
+      const newContact: Contact = {
+        ...data,
+        // Ensure all required fields are present
+        prefix: data.prefix || null,
+        middle_name: data.middle_name || null,
+        job_title: data.job_title || null,
+        date_of_birth: data.date_of_birth || null,
+        profile_image_url: data.profile_image_url || null,
+        // Make sure tags are correctly handled
+        tags: [],
+      };
+      
       // Success
-      onSuccess(data);
+      onSuccess(newContact);
       
     } catch (error) {
       console.error('Error saving contact:', error);

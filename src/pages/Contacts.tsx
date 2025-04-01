@@ -82,14 +82,43 @@ export default function Contacts() {
         
         if (error) throw error;
         
-        // Transform data to include tags as a property
-        const processedContacts = data.map(contact => {
+        // Transform data to include tags as a property and ensure all required fields are present
+        const processedContacts: Contact[] = data.map(contact => {
           const tags = contact.contact_tag_assignments?.map(assignment => assignment.contact_tags) || [];
-          return {
-            ...contact,
-            tags,
-            contact_tag_assignments: undefined
+          
+          // Create a properly typed Contact object with default values for missing fields
+          const typedContact: Contact = {
+            id: contact.id,
+            contact_type_id: contact.contact_type_id,
+            prefix: contact.prefix || null,
+            first_name: contact.first_name || null,
+            middle_name: contact.middle_name || null,
+            last_name: contact.last_name || null,
+            company_name: contact.company_name || null,
+            job_title: contact.job_title || null,
+            date_of_birth: contact.date_of_birth || null,
+            profile_image_url: contact.profile_image_url || null,
+            email: contact.email || null,
+            phone: contact.phone || null,
+            address: contact.address || null,
+            city: contact.city || null,
+            state: contact.state || null,
+            zip: contact.zip || null,
+            country: contact.country || null,
+            notes: contact.notes || null,
+            is_client: Boolean(contact.is_client),
+            created_at: contact.created_at,
+            updated_at: contact.updated_at,
+            created_by: contact.created_by,
+            organization_id: contact.organization_id || null,
+            tags: tags,
+            emails: contact.emails,
+            phones: contact.phones,
+            websites: contact.websites,
+            addresses: contact.addresses,
           };
+          
+          return typedContact;
         });
         
         setContacts(processedContacts);
