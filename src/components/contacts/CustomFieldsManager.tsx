@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,8 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/hooks/use-toast';
-import { Plus, Settings, Loader2 } from 'lucide-react';
+import { Plus, Settings, Loader2, PlusCircle } from 'lucide-react';
 import { CustomFieldDialog } from './CustomFieldDialog';
+import { ContactCustomFieldSelector } from './ContactCustomFieldSelector';
 import { 
   CustomFieldDefinition, 
   CustomFieldFormValue, 
@@ -38,11 +40,12 @@ export function CustomFieldsManager({
   const [fields, setFields] = useState<CustomFieldDefinition[]>([]);
   const [fieldSets, setFieldSets] = useState<CustomFieldSet[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectorOpen, setSelectorOpen] = useState(false);
   
-  // Fetch available custom fields and field sets
+  // Fetch available custom fields and field sets for this entity
   useEffect(() => {
     const fetchCustomFields = async () => {
-      if (!user) return;
+      if (!user || !entityId) return;
       
       try {
         setLoading(true);
@@ -61,52 +64,115 @@ export function CustomFieldsManager({
         
         const organizationId = profileData.organization_id;
         
-        // Fetch field sets first using custom_field_sets table
-        const { data: setsData, error: setsError } = await supabase
-          .from('custom_field_sets')
-          .select('*')
-          .eq('organization_id', organizationId)
-          .eq('entity_type', entityType)
-          .order('position');
-        
-        if (setsError) throw setsError;
-        
-        const sets = (setsData || []).map(mapToCustomFieldSet);
-        setFieldSets(sets);
-        
-        // Fetch fields for each set
-        const updatedSets = [...sets];
-        
-        for (const [index, set] of updatedSets.entries()) {
-          const { data: fieldsInSetData, error: fieldsInSetError } = await supabase
+        if (entityType === 'contact') {
+          // For contacts, we need to fetch the assigned field sets and individual fields
+          
+          // Get assigned field sets for this contact
+          const { data: assignedSets } = await supabase
+            .from('contact_field_set_assignments')
+            .select(`
+              field_set_id,
+              field_set:field_set_id (*)
+            `)
+            .eq('contact_id', entityId);
+            
+          const fieldSetIds = assignedSets?.map(item => item.field_set_id) || [];
+          
+          // Fetch fields for those field sets
+          if (fieldSetIds.length > 0) {
+            // Fetch the field sets with their fields
+            const updatedSets = [];
+            
+            for (const setId of fieldSetIds) {
+              // Get the field set details
+              const { data: setData } = await supabase
+                .from('custom_field_sets')
+                .select('*')
+                .eq('id', setId)
+                .single();
+                
+              if (setData) {
+                // Get fields for this set
+                const { data: fieldsInSetData } = await supabase
+                  .from('custom_field_definitions')
+                  .select('*')
+                  .eq('field_set', setId)
+                  .order('position');
+                  
+                const mappedSet = mapToCustomFieldSet(setData);
+                mappedSet.fields = (fieldsInSetData || []).map(mapToCustomFieldDefinition);
+                
+                updatedSets.push(mappedSet);
+              }
+            }
+            
+            setFieldSets(updatedSets);
+          } else {
+            setFieldSets([]);
+          }
+          
+          // Get individually assigned fields (not in sets)
+          const { data: assignedFields } = await supabase
+            .from('contact_field_assignments')
+            .select(`
+              field_id,
+              field:field_id (*)
+            `)
+            .eq('contact_id', entityId);
+            
+          const fieldData = assignedFields?.map(item => item.field) || [];
+          setFields(fieldData.map(mapToCustomFieldDefinition));
+        } else {
+          // For other entity types, we fetch all fields as before
+          
+          // Fetch field sets first using custom_field_sets table
+          const { data: setsData, error: setsError } = await supabase
+            .from('custom_field_sets')
+            .select('*')
+            .eq('organization_id', organizationId)
+            .eq('entity_type', entityType)
+            .order('position');
+          
+          if (setsError) throw setsError;
+          
+          const sets = (setsData || []).map(mapToCustomFieldSet);
+          setFieldSets(sets);
+          
+          // Fetch fields for each set
+          const updatedSets = [...sets];
+          
+          for (const [index, set] of updatedSets.entries()) {
+            const { data: fieldsInSetData, error: fieldsInSetError } = await supabase
+              .from('custom_field_definitions')
+              .select('*')
+              .eq('organization_id', organizationId)
+              .eq('field_set', set.id)
+              .order('position');
+            
+            if (fieldsInSetError) throw fieldsInSetError;
+            
+            updatedSets[index] = {
+              ...set,
+              fields: (fieldsInSetData || []).map(mapToCustomFieldDefinition)
+            };
+          }
+          
+          setFieldSets(updatedSets);
+          
+          // Fetch standalone fields (fields with no set)
+          const { data: standaloneFieldsData, error: standaloneFieldsError } = await supabase
             .from('custom_field_definitions')
             .select('*')
             .eq('organization_id', organizationId)
-            .eq('field_set', set.id)
+            .eq('entity_type', entityType)
+            .is('field_set', null)
             .order('position');
           
-          if (fieldsInSetError) throw fieldsInSetError;
-          updatedSets[index] = {
-            ...set,
-            fields: (fieldsInSetData || []).map(mapToCustomFieldDefinition)
-          };
+          if (standaloneFieldsError) throw standaloneFieldsError;
+          
+          const mappedFields = (standaloneFieldsData || []).map(mapToCustomFieldDefinition);
+          setFields(mappedFields);
         }
-        
-        setFieldSets(updatedSets);
-        
-        // Fetch standalone fields (fields with no set)
-        const { data: standaloneFieldsData, error: standaloneFieldsError } = await supabase
-          .from('custom_field_definitions')
-          .select('*')
-          .eq('organization_id', organizationId)
-          .eq('entity_type', entityType)
-          .is('field_set', null)
-          .order('position');
-        
-        if (standaloneFieldsError) throw standaloneFieldsError;
-        
-        const mappedFields = (standaloneFieldsData || []).map(mapToCustomFieldDefinition);
-        setFields(mappedFields);
       } catch (error) {
         console.error('Error fetching custom fields:', error);
         toast({
@@ -120,7 +186,7 @@ export function CustomFieldsManager({
     };
     
     fetchCustomFields();
-  }, [user, entityType]);
+  }, [user, entityType, entityId]);
 
   // If we have an entity ID, fetch existing values
   useEffect(() => {
@@ -304,58 +370,109 @@ export function CustomFieldsManager({
       
       const organizationId = profileData.organization_id;
       
-      // Fetch field sets using custom_field_sets table
-      const { data: setsData, error: setsError } = await supabase
-        .from('custom_field_sets')
-        .select('*')
-        .eq('organization_id', organizationId)
-        .eq('entity_type', entityType)
-        .order('position');
+      if (entityType === 'contact' && entityId) {
+        // Refetch the assigned field sets for this contact
+        const { data: assignedSets } = await supabase
+          .from('contact_field_set_assignments')
+          .select(`
+            field_set_id,
+            field_set:field_set_id (*)
+          `)
+          .eq('contact_id', entityId);
+          
+        const fieldSetIds = assignedSets?.map(item => item.field_set_id) || [];
         
-      if (setsError) {
-        console.error('Error fetching field sets:', setsError);
-        setLoading(false);
-        return;
-      }
-      
-      const sets = (setsData || []).map(mapToCustomFieldSet);
-      setFieldSets(sets);
-      
-      // Fetch fields for each set
-      const updatedSets = [...sets];
-      
-      for (const [index, set] of updatedSets.entries()) {
-        const { data: fieldsInSetData } = await supabase
+        // Fetch fields for those field sets
+        const updatedSets = [];
+        
+        for (const setId of fieldSetIds) {
+          // Get the field set details
+          const { data: setData } = await supabase
+            .from('custom_field_sets')
+            .select('*')
+            .eq('id', setId)
+            .single();
+            
+          if (setData) {
+            // Get fields for this set
+            const { data: fieldsInSetData } = await supabase
+              .from('custom_field_definitions')
+              .select('*')
+              .eq('field_set', setId)
+              .order('position');
+              
+            const mappedSet = mapToCustomFieldSet(setData);
+            mappedSet.fields = (fieldsInSetData || []).map(mapToCustomFieldDefinition);
+            
+            updatedSets.push(mappedSet);
+          }
+        }
+        
+        setFieldSets(updatedSets);
+        
+        // Get individually assigned fields (not in sets)
+        const { data: assignedFields } = await supabase
+          .from('contact_field_assignments')
+          .select(`
+            field_id,
+            field:field_id (*)
+          `)
+          .eq('contact_id', entityId);
+          
+        const fieldData = assignedFields?.map(item => item.field) || [];
+        setFields(fieldData.map(mapToCustomFieldDefinition));
+      } else {
+        // For other entity types, fetch all fields as before
+        
+        // Fetch field sets
+        const { data: setsData } = await supabase
+          .from('custom_field_sets')
+          .select('*')
+          .eq('organization_id', organizationId)
+          .eq('entity_type', entityType)
+          .order('position');
+          
+        const sets = (setsData || []).map(mapToCustomFieldSet);
+        
+        // Fetch fields for each set
+        const updatedSets = [...sets];
+        
+        for (const [index, set] of updatedSets.entries()) {
+          const { data: fieldsInSetData } = await supabase
+            .from('custom_field_definitions')
+            .select('*')
+            .eq('field_set', set.id)
+            .order('position');
+          
+          updatedSets[index] = {
+            ...set,
+            fields: (fieldsInSetData || []).map(mapToCustomFieldDefinition)
+          };
+        }
+        
+        setFieldSets(updatedSets);
+        
+        // Fetch standalone fields
+        const { data: fieldsData } = await supabase
           .from('custom_field_definitions')
           .select('*')
           .eq('organization_id', organizationId)
-          .eq('field_set', set.id)
+          .eq('entity_type', entityType)
+          .is('field_set', null)
           .order('position');
-        
-        updatedSets[index] = {
-          ...set,
-          fields: (fieldsInSetData || []).map(mapToCustomFieldDefinition)
-        };
-      }
-      
-      setFieldSets(updatedSets);
-      
-      // Fetch standalone fields
-      const { data: fieldsData, error: fieldsError } = await supabase
-        .from('custom_field_definitions')
-        .select('*')
-        .eq('organization_id', organizationId)
-        .eq('entity_type', entityType)
-        .is('field_set', null)
-        .order('position');
-        
-      setLoading(false);
-      if (!fieldsError && fieldsData) {
-        setFields(fieldsData.map(mapToCustomFieldDefinition));
+          
+        setFields((fieldsData || []).map(mapToCustomFieldDefinition));
       }
     } catch (error) {
       console.error('Error refreshing custom fields:', error);
+    } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCustomizeFields = () => {
+    if (entityType === 'contact' && entityId) {
+      setSelectorOpen(true);
     }
   };
 
@@ -369,9 +486,25 @@ export function CustomFieldsManager({
 
   // Check if there are any fields or field sets
   const hasContent = fields.length > 0 || fieldSets.length > 0;
+  const isContact = entityType === 'contact';
 
   return (
     <div className="space-y-6">
+      {isContact && entityId && (
+        <div className="flex justify-between items-center">
+          <h3 className="text-lg font-medium">Custom Fields</h3>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleCustomizeFields}
+            className="flex items-center gap-1"
+          >
+            <Settings className="h-4 w-4 mr-1" />
+            Customize Fields
+          </Button>
+        </div>
+      )}
+      
       {hasContent ? (
         <>
           {/* Render field sets */}
@@ -416,7 +549,11 @@ export function CustomFieldsManager({
         </>
       ) : (
         <div className="text-center p-4 border border-dashed border-gray-200 rounded-md">
-          <p className="text-gray-500 mb-2">No custom fields defined yet</p>
+          {isContact && entityId ? (
+            <p className="text-gray-500 mb-2">No custom fields selected for this contact</p>
+          ) : (
+            <p className="text-gray-500 mb-2">No custom fields defined yet</p>
+          )}
         </div>
       )}
       
@@ -439,6 +576,15 @@ export function CustomFieldsManager({
         entityType={entityType}
         onSuccess={handleRefreshFields}
       />
+      
+      {entityType === 'contact' && entityId && (
+        <ContactCustomFieldSelector
+          open={selectorOpen}
+          onOpenChange={setSelectorOpen}
+          contactId={entityId}
+          onSuccess={handleRefreshFields}
+        />
+      )}
     </div>
   );
 }

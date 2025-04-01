@@ -90,6 +90,78 @@ export type Database = {
           },
         ]
       }
+      contact_field_assignments: {
+        Row: {
+          contact_id: string
+          created_at: string | null
+          field_id: string
+          id: string
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string | null
+          field_id: string
+          id?: string
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string | null
+          field_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_field_assignments_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_field_assignments_field_id_fkey"
+            columns: ["field_id"]
+            isOneToOne: false
+            referencedRelation: "custom_field_definitions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contact_field_set_assignments: {
+        Row: {
+          contact_id: string
+          created_at: string | null
+          field_set_id: string
+          id: string
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string | null
+          field_set_id: string
+          id?: string
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string | null
+          field_set_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_field_set_assignments_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_field_set_assignments_field_set_id_fkey"
+            columns: ["field_set_id"]
+            isOneToOne: false
+            referencedRelation: "custom_field_sets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contact_tag_assignments: {
         Row: {
           contact_id: string

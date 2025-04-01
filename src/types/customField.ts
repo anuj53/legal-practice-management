@@ -41,6 +41,21 @@ export interface CustomFieldFormValue {
   value: string | null;
 }
 
+// Interface for contact field assignments
+export interface ContactFieldSetAssignment {
+  id: string;
+  contact_id: string;
+  field_set_id: string;
+  created_at?: string;
+}
+
+export interface ContactFieldAssignment {
+  id: string;
+  contact_id: string;
+  field_id: string;
+  created_at?: string;
+}
+
 // Helper type for Supabase query responses to avoid TypeScript errors
 export type CustomFieldSetWithFields = CustomFieldSet & { fields: CustomFieldDefinition[] };
 
