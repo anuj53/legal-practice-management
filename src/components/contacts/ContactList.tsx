@@ -111,6 +111,10 @@ export function ContactList({ contacts, contactTypes, onContactDeleted }: Contac
     setDeleteConfirmOpen(true);
   };
 
+  const checkAndDeleteEmployeeLinks = async (contactId: string) => {
+    return true; // Always return true since the database will handle cascade deletion
+  };
+
   const handleDeleteConfirm = async () => {
     if (!contactToDelete || isDeleting) return;
     
@@ -120,6 +124,7 @@ export function ContactList({ contacts, contactTypes, onContactDeleted }: Contac
       
       const isCompany = contactToDelete.contact_type_id === contactTypes.find(t => t.name === 'Company')?.id;
       
+      // If it's a company, check for employees
       if (isCompany) {
         const { data: employeeData, error: employeeCheckError, count } = await supabase
           .from('company_employees')
@@ -138,11 +143,13 @@ export function ContactList({ contacts, contactTypes, onContactDeleted }: Contac
         }
       } 
       
+      // Delete any tag assignments for this contact
       await supabase
         .from('contact_tag_assignments')
         .delete()
         .eq('contact_id', contactToDelete.id);
       
+      // Now delete the contact
       const { error } = await supabase
         .from('contacts')
         .delete()
@@ -150,25 +157,19 @@ export function ContactList({ contacts, contactTypes, onContactDeleted }: Contac
       
       if (error) throw error;
       
-      setDeleteConfirmOpen(false);
-      
       toast({
         title: "Contact deleted",
         description: "The contact has been removed successfully."
       });
       
-      const currentPath = window.location.pathname;
-      const deletedContactPath = `/contacts/${contactToDelete.id}`;
-      
-      if (currentPath === deletedContactPath || currentPath === `${deletedContactPath}/edit`) {
-        navigate('/contacts');
-      } else {
-        if (onContactDeleted) {
-          onContactDeleted();
-        }
-      }
-      
+      // Close dialog first before refreshing
+      setDeleteConfirmOpen(false);
       setContactToDelete(null);
+      
+      // Then refresh contact list
+      if (onContactDeleted) {
+        onContactDeleted();
+      }
     } catch (error: any) {
       console.error('Error deleting contact:', error);
       setDeleteErrorMessage(error.message || 'Failed to delete contact. Please try again.');
