@@ -22,10 +22,10 @@ export default function WorkflowTemplates() {
           <Breadcrumb className="mb-2">
             <BreadcrumbList>
               <BreadcrumbItem>
-                <BreadcrumbLink as={Link} to="/tasks">
-                  <ArrowLeft className="h-4 w-4 mr-1 inline-block" />
+                <Link to="/tasks" className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+                  <ArrowLeft className="h-4 w-4 mr-1" />
                   Back to Tasks
-                </BreadcrumbLink>
+                </Link>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
