@@ -210,27 +210,8 @@ export default function AccountSettings() {
     setUploading(true);
     
     try {
-      // Check if 'avatars' storage bucket exists
-      const { data: bucketExists } = await supabase
-        .storage
-        .getBucket('avatars');
-      
-      // If bucket doesn't exist, create it
-      if (!bucketExists) {
-        const { error: createBucketError } = await supabase
-          .storage
-          .createBucket('avatars', { 
-            public: true,
-            fileSizeLimit: 1024 * 1024 * 2 // 2MB limit
-          });
-        
-        if (createBucketError) {
-          throw createBucketError;
-        }
-      }
-      
-      // Upload file
-      const { error: uploadError } = await supabase
+      // Upload file directly without trying to create bucket first
+      const { error: uploadError, data } = await supabase
         .storage
         .from('avatars')
         .upload(filePath, file);
@@ -240,7 +221,7 @@ export default function AccountSettings() {
       }
       
       // Get public URL
-      const { data } = supabase
+      const { data: publicUrlData } = supabase
         .storage
         .from('avatars')
         .getPublicUrl(filePath);
@@ -248,7 +229,7 @@ export default function AccountSettings() {
       // Update profile with new avatar URL
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ avatar_url: data.publicUrl })
+        .update({ avatar_url: publicUrlData.publicUrl })
         .eq('id', user.id);
       
       if (updateError) {
@@ -259,7 +240,7 @@ export default function AccountSettings() {
       if (profileData) {
         setProfileData({
           ...profileData,
-          avatar_url: data.publicUrl,
+          avatar_url: publicUrlData.publicUrl,
         });
       }
       
