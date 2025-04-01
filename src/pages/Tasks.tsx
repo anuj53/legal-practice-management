@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,7 @@ import { TaskTypeProvider } from '@/contexts/TaskTypeContext';
 import { TaskFilters, TaskFilters as TaskFiltersType, SortConfig } from '@/components/tasks/TaskFilters';
 import { fetchTasks } from '@/components/tasks/TaskService';
 import { Task } from '@/types/task';
+import { toast } from 'sonner';
 
 export default function Tasks() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -49,6 +51,7 @@ export default function Tasks() {
     setIsLoading(true);
     try {
       const data = await fetchTasks();
+      console.log('Fetched tasks from database:', data);
       
       const transformedTasks: UITask[] = data.map(task => ({
         id: task.id,
@@ -61,9 +64,10 @@ export default function Tasks() {
         timeEstimate: task.time_estimate || '',
         matter: task.matter_id || '',
         isPrivate: task.is_private,
-        status: (task.status as UITask['status']) || 'Pending'
+        status: task.status as UITask['status'] || 'Pending'
       }));
       
+      console.log('Transformed tasks for UI:', transformedTasks);
       setTasks(transformedTasks);
     } catch (error) {
       console.error('Error loading tasks:', error);
@@ -156,11 +160,11 @@ export default function Tasks() {
       const matchesSearch = searchQuery ? 
         task.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         task.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        task.matter.toLowerCase().includes(searchQuery.toLowerCase()) :
+        (task.matter && task.matter.toString().toLowerCase().includes(searchQuery.toLowerCase())) :
         true;
       
       const matchesTab = 
-        (activeTab === 'my-tasks' && task.assignee === 'John Doe' && task.status !== 'Completed') ||
+        (activeTab === 'my-tasks' && task.status !== 'Completed') ||
         (activeTab === 'all-tasks' && task.status !== 'Completed');
       
       const matchesPriority = filters.priority.length === 0 || 
@@ -170,7 +174,7 @@ export default function Tasks() {
         filters.taskType.includes(task.taskType);
       
       const matchesDueDate = !filters.dueDate || 
-        new Date(task.dueDate).toDateString() === filters.dueDate.toDateString();
+        (task.dueDate && new Date(task.dueDate).toDateString() === filters.dueDate.toDateString());
       
       return matchesSearch && matchesTab && matchesPriority && matchesTaskType && matchesDueDate;
     }).sort((a, b) => {
@@ -180,16 +184,16 @@ export default function Tasks() {
       const direction = sortConfig.direction === 'asc' ? 1 : -1;
       
       if (field === 'dueDate') {
-        return (new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()) * direction;
+        return ((new Date(a.dueDate || '').getTime() || 0) - (new Date(b.dueDate || '').getTime() || 0)) * direction;
       }
       
       if (field === 'priority') {
         const priorityValue = { 'High': 3, 'Normal': 2, 'Low': 1 };
-        return (priorityValue[a.priority as keyof typeof priorityValue] - 
-                priorityValue[b.priority as keyof typeof priorityValue]) * direction;
+        return ((priorityValue[a.priority as keyof typeof priorityValue] || 0) - 
+                (priorityValue[b.priority as keyof typeof priorityValue] || 0)) * direction;
       }
       
-      return a[field].toString().localeCompare(b[field].toString()) * direction;
+      return (a[field]?.toString() || '').localeCompare(b[field]?.toString() || '') * direction;
     });
   }, [tasks, searchQuery, activeTab, filters, sortConfig]);
 

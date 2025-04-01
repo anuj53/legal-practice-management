@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -17,7 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { EditTaskDialog } from './EditTaskDialog';
 import { Task } from './TaskList';
 import { useTaskTypes } from '@/contexts/TaskTypeContext';
@@ -35,6 +36,7 @@ export function TaskBoard({ tasks: initialTasks, onCloseTask }: TaskBoardProps) 
   const { taskTypes } = useTaskTypes();
   
   useEffect(() => {
+    console.log('TaskBoard received tasks:', initialTasks);
     setTasks(initialTasks);
   }, [initialTasks]);
   
@@ -60,8 +62,9 @@ export function TaskBoard({ tasks: initialTasks, onCloseTask }: TaskBoardProps) 
   });
 
   const formatDate = (dateStr: string) => {
+    if (!dateStr) return '';
     const date = new Date(dateStr);
-    return new Intl.DateTimeFormat('en-US', { 
+    return isNaN(date.getTime()) ? '' : new Intl.DateTimeFormat('en-US', { 
       month: 'short', 
       day: 'numeric' 
     }).format(date);
@@ -99,7 +102,7 @@ export function TaskBoard({ tasks: initialTasks, onCloseTask }: TaskBoardProps) 
       
       if (oldStatus !== newStatus) {
         draggedTask.status = newStatus;
-        toast({
+        useToast().toast({
           title: "Task Updated",
           description: `Task moved to ${newStatus}`,
         });
@@ -242,10 +245,12 @@ export function TaskBoard({ tasks: initialTasks, onCloseTask }: TaskBoardProps) 
                                   </div>
                                   
                                   <div className="flex justify-between items-center mt-2 text-xs">
-                                    <div className="flex items-center">
-                                      <FileText className="h-3.5 w-3.5 mr-1 text-gray-500" />
-                                      <span className="truncate max-w-[120px]">{task.matter}</span>
-                                    </div>
+                                    {task.matter && (
+                                      <div className="flex items-center">
+                                        <FileText className="h-3.5 w-3.5 mr-1 text-gray-500" />
+                                        <span className="truncate max-w-[120px]">{task.matter}</span>
+                                      </div>
+                                    )}
                                   </div>
                                 </CardContent>
                               </Card>

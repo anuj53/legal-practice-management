@@ -1,11 +1,14 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Task } from '@/types/task';
+import { toast } from 'sonner';
 
 /**
  * Creates a new task in the database
  */
 export async function createTask(taskData: Omit<Task, 'id' | 'created_at' | 'updated_at'>): Promise<Task> {
+  console.log('Creating task with data:', taskData);
+  
   // Add timestamps
   const data = {
     ...taskData,
@@ -25,6 +28,7 @@ export async function createTask(taskData: Omit<Task, 'id' | 'created_at' | 'upd
     throw new Error(`Failed to create task: ${error.message}`);
   }
   
+  console.log('Task created successfully:', insertedTask);
   return insertedTask as Task;
 }
 
@@ -32,6 +36,7 @@ export async function createTask(taskData: Omit<Task, 'id' | 'created_at' | 'upd
  * Fetches a list of tasks from the database
  */
 export async function fetchTasks(): Promise<Task[]> {
+  console.log('Fetching tasks from database');
   const { data, error } = await supabase
     .from('tasks')
     .select('*')
@@ -42,6 +47,7 @@ export async function fetchTasks(): Promise<Task[]> {
     throw new Error(`Failed to fetch tasks: ${error.message}`);
   }
   
+  console.log('Tasks fetched successfully:', data);
   return data as Task[];
 }
 
