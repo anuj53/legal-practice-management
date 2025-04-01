@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -18,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { useToast } from '@/hooks/use-toast';
+import { useToast, toast } from '@/hooks/use-toast';
 import { EditTaskDialog } from './EditTaskDialog';
 import { Task } from './TaskList';
 import { useTaskTypes } from '@/contexts/TaskTypeContext';
@@ -34,6 +33,7 @@ export function TaskBoard({ tasks: initialTasks, onCloseTask }: TaskBoardProps) 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
   const { taskTypes } = useTaskTypes();
+  const { toast: toastFunction } = useToast();
   
   useEffect(() => {
     console.log('TaskBoard received tasks:', initialTasks);
@@ -102,7 +102,7 @@ export function TaskBoard({ tasks: initialTasks, onCloseTask }: TaskBoardProps) 
       
       if (oldStatus !== newStatus) {
         draggedTask.status = newStatus;
-        useToast().toast({
+        toastFunction({
           title: "Task Updated",
           description: `Task moved to ${newStatus}`,
         });
@@ -135,7 +135,7 @@ export function TaskBoard({ tasks: initialTasks, onCloseTask }: TaskBoardProps) 
       );
     }
     
-    toast({
+    toastFunction({
       title: "Task Completed",
       description: "Task marked as complete and removed from view",
     });
