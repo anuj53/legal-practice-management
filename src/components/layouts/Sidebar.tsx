@@ -2,9 +2,9 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { Settings, Calendar, User, CheckSquare } from 'lucide-react';
+import { Settings, Calendar, User, CheckSquare, FileText } from 'lucide-react';
 
-export default function Sidebar() {
+export default function Sidebar({ collapsed, onToggleCollapse }: { collapsed?: boolean, onToggleCollapse?: () => void }) {
   const location = useLocation();
   const isActive = (path: string) => {
     if (path === '/') return location.pathname === '/';
@@ -16,6 +16,7 @@ export default function Sidebar() {
     { name: 'Calendar', href: '/calendar', icon: Calendar },
     { name: 'Contacts', href: '/contacts', icon: User },
     { name: 'Tasks', href: '/tasks', icon: CheckSquare },
+    { name: 'Matter', href: '/matter', icon: FileText },
   ];
   
   return (
@@ -34,17 +35,19 @@ export default function Sidebar() {
                 active
                   ? 'bg-yorpro-50 text-yorpro-600'
                   : 'text-gray-600 hover:bg-gray-50 hover:text-yorpro-600',
-                'group flex items-center px-2 py-2 text-sm font-medium rounded-md'
+                'group flex items-center px-2 py-2 text-sm font-medium rounded-md',
+                collapsed && 'justify-center'
               )}
             >
               <item.icon
                 className={cn(
                   active ? 'text-yorpro-600' : 'text-gray-400 group-hover:text-yorpro-600',
-                  'mr-3 flex-shrink-0 h-5 w-5'
+                  'flex-shrink-0 h-5 w-5',
+                  collapsed ? 'mx-auto' : 'mr-3'
                 )}
                 aria-hidden="true"
               />
-              {item.name}
+              {!collapsed && <span>{item.name}</span>}
             </Link>
           );
         })}
@@ -52,9 +55,11 @@ export default function Sidebar() {
       
       <div className="px-2 py-4 space-y-1">
         {/* Settings navigation */}
-        <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
-          Settings
-        </div>
+        {!collapsed && (
+          <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
+            Settings
+          </div>
+        )}
         
         <Link
           to="/settings"
@@ -62,17 +67,19 @@ export default function Sidebar() {
             isActive('/settings') && !isActive('/settings/custom-fields')
               ? 'bg-yorpro-50 text-yorpro-600'
               : 'text-gray-600 hover:bg-gray-50 hover:text-yorpro-600',
-            'group flex items-center px-2 py-2 text-sm font-medium rounded-md'
+            'group flex items-center px-2 py-2 text-sm font-medium rounded-md',
+            collapsed && 'justify-center'
           )}
         >
           <Settings
             className={cn(
               isActive('/settings') && !isActive('/settings/custom-fields') ? 'text-yorpro-600' : 'text-gray-400 group-hover:text-yorpro-600',
-              'mr-3 flex-shrink-0 h-5 w-5'
+              'flex-shrink-0 h-5 w-5',
+              collapsed ? 'mx-auto' : 'mr-3'
             )}
             aria-hidden="true"
           />
-          General Settings
+          {!collapsed && <span>General Settings</span>}
         </Link>
         
         <Link
@@ -81,17 +88,19 @@ export default function Sidebar() {
             isActive('/settings/custom-fields')
               ? 'bg-yorpro-50 text-yorpro-600'
               : 'text-gray-600 hover:bg-gray-50 hover:text-yorpro-600',
-            'group flex items-center px-2 py-2 text-sm font-medium rounded-md'
+            'group flex items-center px-2 py-2 text-sm font-medium rounded-md',
+            collapsed && 'justify-center'
           )}
         >
           <Settings
             className={cn(
               isActive('/settings/custom-fields') ? 'text-yorpro-600' : 'text-gray-400 group-hover:text-yorpro-600',
-              'mr-3 flex-shrink-0 h-5 w-5'
+              'flex-shrink-0 h-5 w-5',
+              collapsed ? 'mx-auto' : 'mr-3'
             )}
             aria-hidden="true"
           />
-          Custom Fields
+          {!collapsed && <span>Custom Fields</span>}
         </Link>
       </div>
     </div>

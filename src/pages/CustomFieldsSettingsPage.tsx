@@ -11,7 +11,7 @@ export default function CustomFieldsSettingsPage() {
       <PageHeader
         title="Custom Fields Settings"
         description="Manage custom fields and field sets for contacts, matters, and tasks"
-        icon={<Settings className="h-6 w-6" />}
+        icon={Settings}
       />
       <Separator className="my-6" />
       

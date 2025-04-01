@@ -22,6 +22,7 @@ export interface CustomFieldValue {
   created_at: string;
   updated_at: string;
   definition?: CustomFieldDefinition;
+  field_type?: string;
 }
 
 export interface CustomFieldFormValue {
@@ -43,7 +44,7 @@ export interface CustomFieldSet {
 export type DbTables = 'calendars' | 'company_employees' | 'contacts' | 
   'contact_tag_assignments' | 'contact_tags' | 'organizations' | 
   'contact_types' | 'custom_field_definitions' | 'custom_field_values' | 
-  'custom_field_sets' | 'event_attendees' | 'event_documents' | 'event_reminders' | 
+  'custom_field_sets' | 'contact_custom_fields' | 'event_attendees' | 'event_documents' | 'event_reminders' | 
   'event_types' | 'events' | 'profiles' | 'task_templates' | 'tasks' | 'workflow_templates';
 
 // Create a type for selected custom fields on a contact
@@ -54,3 +55,6 @@ export interface ContactCustomField {
   created_at: string;
   updated_at: string;
 }
+
+// Type for casting Supabase query results to reduce TypeScript errors
+export type SupabaseQueryResult<T> = T;

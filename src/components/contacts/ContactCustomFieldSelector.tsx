@@ -1,301 +1,213 @@
 
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
+import React, { useEffect, useState } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { toast } from '@/hooks/use-toast';
-import { Plus, Settings, Loader2 } from 'lucide-react';
-import { Separator } from '@/components/ui/separator';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { CustomFieldDefinition, CustomFieldSet, DbTables } from '@/types/customField';
-import { useNavigate } from 'react-router-dom';
+import { supabaseClient } from '@/integrations/supabase/client';
+import { CustomFieldDefinition, CustomFieldSet, ContactCustomField } from '@/types/customField';
+import { castQueryResult } from '@/utils/supabaseUtils';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 interface ContactCustomFieldSelectorProps {
   contactId?: string;
-  onSelectionChange: (selectedFieldIds: string[]) => void;
+  onSelectedFieldsChange?: (selectedFields: string[]) => void;
 }
 
-export function ContactCustomFieldSelector({
-  contactId,
-  onSelectionChange
+export function ContactCustomFieldSelector({ 
+  contactId, 
+  onSelectedFieldsChange 
 }: ContactCustomFieldSelectorProps) {
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [organizationId, setOrganizationId] = useState<string | null>(null);
-  const [fields, setFields] = useState<CustomFieldDefinition[]>([]);
+  const [customFields, setCustomFields] = useState<CustomFieldDefinition[]>([]);
   const [fieldSets, setFieldSets] = useState<CustomFieldSet[]>([]);
-  const [selectedFieldIds, setSelectedFieldIds] = useState<string[]>([]);
-  const [selectedSetIds, setSelectedSetIds] = useState<string[]>([]);
-  
-  // Fetch the organization ID and then custom fields and sets
-  useEffect(() => {
-    const fetchOrganizationId = async () => {
-      if (!user) return null;
-      
-      try {
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('organization_id')
-          .eq('id', user.id)
-          .maybeSingle();
-        
-        if (profileData?.organization_id) {
-          setOrganizationId(profileData.organization_id);
-          return profileData.organization_id;
-        }
-        return null;
-      } catch (error) {
-        console.error('Error fetching organization ID:', error);
-        return null;
-      }
-    };
-    
-    const fetchData = async () => {
+  const [selectedFields, setSelectedFields] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchCustomFieldsAndSets = async () => {
+    try {
       setLoading(true);
-      const orgId = await fetchOrganizationId();
-      if (!orgId) {
-        setLoading(false);
-        return;
-      }
       
-      try {
-        // Fetch custom field sets
-        const { data: fieldSetData, error: fieldSetError } = await supabase
-          .from('custom_field_sets' as DbTables)
-          .select('*')
-          .eq('organization_id', orgId)
-          .eq('entity_type', 'contact')
-          .order('position');
+      // Fetch custom field sets
+      const { data: setsData, error: setsError } = await supabaseClient
+        .from('custom_field_sets')
+        .select('*')
+        .eq('entity_type', 'contact')
+        .order('position', { ascending: true });
         
-        if (fieldSetError) throw fieldSetError;
-        setFieldSets(fieldSetData as unknown as CustomFieldSet[] || []);
+      if (setsError) throw new Error(setsError.message);
+      
+      // Fetch custom fields
+      const { data: fieldsData, error: fieldsError } = await supabaseClient
+        .from('custom_field_definitions')
+        .select('*')
+        .eq('entity_type', 'contact')
+        .order('position', { ascending: true });
         
-        // Fetch custom fields
-        const { data: fieldData, error: fieldError } = await supabase
-          .from('custom_field_definitions')
-          .select('*')
-          .eq('organization_id', orgId)
-          .eq('entity_type', 'contact')
-          .order('position');
-        
-        if (fieldError) throw fieldError;
-        setFields(fieldData || []);
-        
-        // If we have a contact ID, fetch active custom fields for this contact
-        if (contactId) {
-          const { data: contactFields, error: contactFieldsError } = await supabase
-            .from('contact_custom_fields')
-            .select('field_definition_id')
-            .eq('contact_id', contactId)
-            .eq('is_active', true);
+      if (fieldsError) throw new Error(fieldsError.message);
+      
+      // Set data with proper type casting
+      setFieldSets(castQueryResult<CustomFieldSet[]>(setsData || []));
+      setCustomFields(castQueryResult<CustomFieldDefinition[]>(fieldsData || []));
+      
+      // If contactId is provided, fetch selected fields for this contact
+      if (contactId) {
+        const { data: selectedFieldsData, error: selectionError } = await supabaseClient
+          .from('contact_custom_fields')
+          .select('field_definition_id')
+          .eq('contact_id', contactId)
+          .eq('is_active', true);
           
-          if (contactFieldsError) throw contactFieldsError;
-          
-          if (contactFields) {
-            const activeFieldIds = contactFields.map(cf => cf.field_definition_id);
-            setSelectedFieldIds(activeFieldIds);
-            
-            // Determine which sets should be selected
-            const newSelectedSetIds: string[] = [];
-            fieldSetData.forEach((set: any) => {
-              const fieldsInSet = fieldData.filter(f => f.field_set === set.id);
-              const allFieldsInSetSelected = fieldsInSet.every(f => activeFieldIds.includes(f.id));
-              if (allFieldsInSetSelected && fieldsInSet.length > 0) {
-                newSelectedSetIds.push(set.id);
-              }
-            });
-            setSelectedSetIds(newSelectedSetIds);
+        if (selectionError) throw new Error(selectionError.message);
+        
+        if (selectedFieldsData) {
+          const fieldIds = castQueryResult<{ field_definition_id: string }[]>(selectedFieldsData)
+            .map(item => item.field_definition_id);
+          setSelectedFields(fieldIds);
+          if (onSelectedFieldsChange) {
+            onSelectedFieldsChange(fieldIds);
           }
         }
-      } catch (error) {
-        console.error('Error fetching custom fields data:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load custom fields.",
-          variant: "destructive"
-        });
-      } finally {
-        setLoading(false);
       }
-    };
-    
-    fetchData();
-  }, [user, contactId]);
+      
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching custom fields:', err);
+      setError('Failed to load custom fields. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // Handle individual field selection
-  const handleFieldSelection = (fieldId: string, checked: boolean) => {
-    let newSelectedFieldIds = [...selectedFieldIds];
+  useEffect(() => {
+    fetchCustomFieldsAndSets();
+  }, [contactId]);
+
+  const handleFieldToggle = (fieldId: string, checked: boolean) => {
+    let newSelectedFields: string[];
     
     if (checked) {
-      if (!newSelectedFieldIds.includes(fieldId)) {
-        newSelectedFieldIds.push(fieldId);
-      }
+      newSelectedFields = [...selectedFields, fieldId];
     } else {
-      newSelectedFieldIds = newSelectedFieldIds.filter(id => id !== fieldId);
+      newSelectedFields = selectedFields.filter(id => id !== fieldId);
     }
     
-    setSelectedFieldIds(newSelectedFieldIds);
-    onSelectionChange(newSelectedFieldIds);
+    setSelectedFields(newSelectedFields);
     
-    // Update field set selection state
-    updateFieldSetSelection(newSelectedFieldIds);
+    if (onSelectedFieldsChange) {
+      onSelectedFieldsChange(newSelectedFields);
+    }
   };
 
-  // Handle field set selection
-  const handleFieldSetSelection = (setId: string, checked: boolean) => {
-    // Get all fields in this set
-    const fieldsInSet = fields.filter(f => f.field_set === setId);
-    const fieldIdsInSet = fieldsInSet.map(f => f.id);
-    
-    let newSelectedFieldIds = [...selectedFieldIds];
+  // Helper function to check if all fields in a set are selected
+  const isFieldSetSelected = (setId: string) => {
+    const fieldsInSet = customFields.filter(field => field.field_set === setId);
+    return fieldsInSet.length > 0 && fieldsInSet.every(field => selectedFields.includes(field.id));
+  };
+
+  // Function to toggle all fields in a set
+  const toggleFieldSet = (setId: string, checked: boolean) => {
+    const fieldsInSet = customFields.filter(field => field.field_set === setId).map(field => field.id);
+    let newSelectedFields: string[];
     
     if (checked) {
-      // Add all fields in the set
-      fieldIdsInSet.forEach(id => {
-        if (!newSelectedFieldIds.includes(id)) {
-          newSelectedFieldIds.push(id);
-        }
-      });
-      
-      // Add set to selected sets
-      setSelectedSetIds([...selectedSetIds, setId]);
+      // Add all fields from the set that aren't already selected
+      newSelectedFields = [...new Set([...selectedFields, ...fieldsInSet])];
     } else {
-      // Remove all fields in the set
-      newSelectedFieldIds = newSelectedFieldIds.filter(id => !fieldIdsInSet.includes(id));
-      
-      // Remove set from selected sets
-      setSelectedSetIds(selectedSetIds.filter(id => id !== setId));
+      // Remove all fields from the set
+      newSelectedFields = selectedFields.filter(id => !fieldsInSet.includes(id));
     }
     
-    setSelectedFieldIds(newSelectedFieldIds);
-    onSelectionChange(newSelectedFieldIds);
-  };
-
-  // Update selected sets based on selected fields
-  const updateFieldSetSelection = (selectedFields: string[]) => {
-    const newSelectedSetIds: string[] = [];
+    setSelectedFields(newSelectedFields);
     
-    fieldSets.forEach(set => {
-      const fieldsInSet = fields.filter(f => f.field_set === set.id);
-      const fieldIdsInSet = fieldsInSet.map(f => f.id);
-      
-      // If all fields in this set are selected, mark the set as selected
-      const allFieldsSelected = fieldIdsInSet.length > 0 && fieldIdsInSet.every(id => selectedFields.includes(id));
-      
-      if (allFieldsSelected) {
-        newSelectedSetIds.push(set.id);
-      }
-    });
-    
-    setSelectedSetIds(newSelectedSetIds);
-  };
-
-  const navigateToSettings = () => {
-    navigate('/settings/custom-fields');
+    if (onSelectedFieldsChange) {
+      onSelectedFieldsChange(newSelectedFields);
+    }
   };
 
   if (loading) {
+    return <div className="p-4">Loading custom fields...</div>;
+  }
+
+  if (error) {
     return (
-      <div className="flex justify-center items-center p-4">
-        <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
-      </div>
+      <Alert variant="destructive" className="mb-4">
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
     );
   }
 
-  // Get unassigned fields (not in any field set)
-  const unassignedFields = fields.filter(f => f.field_set === null);
+  // Get fields that aren't part of any set
+  const standaloneFields = customFields.filter(field => !field.field_set);
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-medium">Custom Fields</h3>
-        <Button 
-          variant="ghost" 
-          size="sm"
-          onClick={navigateToSettings}
-        >
-          <Settings className="h-4 w-4 mr-2" />
-          Manage Fields
-        </Button>
-      </div>
+      <h3 className="text-lg font-medium">Custom Fields</h3>
       
-      <div className="space-y-4">
-        {fieldSets.length > 0 && (
-          <div className="space-y-2">
-            <p className="text-sm font-medium">Field Sets</p>
-            {fieldSets.map(set => {
-              const fieldsInSet = fields.filter(f => f.field_set === set.id);
-              if (fieldsInSet.length === 0) return null;
-              
-              return (
-                <div key={set.id} className="flex items-start space-x-2">
-                  <Checkbox 
-                    id={`set-${set.id}`} 
-                    checked={selectedSetIds.includes(set.id)}
-                    onCheckedChange={(checked) => handleFieldSetSelection(set.id, checked === true)}
+      {fieldSets.length > 0 && (
+        <Accordion type="multiple" className="w-full">
+          {fieldSets.map(fieldSet => {
+            const fieldsInSet = customFields.filter(field => field.field_set === fieldSet.id);
+            
+            if (fieldsInSet.length === 0) return null;
+            
+            return (
+              <AccordionItem key={fieldSet.id} value={fieldSet.id}>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id={`field-set-${fieldSet.id}`}
+                    checked={isFieldSetSelected(fieldSet.id)}
+                    onCheckedChange={(checked) => toggleFieldSet(fieldSet.id, !!checked)}
                   />
-                  <div className="grid gap-1.5 leading-none">
-                    <label
-                      htmlFor={`set-${set.id}`}
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      {set.name}
-                    </label>
-                    <p className="text-xs text-muted-foreground">
-                      {fieldsInSet.length} field{fieldsInSet.length !== 1 ? 's' : ''}
-                    </p>
+                  <AccordionTrigger className="hover:no-underline">
+                    <Label htmlFor={`field-set-${fieldSet.id}`} className="text-sm font-medium">
+                      {fieldSet.name}
+                    </Label>
+                  </AccordionTrigger>
+                </div>
+                <AccordionContent>
+                  <div className="pl-6 space-y-2">
+                    {fieldsInSet.map(field => (
+                      <div key={field.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`field-${field.id}`}
+                          checked={selectedFields.includes(field.id)}
+                          onCheckedChange={(checked) => handleFieldToggle(field.id, !!checked)}
+                        />
+                        <Label htmlFor={`field-${field.id}`} className="text-sm">
+                          {field.name} {field.is_required && <span className="text-red-500">*</span>}
+                        </Label>
+                      </div>
+                    ))}
                   </div>
-                </div>
-              );
-            })}
-            <Separator className="my-4" />
-          </div>
-        )}
-        
-        {unassignedFields.length > 0 && (
-          <div className="space-y-2">
-            <p className="text-sm font-medium">Individual Fields</p>
-            {unassignedFields.map(field => (
-              <div key={field.id} className="flex items-start space-x-2">
-                <Checkbox 
-                  id={`field-${field.id}`} 
-                  checked={selectedFieldIds.includes(field.id)}
-                  onCheckedChange={(checked) => handleFieldSelection(field.id, checked === true)}
-                />
-                <div className="grid gap-1.5 leading-none">
-                  <label
-                    htmlFor={`field-${field.id}`}
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    {field.name}
-                    {field.is_required && <span className="text-red-500 ml-1">*</span>}
-                  </label>
-                  <p className="text-xs text-muted-foreground">
-                    {field.field_type.charAt(0).toUpperCase() + field.field_type.slice(1)}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-        
-        {fieldSets.length === 0 && unassignedFields.length === 0 && (
-          <div className="text-center p-4 border border-dashed border-gray-200 rounded-md">
-            <p className="text-gray-500 mb-2">No custom fields defined yet</p>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={navigateToSettings}
-            >
-              <Plus className="h-4 w-4 mr-1" />
-              Create Custom Fields
-            </Button>
-          </div>
-        )}
-      </div>
+                </AccordionContent>
+              </AccordionItem>
+            );
+          })}
+        </Accordion>
+      )}
+      
+      {standaloneFields.length > 0 && (
+        <div className="space-y-2">
+          <h4 className="text-sm font-medium text-muted-foreground">Individual Fields</h4>
+          {standaloneFields.map(field => (
+            <div key={field.id} className="flex items-center space-x-2">
+              <Checkbox
+                id={`field-${field.id}`}
+                checked={selectedFields.includes(field.id)}
+                onCheckedChange={(checked) => handleFieldToggle(field.id, !!checked)}
+              />
+              <Label htmlFor={`field-${field.id}`} className="text-sm">
+                {field.name} {field.is_required && <span className="text-red-500">*</span>}
+              </Label>
+            </div>
+          ))}
+        </div>
+      )}
+      
+      {customFields.length === 0 && (
+        <p className="text-sm text-muted-foreground">No custom fields available. Create them in the settings.</p>
+      )}
     </div>
   );
 }
