@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { toast } from '@/hooks/use-toast';
 import { Loader2, Plus, X } from 'lucide-react';
-import { CustomFieldDefinition } from '@/types/customField';
+import { CustomFieldDefinition, CustomFieldSet } from '@/types/customField';
 
 interface CustomFieldDialogProps {
   open: boolean;
@@ -33,6 +33,48 @@ export function CustomFieldDialog({
   const [defaultValue, setDefaultValue] = useState('');
   const [options, setOptions] = useState<string[]>([]);
   const [optionInput, setOptionInput] = useState('');
+  const [fieldSets, setFieldSets] = useState<CustomFieldSet[]>([]);
+  const [selectedFieldSet, setSelectedFieldSet] = useState<string | null>(null);
+  const [newFieldSetName, setNewFieldSetName] = useState('');
+  const [showNewFieldSetInput, setShowNewFieldSetInput] = useState(false);
+
+  // Fetch existing field sets
+  useEffect(() => {
+    if (user && open) {
+      fetchFieldSets();
+    }
+  }, [user, entityType, open]);
+
+  const fetchFieldSets = async () => {
+    try {
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user?.id)
+        .single();
+      
+      if (!profileData?.organization_id) {
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('custom_field_sets')
+        .select('*')
+        .eq('organization_id', profileData.organization_id)
+        .eq('entity_type', entityType)
+        .order('position');
+
+      if (error) throw error;
+      setFieldSets(data || []);
+      
+      // Set default field set if available
+      if (data && data.length > 0) {
+        setSelectedFieldSet(data[0].id);
+      }
+    } catch (error) {
+      console.error('Error fetching field sets:', error);
+    }
+  };
 
   const handleAddOption = () => {
     if (optionInput.trim() && !options.includes(optionInput.trim())) {
@@ -54,6 +96,56 @@ export function CustomFieldDialog({
     setDefaultValue('');
     setOptions([]);
     setOptionInput('');
+    setSelectedFieldSet(fieldSets.length > 0 ? fieldSets[0].id : null);
+    setNewFieldSetName('');
+    setShowNewFieldSetInput(false);
+  };
+
+  const createNewFieldSet = async (): Promise<string | null> => {
+    if (!newFieldSetName.trim() || !user) return null;
+    
+    try {
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('organization_id')
+        .eq('id', user.id)
+        .single();
+      
+      if (!profileData?.organization_id) {
+        throw new Error("Organization not found");
+      }
+
+      // Get next position value
+      let position = 0;
+      if (fieldSets.length > 0) {
+        position = Math.max(...fieldSets.map(set => set.position || 0)) + 1;
+      }
+
+      const { data, error } = await supabase
+        .from('custom_field_sets')
+        .insert({
+          name: newFieldSetName.trim(),
+          entity_type: entityType,
+          organization_id: profileData.organization_id,
+          position
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      // Update local state with new field set
+      setFieldSets([...fieldSets, data]);
+      return data.id;
+    } catch (error) {
+      console.error('Error creating field set:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create field set.",
+        variant: "destructive"
+      });
+      return null;
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -91,6 +183,28 @@ export function CustomFieldDialog({
         throw new Error("Organization not found");
       }
 
+      // Create new field set if needed
+      let fieldSetId = selectedFieldSet;
+      if (showNewFieldSetInput) {
+        const newId = await createNewFieldSet();
+        if (newId) {
+          fieldSetId = newId;
+        }
+      }
+
+      // Get next position value for the field
+      const { data: existingFields } = await supabase
+        .from('custom_field_definitions')
+        .select('position')
+        .eq('field_set', fieldSetId)
+        .order('position', { ascending: false })
+        .limit(1);
+      
+      let position = 0;
+      if (existingFields && existingFields.length > 0 && existingFields[0].position) {
+        position = existingFields[0].position + 1;
+      }
+
       const fieldData = {
         organization_id: profileData.organization_id,
         name: name.trim(),
@@ -98,7 +212,9 @@ export function CustomFieldDialog({
         entity_type: entityType,
         default_value: defaultValue || null,
         is_required: isRequired,
-        options: fieldType === 'select' ? options : null
+        options: fieldType === 'select' ? options : null,
+        field_set: fieldSetId,
+        position
       };
 
       const { error } = await supabase
@@ -146,6 +262,52 @@ export function CustomFieldDialog({
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="fieldSet">Field Set</Label>
+            {!showNewFieldSetInput ? (
+              <div className="flex gap-2">
+                <Select 
+                  value={selectedFieldSet || ""} 
+                  onValueChange={setSelectedFieldSet}>
+                  <SelectTrigger id="fieldSet" className="flex-1">
+                    <SelectValue placeholder="Select a field set" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {fieldSets.map(set => (
+                      <SelectItem key={set.id} value={set.id}>{set.name}</SelectItem>
+                    ))}
+                    <SelectItem value="new">+ Create new field set</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setShowNewFieldSetInput(true)}
+                >
+                  <Plus className="h-4 w-4" />
+                  <span className="sr-only">New Field Set</span>
+                </Button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <Input
+                  value={newFieldSetName}
+                  onChange={(e) => setNewFieldSetName(e.target.value)}
+                  placeholder="New field set name"
+                  className="flex-1"
+                />
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  onClick={() => setShowNewFieldSetInput(false)}
+                >
+                  <X className="h-4 w-4" />
+                  <span className="sr-only">Cancel</span>
+                </Button>
+              </div>
+            )}
+          </div>
+          
           <div className="space-y-2">
             <Label htmlFor="name">Field Name <span className="text-red-500">*</span></Label>
             <Input

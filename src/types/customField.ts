@@ -8,6 +8,8 @@ export interface CustomFieldDefinition {
   default_value: string | null;
   is_required: boolean;
   options: string[] | null;
+  field_set: string | null;
+  position: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -25,4 +27,14 @@ export interface CustomFieldValue {
 export interface CustomFieldFormValue {
   definition_id: string;
   value: string | null;
+}
+
+export interface CustomFieldSet {
+  id: string;
+  name: string;
+  entity_type: 'contact' | 'matter' | 'task';
+  organization_id: string;
+  position: number;
+  created_at: string;
+  updated_at: string;
 }
