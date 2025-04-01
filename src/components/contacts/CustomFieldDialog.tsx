@@ -51,7 +51,7 @@ export function CustomFieldDialog({
         .from('profiles')
         .select('organization_id')
         .eq('id', user?.id)
-        .single();
+        .maybeSingle();
       
       if (!profileData?.organization_id) {
         return;
@@ -65,11 +65,13 @@ export function CustomFieldDialog({
         .order('position');
 
       if (error) throw error;
-      setFieldSets(data || []);
       
-      // Set default field set if available
-      if (data && data.length > 0) {
-        setSelectedFieldSet(data[0].id);
+      if (data) {
+        setFieldSets(data as CustomFieldSet[]);
+        // Set default field set if available
+        if (data.length > 0) {
+          setSelectedFieldSet(data[0].id);
+        }
       }
     } catch (error) {
       console.error('Error fetching field sets:', error);
@@ -135,8 +137,9 @@ export function CustomFieldDialog({
       if (error) throw error;
       
       // Update local state with new field set
-      setFieldSets([...fieldSets, data]);
-      return data.id;
+      const newFieldSet = data as CustomFieldSet;
+      setFieldSets([...fieldSets, newFieldSet]);
+      return newFieldSet.id;
     } catch (error) {
       console.error('Error creating field set:', error);
       toast({
@@ -201,8 +204,9 @@ export function CustomFieldDialog({
         .limit(1);
       
       let position = 0;
-      if (existingFields && existingFields.length > 0 && existingFields[0].position) {
-        position = existingFields[0].position + 1;
+      if (existingFields && existingFields.length > 0) {
+        const highestPosition = existingFields[0]?.position || 0;
+        position = highestPosition + 1;
       }
 
       const fieldData = {

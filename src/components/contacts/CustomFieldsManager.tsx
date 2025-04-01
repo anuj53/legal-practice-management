@@ -62,7 +62,12 @@ export function CustomFieldsManager({
           .order('position');
         
         if (fieldSetError) throw fieldSetError;
-        setFieldSets(fieldSetData || []);
+        
+        if (fieldSetData) {
+          setFieldSets(fieldSetData as CustomFieldSet[]);
+        } else {
+          setFieldSets([]);
+        }
 
         // Fetch fields
         const { data, error } = await supabase
@@ -75,7 +80,11 @@ export function CustomFieldsManager({
           
         if (error) throw error;
         
-        setFields(data || []);
+        if (data) {
+          setFields(data as CustomFieldDefinition[]);
+        } else {
+          setFields([]);
+        }
       } catch (error) {
         console.error('Error fetching custom fields:', error);
         toast({
@@ -386,7 +395,7 @@ export function CustomFieldsManager({
                   .order('position')
                   .then(({ data, error }) => {
                     if (!error && data) {
-                      setFieldSets(data);
+                      setFieldSets(data as CustomFieldSet[]);
                     }
                   });
                 
@@ -401,7 +410,7 @@ export function CustomFieldsManager({
                   .then(({ data, error }) => {
                     setLoading(false);
                     if (!error && data) {
-                      setFields(data);
+                      setFields(data as CustomFieldDefinition[]);
                     }
                   });
               }
