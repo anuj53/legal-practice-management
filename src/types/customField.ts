@@ -102,3 +102,21 @@ export function mapToCustomFieldSet(data: any): CustomFieldSet {
     fields: data.fields ? data.fields.map(mapToCustomFieldDefinition) : []
   };
 }
+
+export function mapToContactFieldSetAssignment(data: any): ContactFieldSetAssignment {
+  return {
+    id: data.id,
+    contact_id: data.contact_id,
+    field_set_id: data.field_set_id,
+    created_at: data.created_at
+  };
+}
+
+export function mapToContactFieldAssignment(data: any): ContactFieldAssignment {
+  return {
+    id: data.id,
+    contact_id: data.contact_id,
+    field_id: data.field_id,
+    created_at: data.created_at
+  };
+}

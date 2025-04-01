@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -65,63 +64,117 @@ export function CustomFieldsManager({
         const organizationId = profileData.organization_id;
         
         if (entityType === 'contact') {
-          // For contacts, we need to fetch the assigned field sets and individual fields
+          // For contacts, we need to fetch the assigned field sets and individual fields using RPC functions
           
           // Get assigned field sets for this contact
-          const { data: assignedSets } = await supabase
-            .from('contact_field_set_assignments')
-            .select(`
-              field_set_id,
-              field_set:field_set_id (*)
-            `)
-            .eq('contact_id', entityId);
+          const { data: assignedSetsData, error: assignedSetsError } = await supabase
+            .rpc('get_contact_field_sets_with_details', { contact_id_param: entityId });
             
-          const fieldSetIds = assignedSets?.map(item => item.field_set_id) || [];
+          if (assignedSetsError) {
+            console.error('Error fetching assigned field sets:', assignedSetsError);
+            
+            // Fallback if RPC doesn't exist yet
+            const { data: rawSetAssignments } = await supabase
+              .from('contact_field_set_assignments')
+              .select(`
+                field_set_id
+              `)
+              .eq('contact_id', entityId);
+              
+            const fieldSetIds = rawSetAssignments?.map(item => item.field_set_id) || [];
+            
+            // Fetch fields for those field sets
+            if (fieldSetIds.length > 0) {
+              // Fetch the field sets with their fields
+              const updatedSets = [];
+              
+              for (const setId of fieldSetIds) {
+                // Get the field set details
+                const { data: setData } = await supabase
+                  .from('custom_field_sets')
+                  .select('*')
+                  .eq('id', setId)
+                  .single();
+                  
+                if (setData) {
+                  // Get fields for this set
+                  const { data: fieldsInSetData } = await supabase
+                    .from('custom_field_definitions')
+                    .select('*')
+                    .eq('field_set', setId)
+                    .order('position');
+                    
+                  const mappedSet = mapToCustomFieldSet(setData);
+                  mappedSet.fields = (fieldsInSetData || []).map(mapToCustomFieldDefinition);
+                  
+                  updatedSets.push(mappedSet);
+                }
+              }
+              
+              setFieldSets(updatedSets);
+            } else {
+              setFieldSets([]);
+            }
+          } else {
+            // If RPC exists and returned data, use it
+            const mappedSets = (assignedSetsData || []).map(setData => {
+              const fieldSet = mapToCustomFieldSet({
+                id: setData.id,
+                name: setData.name,
+                organization_id: setData.organization_id,
+                entity_type: setData.entity_type,
+                position: setData.position,
+                created_at: setData.created_at,
+                updated_at: setData.updated_at
+              });
+              
+              // Add fields if they were included in the RPC response
+              if (setData.fields) {
+                fieldSet.fields = setData.fields.map(mapToCustomFieldDefinition);
+              }
+              
+              return fieldSet;
+            });
+            
+            setFieldSets(mappedSets);
+          }
           
-          // Fetch fields for those field sets
-          if (fieldSetIds.length > 0) {
-            // Fetch the field sets with their fields
-            const updatedSets = [];
+          // Get individually assigned fields (not in sets) using RPC
+          const { data: assignedFieldsData, error: assignedFieldsError } = await supabase
+            .rpc('get_contact_individual_fields', { contact_id_param: entityId });
             
-            for (const setId of fieldSetIds) {
-              // Get the field set details
-              const { data: setData } = await supabase
-                .from('custom_field_sets')
+          if (assignedFieldsError) {
+            console.error('Error fetching assigned fields:', assignedFieldsError);
+            
+            // Fallback if RPC doesn't exist yet
+            const { data: rawFieldAssignments } = await supabase
+              .from('contact_field_assignments')
+              .select(`
+                field_id
+              `)
+              .eq('contact_id', entityId);
+              
+            const fieldIds = rawFieldAssignments?.map(item => item.field_id) || [];
+            const fetchedFields = [];
+            
+            // Fetch each field individually
+            for (const fieldId of fieldIds) {
+              const { data: fieldData } = await supabase
+                .from('custom_field_definitions')
                 .select('*')
-                .eq('id', setId)
+                .eq('id', fieldId)
                 .single();
                 
-              if (setData) {
-                // Get fields for this set
-                const { data: fieldsInSetData } = await supabase
-                  .from('custom_field_definitions')
-                  .select('*')
-                  .eq('field_set', setId)
-                  .order('position');
-                  
-                const mappedSet = mapToCustomFieldSet(setData);
-                mappedSet.fields = (fieldsInSetData || []).map(mapToCustomFieldDefinition);
-                
-                updatedSets.push(mappedSet);
+              if (fieldData) {
+                fetchedFields.push(mapToCustomFieldDefinition(fieldData));
               }
             }
             
-            setFieldSets(updatedSets);
+            setFields(fetchedFields);
           } else {
-            setFieldSets([]);
+            // If RPC exists and returned data, use it
+            setFields((assignedFieldsData || []).map(mapToCustomFieldDefinition));
           }
-          
-          // Get individually assigned fields (not in sets)
-          const { data: assignedFields } = await supabase
-            .from('contact_field_assignments')
-            .select(`
-              field_id,
-              field:field_id (*)
-            `)
-            .eq('contact_id', entityId);
-            
-          const fieldData = assignedFields?.map(item => item.field) || [];
-          setFields(fieldData.map(mapToCustomFieldDefinition));
         } else {
           // For other entity types, we fetch all fields as before
           
@@ -371,56 +424,110 @@ export function CustomFieldsManager({
       const organizationId = profileData.organization_id;
       
       if (entityType === 'contact' && entityId) {
-        // Refetch the assigned field sets for this contact
-        const { data: assignedSets } = await supabase
-          .from('contact_field_set_assignments')
-          .select(`
-            field_set_id,
-            field_set:field_set_id (*)
-          `)
-          .eq('contact_id', entityId);
+        // Refetch the assigned field sets for this contact using RPC
+        const { data: assignedSetsData, error: assignedSetsError } = await supabase
+          .rpc('get_contact_field_sets_with_details', { contact_id_param: entityId });
           
-        const fieldSetIds = assignedSets?.map(item => item.field_set_id) || [];
-        
-        // Fetch fields for those field sets
-        const updatedSets = [];
-        
-        for (const setId of fieldSetIds) {
-          // Get the field set details
-          const { data: setData } = await supabase
-            .from('custom_field_sets')
-            .select('*')
-            .eq('id', setId)
-            .single();
+        if (assignedSetsError) {
+          console.error('Error fetching assigned field sets:', assignedSetsError);
+          
+          // Fallback if RPC doesn't exist
+          const { data: rawSetAssignments } = await supabase
+            .from('contact_field_set_assignments')
+            .select(`
+              field_set_id
+            `)
+            .eq('contact_id', entityId);
             
-          if (setData) {
-            // Get fields for this set
-            const { data: fieldsInSetData } = await supabase
-              .from('custom_field_definitions')
+          const fieldSetIds = rawSetAssignments?.map(item => item.field_set_id) || [];
+          
+          // Fetch fields for those field sets
+          const updatedSets = [];
+          
+          for (const setId of fieldSetIds) {
+            // Get the field set details
+            const { data: setData } = await supabase
+              .from('custom_field_sets')
               .select('*')
-              .eq('field_set', setId)
-              .order('position');
+              .eq('id', setId)
+              .single();
               
-            const mappedSet = mapToCustomFieldSet(setData);
-            mappedSet.fields = (fieldsInSetData || []).map(mapToCustomFieldDefinition);
-            
-            updatedSets.push(mappedSet);
+            if (setData) {
+              // Get fields for this set
+              const { data: fieldsInSetData } = await supabase
+                .from('custom_field_definitions')
+                .select('*')
+                .eq('field_set', setId)
+                .order('position');
+                
+              const mappedSet = mapToCustomFieldSet(setData);
+              mappedSet.fields = (fieldsInSetData || []).map(mapToCustomFieldDefinition);
+              
+              updatedSets.push(mappedSet);
+            }
           }
+          
+          setFieldSets(updatedSets);
+        } else {
+          // If RPC exists and returned data, use it
+          const mappedSets = (assignedSetsData || []).map(setData => {
+            const fieldSet = mapToCustomFieldSet({
+              id: setData.id,
+              name: setData.name,
+              organization_id: setData.organization_id,
+              entity_type: setData.entity_type,
+              position: setData.position,
+              created_at: setData.created_at,
+              updated_at: setData.updated_at
+            });
+            
+            // Add fields if they were included in the RPC response
+            if (setData.fields) {
+              fieldSet.fields = setData.fields.map(mapToCustomFieldDefinition);
+            }
+            
+            return fieldSet;
+          });
+          
+          setFieldSets(mappedSets);
         }
         
-        setFieldSets(updatedSets);
-        
-        // Get individually assigned fields (not in sets)
-        const { data: assignedFields } = await supabase
-          .from('contact_field_assignments')
-          .select(`
-            field_id,
-            field:field_id (*)
-          `)
-          .eq('contact_id', entityId);
+        // Get individually assigned fields (not in sets) using RPC
+        const { data: assignedFieldsData, error: assignedFieldsError } = await supabase
+          .rpc('get_contact_individual_fields', { contact_id_param: entityId });
           
-        const fieldData = assignedFields?.map(item => item.field) || [];
-        setFields(fieldData.map(mapToCustomFieldDefinition));
+        if (assignedFieldsError) {
+          console.error('Error fetching assigned fields:', assignedFieldsError);
+          
+          // Fallback if RPC doesn't exist
+          const { data: rawFieldAssignments } = await supabase
+            .from('contact_field_assignments')
+            .select(`
+              field_id
+            `)
+            .eq('contact_id', entityId);
+            
+          const fieldIds = rawFieldAssignments?.map(item => item.field_id) || [];
+          const fetchedFields = [];
+          
+          // Fetch each field individually
+          for (const fieldId of fieldIds) {
+            const { data: fieldData } = await supabase
+              .from('custom_field_definitions')
+              .select('*')
+              .eq('id', fieldId)
+              .single();
+              
+            if (fieldData) {
+              fetchedFields.push(mapToCustomFieldDefinition(fieldData));
+            }
+          }
+          
+          setFields(fetchedFields);
+        } else {
+          // If RPC exists and returned data, use it
+          setFields((assignedFieldsData || []).map(mapToCustomFieldDefinition));
+        }
       } else {
         // For other entity types, fetch all fields as before
         
