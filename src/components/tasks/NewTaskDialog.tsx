@@ -45,12 +45,18 @@ interface NewTaskDialogProps {
   onTaskCreated?: () => void;
 }
 
+// Define an interface for matter objects
+interface Matter {
+  id: string;
+  name: string;
+}
+
 export function NewTaskDialog({ open, onOpenChange, onTaskCreated }: NewTaskDialogProps) {
   const { taskTypes } = useTaskTypes();
   const { toast } = useToast();
   const { user } = useAuth();
   const [users, setUsers] = useState<{ id: string; first_name: string; last_name: string }[]>([]);
-  const [matters, setMatters] = useState<{ id: string; name: string }[]>([]);
+  const [matters, setMatters] = useState<Matter[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const activeTaskTypes = taskTypes.filter(type => type.active);
@@ -102,17 +108,22 @@ export function NewTaskDialog({ open, onOpenChange, onTaskCreated }: NewTaskDial
     const fetchMatters = async () => {
       try {
         console.log('Fetching matters from database');
+        // Use type assertion to work around TypeScript error with the matters table
         const { data, error } = await supabase
-          .from('matters')
-          .select('id, name')
-          .order('name', { ascending: true });
+          .from('matters' as any)
+          .select('id, name') as any;
           
         if (error) throw error;
         
         console.log('Fetched matters:', data);
         
         if (data && data.length > 0) {
-          setMatters(data);
+          // Ensure the data matches our Matter interface
+          const typedMatters: Matter[] = data.map((matter: any) => ({
+            id: matter.id,
+            name: matter.name
+          }));
+          setMatters(typedMatters);
         } else {
           console.log('No matters found in the database');
           // Set empty array if no matters found
