@@ -129,7 +129,7 @@ export function UserProfile({
     }
   };
   return <div className={cn("flex-shrink-0 p-4 relative z-10", collapsed && "p-2")}>
-      <div className="rounded-xl bg-gradient-to-r from-yorpro-700/30 to-yorpro-800/30 backdrop-blur-md p-4 border border-white/10 shadow-lg hover:shadow-xl transition-all duration-300 group py-0">
+      <div className="rounded-xl bg-gradient-to-r from-yorpro-700/30 to-yorpro-800/30 backdrop-blur-md p-4 border border-white/10 shadow-lg hover:shadow-xl transition-all duration-300 group py-[5px]">
         <div className="flex items-center gap-3">
           <div className="rounded-full bg-gradient-to-br from-yorpro-400/80 to-yorpro-500/80 flex items-center justify-center shadow-lg border border-white/20 group-hover:scale-105 transition-all duration-300 overflow-hidden h-12 w-12">
             <Avatar className="h-full w-full">
