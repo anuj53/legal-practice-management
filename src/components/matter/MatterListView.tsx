@@ -6,10 +6,13 @@ import {
   Search, 
   FileEdit, 
   Trash2,
-  Filter 
+  Filter, 
+  Bell,
+  User,
+  Calendar,
+  File
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -39,6 +42,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 
 interface Matter {
   id: string;
@@ -48,6 +52,11 @@ interface Matter {
   practice_area?: string;
   responsible_attorney_id?: string;
   client_id?: string;
+  originating_attorney_id?: string;
+  responsible_staff_id?: string;
+  notifications?: boolean;
+  stage?: string;
+  open_date?: string;
   created_at: string;
 }
 
@@ -150,7 +159,7 @@ export function MatterListView() {
             <Filter className="h-4 w-4 mr-1" />
             Filter
           </Button>
-          <Button onClick={() => navigate('/matter-templates/new')}>
+          <Button onClick={() => navigate('/matter-templates')}>
             <Plus className="mr-2 h-4 w-4" />
             New Matter
           </Button>
@@ -176,88 +185,150 @@ export function MatterListView() {
                 {search ? "Try a different search term" : "Create your first matter to get started"}
               </p>
               {!search && (
-                <Button onClick={() => navigate('/matter-templates')} className="mt-4">
+                <Button onClick={() => navigate('/matter-templates/new')} className="mt-4">
                   <Plus className="mr-2 h-4 w-4" />
                   Create Matter
                 </Button>
               )}
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Practice Area</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead className="w-[100px]">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredMatters.map((matter) => (
-                  <TableRow 
-                    key={matter.id}
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => handleViewMatter(matter.id)}
-                  >
-                    <TableCell className="font-medium">{matter.name}</TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        matter.status === 'Open' ? 'bg-green-100 text-green-800' : 
-                        matter.status === 'Closed' ? 'bg-gray-100 text-gray-800' : 
-                        'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {matter.status}
-                      </span>
-                    </TableCell>
-                    <TableCell>{matter.practice_area || '-'}</TableCell>
-                    <TableCell>{matter.client_id || '-'}</TableCell>
-                    <TableCell>
-                      <div 
-                        className="flex items-center space-x-1"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEditMatter(matter.id)}
-                        >
-                          <FileEdit className="h-4 w-4" />
-                        </Button>
-                        
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Matter</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Are you sure you want to delete this matter? This action cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction 
-                                onClick={() => handleDeleteMatter(matter.id)}
-                                className="bg-red-600 hover:bg-red-700"
-                              >
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[100px]">Actions</TableHead>
+                    <TableHead>Matter</TableHead>
+                    <TableHead>Client</TableHead>
+                    <TableHead>Responsible Attorney</TableHead>
+                    <TableHead>Originating Attorney</TableHead>
+                    <TableHead>Responsible Staff</TableHead>
+                    <TableHead>Notifications</TableHead>
+                    <TableHead>Practice Area</TableHead>
+                    <TableHead>Stage</TableHead>
+                    <TableHead>Open Date</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredMatters.map((matter) => (
+                    <TableRow 
+                      key={matter.id}
+                      className="hover:bg-muted/50"
+                    >
+                      <TableCell>
+                        <div 
+                          className="flex items-center space-x-1"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEditMatter(matter.id)}
+                            title="Edit Matter"
+                          >
+                            <FileEdit className="h-4 w-4" />
+                          </Button>
+                          
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleViewMatter(matter.id)}
+                            title="View Matter Details"
+                          >
+                            <File className="h-4 w-4" />
+                          </Button>
+                          
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" title="Delete Matter">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Matter</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete this matter? This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction 
+                                  onClick={() => handleDeleteMatter(matter.id)}
+                                  className="bg-red-600 hover:bg-red-700"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-medium">{matter.name}</TableCell>
+                      <TableCell>{matter.client_id || '-'}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center">
+                          <User className="h-4 w-4 mr-1 text-gray-500" />
+                          {matter.responsible_attorney_id || '-'}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center">
+                          <User className="h-4 w-4 mr-1 text-gray-500" />
+                          {matter.originating_attorney_id || '-'}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center">
+                          <User className="h-4 w-4 mr-1 text-gray-500" />
+                          {matter.responsible_staff_id || '-'}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {matter.notifications ? (
+                          <Badge variant="outline" className="flex items-center">
+                            <Bell className="h-3 w-3 mr-1" /> Enabled
+                          </Badge>
+                        ) : '-'}
+                      </TableCell>
+                      <TableCell>{matter.practice_area || '-'}</TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          matter.stage === 'Discovery' ? 'bg-blue-100 text-blue-800' : 
+                          matter.stage === 'Trial' ? 'bg-purple-100 text-purple-800' : 
+                          matter.stage === 'Closing' ? 'bg-orange-100 text-orange-800' : 
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {matter.stage || 'Not Set'}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center">
+                          <Calendar className="h-4 w-4 mr-1 text-gray-500" />
+                          {matter.open_date || formatDate(matter.created_at)}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
     </div>
   );
+}
+
+// Helper function to format date
+function formatDate(dateString: string): string {
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  } catch (e) {
+    return dateString;
+  }
 }

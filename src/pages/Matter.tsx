@@ -23,8 +23,7 @@ export default function Matter() {
   }, [location.state]);
 
   const handleNewMatter = () => {
-    // Navigate to the new matter page or open a dialog
-    navigate('/matter-templates');
+    navigate('/matter-templates/new');
   };
 
   return (
