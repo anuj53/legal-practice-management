@@ -1,24 +1,31 @@
 
-import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { PageHeader } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
-import { 
-  BookTemplate, 
-  FilePlus, 
-  BarChart2, 
-  ListFilter 
-} from 'lucide-react';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { FilePlus } from 'lucide-react';
+import { MatterListView } from '@/components/matter/MatterListView';
+import { MatterTemplatesView } from '@/components/matter/MatterTemplatesView';
+import { MatterPipelineView } from '@/components/matter/MatterPipelineView';
 
 export default function Matter() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const initialTab = location.state?.activeTab || "list";
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  // Update activeTab when location state changes
+  useEffect(() => {
+    if (location.state?.activeTab) {
+      setActiveTab(location.state.activeTab);
+    }
+  }, [location.state]);
+
+  const handleNewMatter = () => {
+    // Navigate to the new matter page or open a dialog
+    navigate('/matter-templates');
+  };
 
   return (
     <div className="container py-6">
@@ -26,58 +33,33 @@ export default function Matter() {
         title="Matters"
         description="Manage your legal cases and matters"
         actions={
-          <Button onClick={() => navigate('/matter-templates')}>
+          <Button onClick={handleNewMatter}>
             <FilePlus className="mr-2 h-4 w-4" />
             New Matter
           </Button>
         }
       />
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mt-8">
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/matter-templates')}>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <BookTemplate className="mr-2 h-5 w-5 text-yorpro-600" />
-              Matter Templates
-            </CardTitle>
-            <CardDescription>
-              Create and manage templates for different types of matters
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p>Use templates to quickly set up new matters with predefined settings and documents.</p>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/matter')}>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <BarChart2 className="mr-2 h-5 w-5 text-yorpro-600" />
-              Matter Pipeline
-            </CardTitle>
-            <CardDescription>
-              Track matters through their lifecycle stages
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p>Visualize and manage matters at different stages of the legal process.</p>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/matter')}>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <ListFilter className="mr-2 h-5 w-5 text-yorpro-600" />
-              Matter List
-            </CardTitle>
-            <CardDescription>
-              View and search all matters
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p>See all matters in a searchable and filterable list view.</p>
-          </CardContent>
-        </Card>
+      <div className="mt-6">
+        <Tabs defaultValue="list" value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-6">
+            <TabsTrigger value="list">Matter List</TabsTrigger>
+            <TabsTrigger value="templates">Matter Templates</TabsTrigger>
+            <TabsTrigger value="pipeline">Matter Pipeline</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="list">
+            <MatterListView />
+          </TabsContent>
+          
+          <TabsContent value="templates">
+            <MatterTemplatesView />
+          </TabsContent>
+          
+          <TabsContent value="pipeline">
+            <MatterPipelineView />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
