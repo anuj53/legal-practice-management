@@ -705,6 +705,54 @@ export type Database = {
           },
         ]
       }
+      matter_templates: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_default: boolean | null
+          location: string | null
+          name: string
+          organization_id: string | null
+          originating_attorney_id: string | null
+          permissions: string | null
+          practice_area: string | null
+          responsible_attorney_id: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_default?: boolean | null
+          location?: string | null
+          name: string
+          organization_id?: string | null
+          originating_attorney_id?: string | null
+          permissions?: string | null
+          practice_area?: string | null
+          responsible_attorney_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_default?: boolean | null
+          location?: string | null
+          name?: string
+          organization_id?: string | null
+          originating_attorney_id?: string | null
+          permissions?: string | null
+          practice_area?: string | null
+          responsible_attorney_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       matters: {
         Row: {
           client_id: string | null
@@ -916,6 +964,127 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      template_billing_preferences: {
+        Row: {
+          billing_method: string | null
+          budget: number | null
+          created_at: string | null
+          custom_rate: number | null
+          id: string
+          split_billing: boolean | null
+          template_id: string
+          trust_notification: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          billing_method?: string | null
+          budget?: number | null
+          created_at?: string | null
+          custom_rate?: number | null
+          id?: string
+          split_billing?: boolean | null
+          template_id: string
+          trust_notification?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          billing_method?: string | null
+          budget?: number | null
+          created_at?: string | null
+          custom_rate?: number | null
+          id?: string
+          split_billing?: boolean | null
+          template_id?: string
+          trust_notification?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_billing_preferences_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "matter_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      template_document_folders: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          id: string
+          name: string
+          position: number | null
+          template_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          name: string
+          position?: number | null
+          template_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          position?: number | null
+          template_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_document_folders_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "matter_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      template_task_lists: {
+        Row: {
+          created_at: string | null
+          id: string
+          template_id: string
+          updated_at: string | null
+          workflow_template_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          template_id: string
+          updated_at?: string | null
+          workflow_template_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          template_id?: string
+          updated_at?: string | null
+          workflow_template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_task_lists_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "matter_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "template_task_lists_workflow_template_id_fkey"
+            columns: ["workflow_template_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       workflow_templates: {
         Row: {
