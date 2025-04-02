@@ -52,20 +52,29 @@ export function MatterTemplatesView() {
   
   const fetchTemplates = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('matter_templates')
-      .select('*')
-      .order('created_at', { ascending: false });
-      
-    if (error) {
-      console.error('Error fetching matter templates:', error);
+    try {
+      const { data, error } = await supabase
+        .from('matter_templates')
+        .select('*')
+        .order('created_at', { ascending: false });
+        
+      if (error) {
+        console.error('Error fetching matter templates:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load matter templates',
+          variant: 'destructive',
+        });
+      } else {
+        setTemplates(data as MatterTemplate[] || []);
+      }
+    } catch (error) {
+      console.error('Error in fetchTemplates:', error);
       toast({
         title: 'Error',
-        description: 'Failed to load matter templates',
+        description: 'An unexpected error occurred',
         variant: 'destructive',
       });
-    } else {
-      setTemplates(data || []);
     }
     setLoading(false);
   };
