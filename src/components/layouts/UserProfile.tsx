@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -133,10 +134,6 @@ export function UserProfile({ collapsed = false }: UserProfileProps) {
     return "U";
   };
   
-  const handleManageAccount = () => {
-    navigate('/account-settings');
-  };
-  
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -175,33 +172,23 @@ export function UserProfile({ collapsed = false }: UserProfileProps) {
             </Avatar>
           </div>
           {!collapsed && (
-            <div>
-              <p className="text-sm font-medium text-white">{getDisplayName()}</p>
-              <p className="text-xs text-white/70">{getUserRole()}</p>
+            <div className="flex-1 flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-white">{getDisplayName()}</p>
+                <p className="text-xs text-white/70">{getUserRole()}</p>
+              </div>
+              <Button
+                variant="glass"
+                size="sm"
+                className="w-8 h-8 p-0 flex items-center justify-center hover:bg-white/20 hover:text-red-300"
+                onClick={handleSignOut}
+                title="Sign Out"
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
             </div>
           )}
         </div>
-        {!collapsed && (
-          <div className="mt-3 pt-3 border-t border-white/10 flex gap-2">
-            <Button 
-              variant="glass" 
-              size="sm" 
-              className="flex-1 justify-center text-xs font-medium hover:bg-white/20"
-              onClick={handleManageAccount}
-            >
-              Manage Account
-            </Button>
-            <Button
-              variant="glass"
-              size="sm"
-              className="w-8 h-8 p-0 flex items-center justify-center hover:bg-white/20 hover:text-red-300"
-              onClick={handleSignOut}
-              title="Sign Out"
-            >
-              <LogOut className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
         {collapsed && (
           <div className="mt-2 flex justify-center">
             <Button
