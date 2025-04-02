@@ -97,16 +97,38 @@ export function NewTaskDialog({ open, onOpenChange, onTaskCreated }: NewTaskDial
     }
   }, [open, user]);
   
-  // For demonstration, we'll use mock matters data
+  // Fetch real matters from database
   useEffect(() => {
-    // In a real app, you would fetch matters from the database
-    setMatters([
-      { id: 'matter1', name: 'A vs B client matter' },
-      { id: 'matter2', name: 'Smith Contract' },
-      { id: 'matter3', name: 'Johnson Estate' },
-      { id: 'matter4', name: 'Williams v. City' },
-    ]);
-  }, []);
+    const fetchMatters = async () => {
+      try {
+        console.log('Fetching matters from database');
+        const { data, error } = await supabase
+          .from('matters')
+          .select('id, name')
+          .order('name', { ascending: true });
+          
+        if (error) throw error;
+        
+        console.log('Fetched matters:', data);
+        
+        if (data && data.length > 0) {
+          setMatters(data);
+        } else {
+          console.log('No matters found in the database');
+          // Set empty array if no matters found
+          setMatters([]);
+        }
+      } catch (error) {
+        console.error('Error fetching matters:', error);
+        setMatters([]);
+      }
+    };
+    
+    // Only fetch matters when dialog opens
+    if (open) {
+      fetchMatters();
+    }
+  }, [open]);
   
   const form = useForm({
     defaultValues: {
@@ -358,11 +380,15 @@ export function NewTaskDialog({ open, onOpenChange, onTaskCreated }: NewTaskDial
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {matters.map(matter => (
-                          <SelectItem key={matter.id} value={matter.id}>
-                            {matter.name}
-                          </SelectItem>
-                        ))}
+                        {matters.length > 0 ? (
+                          matters.map(matter => (
+                            <SelectItem key={matter.id} value={matter.id}>
+                              {matter.name}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="" disabled>No matters available</SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                   </FormItem>
