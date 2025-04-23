@@ -12,7 +12,8 @@ import {
   CheckSquare, 
   ClipboardList, 
   Plus, 
-  ListChecks
+  ListChecks,
+  FileDown
 } from 'lucide-react';
 import { TaskList, Task as UITask } from '@/components/tasks/TaskList';
 import { TaskBoard } from '@/components/tasks/TaskBoard';
@@ -25,6 +26,7 @@ import { fetchTasks } from '@/components/tasks/TaskService';
 import { Task } from '@/types/task';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { TaskExportDialog } from '@/components/tasks/TaskExportDialog';
 
 export default function Tasks() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -33,6 +35,7 @@ export default function Tasks() {
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
   const [isTaskTypeOpen, setIsTaskTypeOpen] = useState(false);
   const [isNewTemplateOpen, setIsNewTemplateOpen] = useState(false);
+  const [isExportOpen, setIsExportOpen] = useState(false);
   const [filters, setFilters] = useState<TaskFiltersType>({
     priority: [],
     taskType: [],
@@ -245,6 +248,10 @@ export default function Tasks() {
                 <ListChecks className="mr-2 h-4 w-4" />
                 Task Types
               </Button>
+              <Button variant="outline" onClick={() => setIsExportOpen(true)}>
+                <FileDown className="mr-2 h-4 w-4" />
+                Export PDF
+              </Button>
               <Button variant="outline" asChild>
                 <Link to="/workflow-templates">
                   <ClipboardList className="mr-2 h-4 w-4" />
@@ -335,6 +342,11 @@ export default function Tasks() {
           <NewWorkflowTemplateDialog 
             open={isNewTemplateOpen} 
             onOpenChange={setIsNewTemplateOpen} 
+          />
+          <TaskExportDialog 
+            open={isExportOpen} 
+            onOpenChange={setIsExportOpen} 
+            tasks={filteredTasks}
           />
         </div>
       </div>
