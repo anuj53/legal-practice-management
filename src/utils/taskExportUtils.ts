@@ -1,8 +1,8 @@
 
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { Task } from '@/types/task';
 import { supabase } from '@/integrations/supabase/client';
+import { Task as UITask } from '@/components/tasks/TaskList';
 
 /**
  * Gets the organization name for the current user
@@ -36,7 +36,7 @@ async function getOrganizationName(): Promise<string> {
 /**
  * Exports tasks to PDF format
  */
-export async function exportTasksToPDF(tasks: Task[]): Promise<void> {
+export async function exportTasksToPDF(tasks: UITask[]): Promise<void> {
   if (tasks.length === 0) return;
   
   try {
@@ -61,10 +61,10 @@ export async function exportTasksToPDF(tasks: Task[]): Promise<void> {
       task.name,
       task.priority,
       task.status,
-      task.task_type || '',
-      task.assigned_to,
-      task.due_date ? new Date(task.due_date).toLocaleDateString() : '',
-      task.matter_id || '',
+      task.taskType || '',
+      task.assignee,
+      task.dueDate ? new Date(task.dueDate).toLocaleDateString() : '',
+      task.matter || '',
     ]);
     
     // Define header and styling

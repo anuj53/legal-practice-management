@@ -6,11 +6,12 @@ import { Loader2 } from 'lucide-react';
 import { Task } from '@/types/task';
 import { exportTasksToPDF } from '@/utils/taskExportUtils';
 import { toast } from '@/hooks/use-toast';
+import { Task as UITask } from '@/components/tasks/TaskList';
 
 interface TaskExportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  tasks: Task[];
+  tasks: UITask[];
 }
 
 export function TaskExportDialog({ open, onOpenChange, tasks }: TaskExportDialogProps) {
